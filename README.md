@@ -35,6 +35,8 @@ Required libraries:
 9. If you choose the last option, Event Analytics, the program will ask you which gaze or fixation file you would like to analyze. The program will create a baseline file based on the first two minutes and then ask you to pick a baseline value and a value from the file you inputted to compare 
     to each other, as well as a maximum duration of an event.
 
+Build with gradle:
+https://gradle.org/install/
 # Analysis
 
 ## Inputs: 

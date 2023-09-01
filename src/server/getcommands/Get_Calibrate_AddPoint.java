@@ -1,4 +1,4 @@
-package server.sendcommands;
+package server.getcommands;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;

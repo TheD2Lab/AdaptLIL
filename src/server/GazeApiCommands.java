@@ -28,6 +28,7 @@ public class GazeApiCommands {
         recCommandList.add(RecCounter.class);
         recCommandList.add(RecTime.class);
         recCommandList.add(RecTimeTick.class);
+        recCommandList.add(RecCursor.class);
         return recCommandList;
     }
 

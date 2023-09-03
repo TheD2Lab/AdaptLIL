@@ -71,10 +71,6 @@ public class RecFixationPOG extends RecXmlObject {
         this.id = -1;
     }
 
-    public String name() {
-        return "RecFIXATIONPOG";
-    }
-
     public Float getX() {
         return x;
     }

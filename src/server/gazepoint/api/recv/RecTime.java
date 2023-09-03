@@ -8,7 +8,4 @@ public class RecTime extends RecXmlObject {
 
     @JacksonXmlProperty(isAttribute = true, localName = "TIME")
     public Float time;
-    public String name() {
-        return "REcTime";
-    }
 }

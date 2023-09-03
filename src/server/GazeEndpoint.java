@@ -36,5 +36,6 @@ public class GazeEndpoint {
     @OnClose
     public void OnClose(Session session, CloseReason reason) {
 
+        System.out.println("Closing session...");
     }
 }

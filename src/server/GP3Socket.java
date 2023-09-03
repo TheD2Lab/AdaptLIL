@@ -90,7 +90,7 @@ public class GP3Socket {
             isWritingToGazeBuffer = true;
 
             //Offer data to queue, block if queue is being used.
-            gazeDataQueue.offer(xmlMapper.readValue(input.readLine(), RecXmlObject.class));
+            gazeDataQueue.offer(GazeApiCommands.mapRecCommandToXmlObject(input.readLine()));
         }
     }
 

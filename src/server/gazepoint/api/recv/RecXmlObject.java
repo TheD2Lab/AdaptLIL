@@ -6,7 +6,4 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 public class RecXmlObject {
 
-    public String name() {
-        return "RecXMLOBJECt";
-    }
 }

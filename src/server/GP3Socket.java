@@ -16,6 +16,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 /**
  *
  * Connects to GP3 and reads data.
+ * Utilizes a thread safe queue to write/read data recieved from the tracker. API specifies that data is sent in the form of XML
+ * so we utilize XML Annotations to construct XML objects after receiving API data. This is to simplify the process of
+ * interacting with the tracking data.
  */
 @ServerEndpoint("/gp3connection")
 public class GP3Socket {
@@ -69,7 +72,7 @@ public class GP3Socket {
      * @throws IOException
      */
     public void startGazeDataStream() throws IOException {
-        Set_Enable_Send_Data enableSendData = new Set_Enable_Send_Data(true);
+        Enable_Send_Command enableSendData = new Enable_Send_Command("ENABLE_SEND_DATA", true);
         output.println(xmlMapper.writeValueAsString(enableSendData));
         //Read ACK
         String ack = input.readLine();

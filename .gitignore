@@ -5,6 +5,7 @@
 /bin/
 *.class
 bin/
+target/*
 
 # Mac stuff
 desktop.ini

@@ -4,10 +4,11 @@ import javax.websocket.server.ServerEndpoint;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import server.ackcommands.AckXmlObject;
-import server.getcommands.*;
-import server.recvcommands.RecXmlObject;
-import server.setcommands.Set_Enable_Send_Data;
+import server.gazepoint.api.ack.AckXmlObject;
+import server.gazepoint.api.get.GetCommand;
+import server.gazepoint.api.get.GetEnableSendCommand;
+import server.gazepoint.api.recv.RecXmlObject;
+import server.gazepoint.api.set.SetEnableSendCommand;
 
 import java.io.*;
 import java.net.Socket;
@@ -62,7 +63,7 @@ public class GP3Socket {
      * @throws JsonProcessingException
      */
     public void startCalibration() throws JsonProcessingException {
-        Get_Calibrate_Start calibrateStart = new Get_Calibrate_Start();
+        GetCommand calibrateStart = new GetCommand(GazeApiCommands.CALIBRATE_START);
         output.println(xmlMapper.writeValueAsString(calibrateStart));
     }
 
@@ -72,7 +73,7 @@ public class GP3Socket {
      * @throws IOException
      */
     public void startGazeDataStream() throws IOException {
-        Enable_Send_Command enableSendData = new Enable_Send_Command("ENABLE_SEND_DATA", true);
+        GetEnableSendCommand enableSendData = new GetEnableSendCommand("ENABLE_SEND_DATA", true);
         output.println(xmlMapper.writeValueAsString(enableSendData));
         //Read ACK
         String ack = input.readLine();
@@ -107,7 +108,7 @@ public class GP3Socket {
      * @throws IOException If this is thrown, it may be a logic issue where we are reading the wrong input line.
      */
     public AckXmlObject stopGazeDataStream() throws IOException {
-        Set_Enable_Send_Data enableSendData = new Set_Enable_Send_Data(false);
+        SetEnableSendCommand enableSendData = new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_DATA, false);
         output.println(xmlMapper.writeValueAsString(enableSendData));
         return xmlMapper.readValue(input.readLine(), AckXmlObject.class);
     }

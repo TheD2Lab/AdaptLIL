@@ -1,16 +1,7 @@
 package server;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import server.recvcommands.*;
-
-import javax.xml.rpc.encoding.XMLType;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import server.gazepoint.api.recv.RecFixationPOG;
+import server.gazepoint.api.recv.RecXmlObject;
 
 public class server_main {
 
@@ -21,7 +12,7 @@ public class server_main {
         String fixationString = "<REC FPOGX=\"0.48439\" FPOGY=\"0.50313\" FPOGS=\"1891.86768\" FPOGD=\"0.49280\" FPOGID=\"1599\" FPOGV=\"1\" />";
         RecXmlObject someXmlObj = null;
 
-        someXmlObj =  ApiCommands.mapRecCommandToXmlObject(fixationString);
+        someXmlObj =  GazeApiCommands.mapRecCommandToXmlObject(fixationString);
 
         if (someXmlObj instanceof RecFixationPOG)
             System.out.println(((RecFixationPOG) someXmlObj).getX());

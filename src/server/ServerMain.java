@@ -6,6 +6,8 @@ import org.glassfish.grizzly.websockets.WebSocketApplication;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 import server.gazepoint.api.recv.RecFixationPOG;
 import server.gazepoint.api.recv.RecXmlObject;
+import server.gazepoint.api.set.SetEnableSendCommand;
+
 import java.io.IOException;
 
 public class ServerMain {
@@ -31,22 +33,36 @@ public class ServerMain {
 
     public static void main(String[] args) {
 
+        XmlMapper mapper = new XmlMapper();
         HttpServer server = null;
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         serializationTest();
         GP3Socket gp3Socket = new GP3Socket();
         try {
-//            gp3Socket.connect();
+            gp3Socket.connect();
             System.out.println("Connected to GP3");
             System.out.println("Starting Data Stream via thread");
-//            gp3Socket.startGazeDataStream();
-            System.out.println("Started gaze data stream.");
+            gp3Socket.startGazeDataStream();
+            gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_FIX, true))));
+            gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_BLINK, true))));
+            gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_COUNTER, true))));
 
-            System.out.println("Starting websocket...");
-            server = initWebSocket();
+            gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_DIAL, true))));
+            gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_HR, true))));
+            gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_TIME_TICK, true));
+            gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_TIME, true));
 
-            //All
-            System.out.println("Sever stays alive by waiting for input so type anything to exit");
+
+            gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_CURSOR, true));
+
+//            System.out.println("Started gaze data stream.");
+
+//            System.out.println("Starting websocket...");
+//            server = initWebSocket();
+//
+            // All
+//            System.out.println("Sever stays alive by waiting for input so type anything to exit");
+//
             System.in.read();
         } catch (IOException e) {
             throw new RuntimeException(e);

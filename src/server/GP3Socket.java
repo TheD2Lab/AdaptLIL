@@ -92,7 +92,7 @@ public class GP3Socket {
 
     private void writeToGazeBuffer() throws IOException {
         isWritingToGazeBuffer = true;
-         FileWriter fileWriter = new FileWriter("rec_command_test.txt");
+         FileWriter fileWriter = new FileWriter("rec_command_test_3.txt");
         while(isWritingToGazeBuffer) {
             String msg = input.readLine();
             //Only listen for REC

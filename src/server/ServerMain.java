@@ -4,7 +4,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
-import server.gazepoint.api.recv.RecFixationPOG;
+import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
 
@@ -20,12 +20,12 @@ public class ServerMain {
         String serialString = "<REC CNT=\"34\"/>";
         String serialString2 = "<REC TIME_TICK=\"3434344\"/>";
         String fixationString = "<REC FPOGX=\"0.48439\" FPOGY=\"0.50313\" FPOGS=\"1891.86768\" FPOGD=\"0.49280\" FPOGID=\"1599\" FPOGV=\"1\" />";
-        RecXmlObject someXmlObj = null;
+        XmlObject someXmlObj = null;
 
-        someXmlObj =  GazeApiCommands.mapRecCommandToXmlObject(fixationString);
+        someXmlObj =  GazeApiCommands.mapToXmlObject(fixationString);
 
-        if (someXmlObj instanceof RecFixationPOG)
-            System.out.println(((RecFixationPOG) someXmlObj).getX());
+        if (someXmlObj instanceof RecXmlObject)
+            System.out.println(((RecXmlObject) someXmlObj).getFixation().getX());
 
 
     }

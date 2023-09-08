@@ -1,9 +1,8 @@
-package server.gazepoint.api.recv;
+package server.gazepoint.api.data_objects;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-public class RecCursor extends RecXmlObject {
-
+public class Cursor {
     /**
      * 5.13 Cursor position
      * Description: The position of the mouse cursor.
@@ -23,7 +22,7 @@ public class RecCursor extends RecXmlObject {
     @JacksonXmlProperty(isAttribute = true,localName = "CS")
     public Integer cursorState;
 
-    public RecCursor(Float x, Float y, Integer cursorState) {
+    public Cursor(Float x, Float y, Integer cursorState) {
         this.x = x;
         this.y = y;
         this.cursorState = cursorState;

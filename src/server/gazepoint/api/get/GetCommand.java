@@ -2,9 +2,10 @@ package server.gazepoint.api.get;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import server.gazepoint.api.XmlObject;
 
 @JacksonXmlRootElement(localName = "GET")
-public class GetCommand {
+public class GetCommand extends XmlObject{
 
     @JacksonXmlProperty(isAttribute = true, localName = "ID")
     public String id;

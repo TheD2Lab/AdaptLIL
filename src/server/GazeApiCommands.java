@@ -2,6 +2,7 @@ package server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.ack.AckXmlObject;
 import server.gazepoint.api.recv.*;
 
@@ -23,31 +24,27 @@ public class GazeApiCommands {
      */
     public static List<Class<? extends RecXmlObject>> getRecCommands() {
         ArrayList<Class<? extends RecXmlObject>> recCommandList = new ArrayList<>();
-        recCommandList.add(RecFixationPOG.class);
-
-        recCommandList.add(RecCounter.class);
-        recCommandList.add(RecTime.class);
-        recCommandList.add(RecTimeTick.class);
-        recCommandList.add(RecCursor.class);
+        recCommandList.add(RecXmlObject.class);
         return recCommandList;
     }
 
     public static List<Class<? extends AckXmlObject>> getAckCommands() {
         ArrayList<Class<? extends AckXmlObject>> ackCommandList = new ArrayList<>();
-        ackCommandList.add(null);
+        ackCommandList.add(AckXmlObject.class);
         return ackCommandList;
     }
 
+
     /**
-     * Attempts to map a REC xml from Gaze. If one is found, it is returned, otherwise null.
+     * Attempts to map an xml from Gaze. If one is found, it is returned, otherwise null.
      * NOTE: this downcasts the object so to get the proper object, do an instanceof check on the type to properly deal
      * with the correct xml object.
-     *      (e.g.) -> if (xmlObject instance of RecFixationPOG) ((RecFixationPOG) xmlObject))
+     *      (e.g.) -> if (xmlObject instance of RecXmlCommand) ((RecFixationPOG) xmlObject))
      *          now you can call the correct methods and handle the data properly.
      * @param xml
      * @return
      */
-    public static RecXmlObject mapRecCommandToXmlObject(String xml) {
+    public static XmlObject mapToXmlObject(String xml) {
         RecXmlObject recXmlObject;
         for (Class<? extends RecXmlObject> recXmlClass : GazeApiCommands.getRecCommands()) {
             try {
@@ -59,29 +56,20 @@ public class GazeApiCommands {
                 //Not optimal but hey, let's just get it working
             }
         }
-        return null;
-    }
-
-    /**
-     * Attempts to map the ACK commands from Gaze to a coresponding XmlObject.
-     * If one is found, it will be returned, otherwise null.
-     * @param xml
-     * @return
-     */
-    public static AckXmlObject mapAckStringToXmlObject(String xml) {
-        AckXmlObject ackXmlObject;
 
         for (Class<? extends AckXmlObject> ackXmlClass : GazeApiCommands.getAckCommands()) {
             try {
-                ackXmlObject = xmlMapper.readValue(xml, ackXmlClass);
+                AckXmlObject ackXmlObject = xmlMapper.readValue(xml, ackXmlClass);
                 //Finally found w.o exception being thrown
                 return ackXmlObject;
             } catch (JsonProcessingException e) {
                 //Do nothing continue searching for a matching ackXml Object
             }
         }
+
         return null;
     }
+
 
     public static final String ENABLE_SEND_DATA = "ENABLE_SEND_DATA";
     public static final String ENABLE_SEND_COUNTER = "ENABLE_SEND_COUNTER";

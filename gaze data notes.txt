@@ -1,0 +1,4 @@
+These results suggest that if a participant has less dispersed absolute saccade angles, shorter
+fixations and saccades, coupled with smaller convex hull and
+fewer clicks, it is likely that the person will be successful at
+evaluating the correctness of the given mapping set

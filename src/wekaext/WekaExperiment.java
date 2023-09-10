@@ -16,6 +16,7 @@ import com.opencsv.CSVWriter;
 import org.apache.commons.math3.util.Precision;
 
 // weka.jar
+import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Range;
 import weka.core.Utils;
@@ -146,6 +147,7 @@ public class WekaExperiment {
 			// add data to csv
 
 			for (int i = 0; i < classifiers.length; i++) {
+
 				String[] data = new String[fileNames.size() + 1];
 				data[0] = classifiers[i].getClass().getSimpleName();
 				for (int j = 0; j < results.size(); j++) {
@@ -178,63 +180,63 @@ public class WekaExperiment {
 //		classifiers.add(new ZeroR());
 
 		// bayes
-//		classifiers.add(new BayesNet());
+		classifiers.add(new BayesNet());
 		classifiers.add(new NaiveBayes());
-//		classifiers.add(new NaiveBayesMultinomialText());
-//		classifiers.add(new NaiveBayesUpdateable());
+		classifiers.add(new NaiveBayesMultinomialText());
+		classifiers.add(new NaiveBayesUpdateable());
 
 		// functions
-//		classifiers.add(new Logistic());
-//		classifiers.add(new MultilayerPerceptron());
-//		classifiers.add(new SGD());
-//		classifiers.add(new SGDText());
-//		classifiers.add(new SimpleLogistic());
-//		classifiers.add(new SMO());
-//		classifiers.add(new VotedPerceptron());
+		classifiers.add(new Logistic());
+		classifiers.add(new MultilayerPerceptron());
+		classifiers.add(new SGD());
+		classifiers.add(new SGDText());
+		classifiers.add(new SimpleLogistic());
+		classifiers.add(new SMO());
+		classifiers.add(new VotedPerceptron());
 
 //		// lazy
-//		classifiers.add(new IBk());
-//		classifiers.add(new KStar());
-//		classifiers.add(new LWL());
+		classifiers.add(new IBk());
+		classifiers.add(new KStar());
+		classifiers.add(new LWL());
 //
 //		// meta classifiers
-//		classifiers.add(new AdaBoostM1());
-//		classifiers.add(new AttributeSelectedClassifier());
-//		classifiers.add(new Bagging());
+		classifiers.add(new AdaBoostM1());
+		classifiers.add(new AttributeSelectedClassifier());
+		classifiers.add(new Bagging());
 		classifiers.add(new ClassificationViaRegression());
-//		classifiers.add(new CVParameterSelection());
-//		classifiers.add(new FilteredClassifier());
-//		classifiers.add(new IterativeClassifierOptimizer());
-//		classifiers.add(new LogitBoost());
-//		classifiers.add(new MultiClassClassifier());
-//		classifiers.add(new MultiClassClassifierUpdateable());
-//		classifiers.add(new MultiScheme());
-//		classifiers.add(new RandomCommittee());
-//		classifiers.add(new RandomizableFilteredClassifier());
-//		classifiers.add(new RandomSubSpace());
-//		classifiers.add(new Stacking());
-//		classifiers.add(new Vote());
-//		classifiers.add(new WeightedInstancesHandlerWrapper());
+		classifiers.add(new CVParameterSelection());
+		classifiers.add(new FilteredClassifier());
+		classifiers.add(new IterativeClassifierOptimizer());
+		classifiers.add(new LogitBoost());
+		classifiers.add(new MultiClassClassifier());
+		classifiers.add(new MultiClassClassifierUpdateable());
+		classifiers.add(new MultiScheme());
+		classifiers.add(new RandomCommittee());
+		classifiers.add(new RandomizableFilteredClassifier());
+		classifiers.add(new RandomSubSpace());
+		classifiers.add(new Stacking());
+		classifiers.add(new Vote());
+		classifiers.add(new WeightedInstancesHandlerWrapper());
 //
 //		// misc
-//		InputMappedClassifier imc = new InputMappedClassifier();
-//		imc.setOptions(Utils.splitOptions("-M"));
-//		classifiers.add(imc);
+		InputMappedClassifier imc = new InputMappedClassifier();
+		imc.setOptions(Utils.splitOptions("-M"));
+		classifiers.add(imc);
 //
 //		// rules
-//		classifiers.add(new DecisionTable());
-//		classifiers.add(new JRip());
-//		classifiers.add(new OneR());
-//		classifiers.add(new PART());
-//
+		classifiers.add(new DecisionTable());
+		classifiers.add(new JRip());
+		classifiers.add(new OneR());
+		classifiers.add(new PART());
+
 ////        // tree
 		classifiers.add(new DecisionStump());
-//		classifiers.add(new HoeffdingTree());
-//		classifiers.add(new J48());
-//		classifiers.add(new LMT());
-//		classifiers.add(new RandomForest());
-//		classifiers.add(new RandomTree());
-//		classifiers.add(new REPTree());
+		classifiers.add(new HoeffdingTree());
+		classifiers.add(new J48());
+		classifiers.add(new LMT());
+		classifiers.add(new RandomForest());
+		classifiers.add(new RandomTree());
+		classifiers.add(new REPTree());
 
 		System.out.println("Retrieved classifiers");
 		Classifier[] classifiersArr = new Classifier[classifiers.size()];
@@ -298,6 +300,7 @@ public class WekaExperiment {
 			Boolean logData) throws Exception {
 		// setup weka.experiment
 		Experiment exp = new Experiment();
+
 		exp.setPropertyArray(new Classifier[0]);
 		exp.setUsePropertyIterator(true);
 
@@ -338,6 +341,7 @@ public class WekaExperiment {
 		File file = new File(fileLocation);
 
 		model.addElement(file);
+
 
 		exp.setDatasets(model);
 
@@ -405,7 +409,7 @@ public class WekaExperiment {
 		return classifierResults;
 	}
 
-	private static void evaluateAllClassifiers(Classifier[] classifiers, Instances train) {
+	private static void evaluateAllClassifiers(Classifier[] classifiers, Instances train, Instances test) {
 		// classifier evaluations
 		ArrayList<String> dnw = new ArrayList<String>();
 
@@ -413,7 +417,7 @@ public class WekaExperiment {
 			try {
 				Evaluation eval = new Evaluation(train);
 				eval.crossValidateModel(c, train, 10, new Random(1));
-
+				eval.evaluateModel(c, test);
 			} catch (Exception e) {
 				e.printStackTrace();
 				dnw.add(c.getClass().getSimpleName());

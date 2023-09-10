@@ -1,5 +1,6 @@
 package server;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import it.unimi.dsi.fastutil.Hash;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
@@ -8,8 +9,10 @@ import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
 import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
 import weka.core.Instances;
 import weka.core.Range;
+import weka.core.converters.ArffLoader;
 import weka.experiment.*;
 import wekaext.ClassifierResult;
 import wekaext.WekaExperiment;
@@ -20,10 +23,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Scanner;
+import java.util.*;
 
 public class ServerMain {
 
@@ -49,8 +49,9 @@ public class ServerMain {
         Scanner in = new Scanner(System.in);
 
 //        System.out.print("Enter root directory: ");
-        String rootDirectory = "C:\\Users\\LeaseCalcs\\Desktop\\d2 lab\\result\\supervised learning data\\";//in.nextLine();
-
+        String rootDir =  "C:\\Users\\LeaseCalcs\\Desktop\\d2 lab\\result\\supervised learning data\\";
+        String trainDataDir = rootDir + "\\train\\";//in.nextLine();
+        String trainTestDataDir = rootDir + "\\test\\";
         boolean classification = false;
 //        System.out.print("Enter C for classification or R for regression: ");
         String typeOfExperiment = "C";//in.nextLine();
@@ -60,7 +61,7 @@ public class ServerMain {
         }
 
         try {
-            setupExperiment(classification, rootDirectory);
+            setupExperiment(classification, trainDataDir, trainTestDataDir);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -72,21 +73,28 @@ public class ServerMain {
 
     }
 
-    public static void setupExperiment(boolean classification, String dirLocation) throws Exception {
+    public static void setupExperiment(boolean classification, String trainDataDir, String testDataDir) throws Exception {
         // set directory path
-        File dirPath = new File(dirLocation);
+        File trainDirPath = new File(trainDataDir);
+        File testDataDirPath = new File(testDataDir);
 
         // find all arff files
-        ArrayList<String> fileNames = new ArrayList<>();
+        ArrayList<String> trainDataFiles = new ArrayList<>();
+        ArrayList<String> testDataFiles = new ArrayList<>();
+        for (String fileName : trainDirPath.list()) {
+            if (fileName.contains("arff")) {
+                trainDataFiles.add(fileName);
+            }
+        }
 
-        for (String s : dirPath.list()) {
-            if (s.contains("arff")) {
-                fileNames.add(s);
+        for (String fileName : testDataDirPath.list()) {
+            if (fileName.contains("arff")) {
+                testDataFiles.add(fileName);
             }
         }
 
         // sort all files by filename
-        Collections.sort(fileNames, new Comparator<String>() {
+        Collections.sort(trainDataFiles, new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
                 return extractInt(o1) - extractInt(o2);
@@ -114,25 +122,133 @@ public class ServerMain {
 
         ArrayList<ClassifierResult[]> allResults = new ArrayList<>();
 
-        System.out.println(dirPath.getAbsolutePath());
-        for (int i = 0; i < fileNames.size(); i++) {
-            String fileLocation = String.format("%s/%s", dirPath.getAbsolutePath(), fileNames.get(i));
-            System.out.println(fileLocation);
-            ResultMatrix matrix = runExperiment(classifiers, fileLocation, classification, false);
+        System.out.println(trainDirPath.getAbsolutePath());
+        ArffLoader loader = new ArffLoader();
+
+        HashMap<String, HashMap<String, Double>> totalResultsOfClassifiers = new HashMap<>();
+        for (Classifier c : classifiers) {
+            totalResultsOfClassifiers.put(c.getClass().getName(), new HashMap<>());
+        }
+        for (int i = 0; i < trainDataFiles.size(); i++) {
+            String trainDataFileLocation = String.format("%s/%s", trainDirPath.getAbsolutePath(), trainDataFiles.get(i));
+//            Instances result = new Instances(new BufferedReader(new FileReader(irl.getOutputFile())));
+
+            loader.setFile(new File(trainDataFileLocation));
+            Instances trainDataInstance = loader.getDataSet();
+            trainDataInstance.setClassIndex(trainDataInstance.numAttributes() - 1);
+
+
+            for (String testFile : testDataFiles) {
+                String testDataFileLoc = testDataDirPath.getAbsolutePath() + "/" + testFile;
+                System.out.println(testDataFileLoc);
+                loader.setFile(new File(testDataFileLoc));
+                Instances testDataInstance = loader.getDataSet();
+                testDataInstance.setClassIndex(testDataInstance.numAttributes() - 1);
+
+                HashMap<String, HashMap<String, Double>> resultsOfClassifiers = evaluateAllClassifiers(classifiers, trainDataInstance, testDataInstance);
+                for (String classifierName : resultsOfClassifiers.keySet()) {
+                    for (String resultKey : resultsOfClassifiers.get(classifierName).keySet()) {
+                        if (totalResultsOfClassifiers.get(classifierName).containsKey(resultKey)) {
+                            double newAvg = totalResultsOfClassifiers.get(classifierName).get(resultKey) +
+                                    resultsOfClassifiers.get(classifierName).get(resultKey);
+
+                            totalResultsOfClassifiers.get(classifierName).put(resultKey, newAvg);
+                        } else {
+                            totalResultsOfClassifiers.get(classifierName).put(resultKey, resultsOfClassifiers.get(classifierName).get(resultKey));
+                        }
+                    }
+                }
+            }
+//            ResultMatrix matrix = runExperiment(classifiers, fileLocation, classification, false);
 
             // returns results from classification experiment
-            ClassifierResult[] res = WekaExperiment.getClassificationExperimentResults(classifiers, matrix);
+//            ClassifierResult[] res = WekaExperiment.getClassificationExperimentResults(classifiers, matrix);
 
-            allResults.add(res);
-            System.out.printf("%d/%d Process Complete ^^^\n==============================", i + 1, fileNames.size());
+//            allResults.add(res);
+
+            System.out.println("-----------------------------------");
+            System.out.println("--------------Averages-------------");
+            System.out.println("-----------------------------------");
+
+            for (String classifierName : totalResultsOfClassifiers.keySet()) {
+                System.out.println("--------classifier: " + classifierName + " -------------");
+                for (String resultKey : totalResultsOfClassifiers.get(classifierName).keySet()) {
+                    double avgVal = totalResultsOfClassifiers.get(classifierName).get(resultKey) / testDataFiles.size();
+                    System.out.println("key: " + resultKey + " Avg Val: " + avgVal);
+                }
+            }
+
+            System.out.printf("%d/%d Process Complete ^^^\n==============================", i + 1, trainDataFiles.size());
         }
 
         // saves classification experiment to csv file
-        WekaExperiment.writeResultsToCSV(classifiers, allResults, fileNames,
-                String.format("%s/csv_results-%s.csv", dirPath.getParent(), dirPath.getName()));
+//        WekaExperiment.writeResultsToCSV(classifiers, allResults, fileNames,
+//                String.format("%s/csv_results-%s.csv", dirPath.getParent(), dirPath.getName()));
 
         System.out.println("==============================\nProcess Complete");
 
+    }
+
+    private static HashMap<String, HashMap<String, Double>> evaluateAllClassifiers(Classifier[] classifiers, Instances train, Instances test) {
+        // classifier evaluations
+        ArrayList<String> dnw = new ArrayList<String>();
+
+        HashMap<String, HashMap<String, Double>> totalResultsByClassifier = new HashMap<>();
+        int classifierCount = 0;
+        for (Classifier c : classifiers) {
+            totalResultsByClassifier.put(c.getClass().getName(), new HashMap<String, Double>());
+            ++classifierCount;
+            try {
+                c.buildClassifier(train);
+                Evaluation eval = new Evaluation(train);
+                eval.evaluateModel(c, test);
+                HashMap<String, Double> results = printEvaluationStatistics(c, eval);
+
+                for (String key : results.keySet()) {
+                    HashMap<String, Double> resultsOfClassifier = totalResultsByClassifier.get(c.getClass().getName());
+                    if (resultsOfClassifier.containsKey(key))
+                        resultsOfClassifier.put(key, resultsOfClassifier.get(key) + results.get(key));
+                    else
+                        resultsOfClassifier.put(key, results.get(key));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                dnw.add(c.getClass().getSimpleName());
+
+            }
+        }
+
+        for (String s : dnw) {
+//            System.out.println(s);
+        }
+
+        return totalResultsByClassifier;
+
+
+    }
+
+    private static HashMap<String, Double> printEvaluationStatistics(Classifier c, Evaluation eval) {
+        System.out.println("--------------" + c.getClass().getName() + "----------------");
+        System.out.println("False Positive Rate of CS 0: " + eval.falsePositiveRate(0));
+        System.out.println("False Positive Rate of CS 1: " + eval.falsePositiveRate(1));
+        System.out.println("False Negative Rate of CS 0: " + eval.falseNegativeRate(0));
+        System.out.println("False Negative Rate of CS 1: " + eval.falseNegativeRate(1));
+        System.out.println("weighted true pos rate " + eval.weightedTruePositiveRate());
+        System.out.println("% correct: " + eval.pctCorrect());
+        System.out.println(" % incorrect: " + eval.pctIncorrect());
+        System.out.println("**************************** END ************************");
+
+        HashMap<String, Double> results = new HashMap<>();
+        results.put("falsePosRate_0", eval.falsePositiveRate(0));
+        results.put("falsePosRate_1", eval.falsePositiveRate(1));
+        results.put("falseNegRate_0", eval.falseNegativeRate(0));
+        results.put("falseNegRate_1", eval.falseNegativeRate(1));
+        results.put("weighted_true_pos", eval.weightedTruePositiveRate());
+        results.put("weighted_false_pos", eval.weightedFalseNegativeRate());
+
+        results.put("pct_correct", eval.pctCorrect());
+        results.put("pct_incorrect", eval.pctIncorrect());
+        return results;
     }
     private static ResultMatrix runExperiment(Classifier[] classifiers, String fileLocation, boolean classification,
                                               Boolean logData) throws Exception {

@@ -121,7 +121,7 @@ public class WekaExperiment {
 
 	}
 
-	private static void writeResultsToCSV(Classifier[] classifiers, ArrayList<ClassifierResult[]> results,
+	public static void writeResultsToCSV(Classifier[] classifiers, ArrayList<ClassifierResult[]> results,
 			ArrayList<String> fileNames, String fileLocation) {
 		// first create file object for file placed at location
 		// specified by filepath
@@ -171,75 +171,77 @@ public class WekaExperiment {
 		}
 	}
 
-	private static Classifier[] getClassificationClassifiers() throws Exception {
-		Classifier[] classifiers = new Classifier[44];
+	public static Classifier[] getClassificationClassifiers() throws Exception {
+		ArrayList<Classifier> classifiers = new ArrayList<>();
 
 		// set baseline classifier here
-		classifiers[0] = new ZeroR();
+//		classifiers.add(new ZeroR());
 
 		// bayes
-		classifiers[1] = new BayesNet();
-		classifiers[2] = new NaiveBayes();
-		classifiers[3] = new NaiveBayesMultinomialText();
-		classifiers[4] = new NaiveBayesUpdateable();
+//		classifiers.add(new BayesNet());
+		classifiers.add(new NaiveBayes());
+//		classifiers.add(new NaiveBayesMultinomialText());
+//		classifiers.add(new NaiveBayesUpdateable());
 
 		// functions
-		classifiers[5] = new Logistic();
-		classifiers[6] = new MultilayerPerceptron();
-		classifiers[7] = new SGD();
-		classifiers[8] = new SGDText();
-		classifiers[9] = new SimpleLogistic();
-		classifiers[10] = new SMO();
-		classifiers[11] = new VotedPerceptron();
+//		classifiers.add(new Logistic());
+//		classifiers.add(new MultilayerPerceptron());
+//		classifiers.add(new SGD());
+//		classifiers.add(new SGDText());
+//		classifiers.add(new SimpleLogistic());
+//		classifiers.add(new SMO());
+//		classifiers.add(new VotedPerceptron());
 
-		// lazy
-		classifiers[12] = new IBk();
-		classifiers[13] = new KStar();
-		classifiers[14] = new LWL();
+//		// lazy
+//		classifiers.add(new IBk());
+//		classifiers.add(new KStar());
+//		classifiers.add(new LWL());
+//
+//		// meta classifiers
+//		classifiers.add(new AdaBoostM1());
+//		classifiers.add(new AttributeSelectedClassifier());
+//		classifiers.add(new Bagging());
+		classifiers.add(new ClassificationViaRegression());
+//		classifiers.add(new CVParameterSelection());
+//		classifiers.add(new FilteredClassifier());
+//		classifiers.add(new IterativeClassifierOptimizer());
+//		classifiers.add(new LogitBoost());
+//		classifiers.add(new MultiClassClassifier());
+//		classifiers.add(new MultiClassClassifierUpdateable());
+//		classifiers.add(new MultiScheme());
+//		classifiers.add(new RandomCommittee());
+//		classifiers.add(new RandomizableFilteredClassifier());
+//		classifiers.add(new RandomSubSpace());
+//		classifiers.add(new Stacking());
+//		classifiers.add(new Vote());
+//		classifiers.add(new WeightedInstancesHandlerWrapper());
+//
+//		// misc
+//		InputMappedClassifier imc = new InputMappedClassifier();
+//		imc.setOptions(Utils.splitOptions("-M"));
+//		classifiers.add(imc);
+//
+//		// rules
+//		classifiers.add(new DecisionTable());
+//		classifiers.add(new JRip());
+//		classifiers.add(new OneR());
+//		classifiers.add(new PART());
+//
+////        // tree
+		classifiers.add(new DecisionStump());
+//		classifiers.add(new HoeffdingTree());
+//		classifiers.add(new J48());
+//		classifiers.add(new LMT());
+//		classifiers.add(new RandomForest());
+//		classifiers.add(new RandomTree());
+//		classifiers.add(new REPTree());
 
-		// meta classifiers
-		classifiers[15] = new AdaBoostM1();
-		classifiers[16] = new AttributeSelectedClassifier();
-		classifiers[17] = new Bagging();
-		classifiers[18] = new ClassificationViaRegression();
-		classifiers[19] = new CVParameterSelection();
-		classifiers[20] = new FilteredClassifier();
-		classifiers[21] = new IterativeClassifierOptimizer();
-		classifiers[22] = new LogitBoost();
-		classifiers[23] = new MultiClassClassifier();
-		classifiers[24] = new MultiClassClassifierUpdateable();
-		classifiers[25] = new MultiScheme();
-		classifiers[26] = new RandomCommittee();
-		classifiers[27] = new RandomizableFilteredClassifier();
-		classifiers[28] = new RandomSubSpace();
-		classifiers[29] = new Stacking();
-		classifiers[30] = new Vote();
-		classifiers[31] = new WeightedInstancesHandlerWrapper();
-
-		// misc
-		InputMappedClassifier imc = new InputMappedClassifier();
-		imc.setOptions(Utils.splitOptions("-M"));
-		classifiers[32] = imc;
-
-		// rules
-		classifiers[33] = new DecisionTable();
-		classifiers[34] = new JRip();
-		classifiers[35] = new OneR();
-		classifiers[36] = new PART();
-
-//        // tree
-		classifiers[37] = new DecisionStump();
-		classifiers[38] = new HoeffdingTree();
-		classifiers[39] = new J48();
-		classifiers[40] = new LMT();
-		classifiers[41] = new RandomForest();
-		classifiers[42] = new RandomTree();
-		classifiers[43] = new REPTree();
-
-		return classifiers;
+		System.out.println("Retrieved classifiers");
+		Classifier[] classifiersArr = new Classifier[classifiers.size()];
+		return classifiers.toArray(classifiersArr);
 	}
 
-	private static Classifier[] getRegressionClassifiers() {
+	public static Classifier[] getRegressionClassifiers() {
 		Classifier[] classifiers = new Classifier[20];
 
 		// set baseline classifier here
@@ -388,12 +390,13 @@ public class WekaExperiment {
 		return matrix;
 	}
 
-	private static ClassifierResult[] getClassificationExperimentResults(Classifier[] classifiers,
+	public static ClassifierResult[] getClassificationExperimentResults(Classifier[] classifiers,
 			ResultMatrix matrix) {
 		ClassifierResult[] classifierResults = new ClassifierResult[classifiers.length];
 
 		for (int i = 0; i < matrix.getColCount(); i++) {
 
+			System.out.println("trying classifier: " + i + ", " + classifiers[i].getClass().getName());
 			classifierResults[i] = new ClassifierResult(classifiers[i], Precision.round(matrix.getMean(i, 0), 2),
 					matrix.getSignificance(i, 0));
 

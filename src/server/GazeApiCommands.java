@@ -1,6 +1,7 @@
 package server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.ack.AckXmlObject;
@@ -15,6 +16,15 @@ import java.util.List;
 public class GazeApiCommands {
 
     private static XmlMapper xmlMapper = new XmlMapper();
+
+    /**
+     * Static initialization block
+     */
+    static {
+        //Without this configuration, the mapper will fail to map a RecXmlObject because an attribute wasn't annotaed in.
+        //Furthermore, it allows for the RecXmlObject mega class to exist to encompass all variations of the xml packet.
+        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     /**
      * Contains a list of classes that extend RecXmlObject.

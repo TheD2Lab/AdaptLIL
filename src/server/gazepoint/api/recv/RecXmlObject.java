@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import server.gazepoint.api.XmlObject;
-import server.gazepoint.api.data_objects.Cursor;
-import server.gazepoint.api.data_objects.Fixation;
+import data_classes.Cursor;
+import data_classes.Fixation;
 import server.serialization_helpers.IntToBooleanDeserializer;
 
 /**

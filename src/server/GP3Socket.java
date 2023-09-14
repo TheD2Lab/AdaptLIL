@@ -4,7 +4,9 @@ import javax.websocket.server.ServerEndpoint;
 import javax.xml.crypto.Data;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.ack.AckXmlObject;
 import server.gazepoint.api.get.GetCommand;
 import server.gazepoint.api.get.GetEnableSendCommand;
@@ -43,11 +45,12 @@ public class GP3Socket {
      * the data will be out of order and you'll only be reading the most recent data.
      */
     private final int windowSize = 60;
-    private final ArrayBlockingQueue<RecXmlObject> gazeDataQueue = new ArrayBlockingQueue<>(windowSize);
+    private final LinkedBlockingQueue<RecXmlObject> gazeDataQueue = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<AckXmlObject> ackDataQueue = new LinkedBlockingQueue<>();
 
     public GP3Socket() {
         xmlMapper = new XmlMapper();
+        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     }
 
@@ -56,10 +59,11 @@ public class GP3Socket {
      * @throws IOException
      */
     public void connect() throws IOException {
-
-        socket = new Socket(hostName, port);
-        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        output = new PrintStream(socket.getOutputStream());
+        //socket = new Socket(hostName, port);
+        output = new PrintStream(new FileOutputStream("output_stream_test.txt"));
+        input = new BufferedReader(new FileReader("rec_command_test_3.txt"));
+        //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        //output = new PrintStream(socket.getOutputStream());
 
     }
 
@@ -92,19 +96,25 @@ public class GP3Socket {
 
     private void writeToGazeBuffer() throws IOException {
         isWritingToGazeBuffer = true;
-         FileWriter fileWriter = new FileWriter("rec_command_test_3.txt");
+
         while(isWritingToGazeBuffer) {
             String msg = input.readLine();
             //Only listen for REC
             //Offer data to queue, block if queue is being used.
-            //Look for Acks as well.
-            //Acks should be stored elsewhere.
-            //Test to see if the command can map
-            fileWriter.write(msg);
-//            if (GazeApiCommands.mapAckStringToXmlObject(msg) != null)
-//                ackDataQueue.offer(GazeApiCommands.mapAckStringToXmlObject(msg));
-//
-//            gazeDataQueue.offer(GazeApiCommands.mapRecCommandToXmlObject(input.readLine()));
+
+            //Test to see if the command can map and assign it to the proper buffer.
+            if (msg != null) {
+                XmlObject command = GazeApiCommands.mapToXmlObject(msg);
+                if (GazeApiCommands.mapToXmlObject(msg) != null) {
+                    if (command instanceof AckXmlObject)
+                        ackDataQueue.offer((AckXmlObject) command);
+                    else if (command instanceof RecXmlObject)
+                        gazeDataQueue.offer((RecXmlObject) command);
+
+                }
+                else
+                    System.out.println("failed to write to buffer");
+            }
         }
         System.out.println("ended writing to gaze buffer.");
     }
@@ -129,12 +139,16 @@ public class GP3Socket {
         return xmlMapper.readValue(input.readLine(), AckXmlObject.class);
     }
 
+    public LinkedBlockingQueue<RecXmlObject> getGazeDataQueue() {
+        return gazeDataQueue;
+    }
+
     public void write(String msg) {
         output.println(msg);
     }
 
     public void writeSetCommand(SetCommand setCommand) throws JsonProcessingException {
-        output.println(xmlMapper.writeValueAsString(setCommand));
+        this.write(xmlMapper.writeValueAsString(setCommand));
 
     }
 

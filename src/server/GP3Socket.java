@@ -113,7 +113,7 @@ public class GP3Socket {
 
                 }
                 else
-                    System.out.println("failed to write to buffer");
+                    System.out.println("failed to write to datapacket to buffer");
             }
         }
         System.out.println("ended writing to gaze buffer.");

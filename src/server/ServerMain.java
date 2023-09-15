@@ -1,6 +1,7 @@
 package server;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.websockets.WebSocket;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
@@ -41,6 +42,9 @@ public class ServerMain {
 //        MachineLearningExperiments.classificationExperiment();
 //        serializationTest();
         GP3Socket gp3Socket = new GP3Socket();
+        //screenheight && width should be an ack for consistentcy. see gazepoint documentation
+        float screenHeight = 1920;
+        float screenWidth = 1080;
         try {
             gp3Socket.connect();
             System.out.println("Connected to GP3");
@@ -58,52 +62,63 @@ public class ServerMain {
 
             //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_CURSOR, true));
 
-            Thread.sleep(500);
             //By this point, the data should have stopped writing.
 
             //We will now test the data class mapping for fixations
-            RecXmlObject recObject = gp3Socket.readGazeDataFromBuffer();
+//            RecXmlObject recObject = gp3Socket.readGazeDataFromBuffer();
 
             //TODO
             //Check gazepoint for a stop command
-            while ( recObject  != null) {
-                Fixation fixation = recObject.getFixation();
-                System.out.println("buffer size: " + gp3Socket.getGazeDataQueue().size());
-                System.out.println("Fixation ("+fixation.getX() + "," + fixation.getY() + ")");
-                recObject = gp3Socket.readGazeDataFromBuffer();
-            }
+//            while ( recObject  != null) {
+//                Fixation fixation = recObject.getFixation();
+//                System.out.println("buffer size: " + gp3Socket.getGazeDataQueue().size());
+//                System.out.println("Fixation ("+fixation.getX() + "," + fixation.getY() + ")");
+//                recObject = gp3Socket.readGazeDataFromBuffer();
+//            }
 
-//            System.out.println("Started gaze data stream.");
+            System.out.println("Started gaze data stream.");
 
 //            System.out.println("Starting websocket...");
-//            server = initWebSocket();
+            server = initWebSocket(gp3Socket);
 ////
 //            // All
 ////            System.out.println("Sever stays alive by waiting for input so type anything to exit");
 ////
-//            System.in.read();
+            System.in.read();
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         } finally {
-            //server.shutdown();
+            server.shutdown();
         }
     }
 
     /**
      * https://javaee.github.io/grizzly/websockets.html
      */
-    public static HttpServer initWebSocket() {
+    public static HttpServer initWebSocket(GP3Socket gp3Socket) {
         final HttpServer server = HttpServer.createSimpleServer("/var/www", port);
         final WebSocketAddOn addon = new WebSocketAddOn();
         server.getListener("grizzly").registerAddOn(addon);
-        WebSocketApplication adaptiveOntoMapp = new AdaptiveOntoMapApp();
+        AdaptiveOntoMapApp adaptiveOntoMapp = new AdaptiveOntoMapApp();
         WebSocketEngine.getEngine().register("", "/gaze", adaptiveOntoMapp);
 
         try {
             server.start();
             System.out.println("Websocket started on  " + url + ":" + port);
+            for (WebSocket socket: adaptiveOntoMapp.getWebSockets()) {
+                RecXmlObject recObject = gp3Socket.readGazeDataFromBuffer();
+
+                //TODO
+                //Check gazepoint for a stop command
+            while ( recObject  != null) {
+                Fixation fixation = recObject.getFixation();
+                System.out.println("buffer size: " + gp3Socket.getGazeDataQueue().size());
+                System.out.println("Fixation ("+fixation.getX() + "," + fixation.getY() + ")");
+                recObject = gp3Socket.readGazeDataFromBuffer();
+                adaptiveOntoMapp.sendGazeData(socket, recObject);
+            }
+
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -21,7 +21,7 @@ public class GazeApiCommands {
      * Static initialization block
      */
     static {
-        //Without this configuration, the mapper will fail to map a RecXmlObject because an attribute wasn't annotaed in.
+        //Without this configuration, the mapper will fail to map a RecXmlObject because an attribute wasn't annotated in.
         //Furthermore, it allows for the RecXmlObject mega class to exist to encompass all variations of the xml packet.
         xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }

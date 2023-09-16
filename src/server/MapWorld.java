@@ -4,8 +4,13 @@ import geometry.Cartesian2D;
 import geometry.Shape;
 import data_classes.DomElement;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+/**
+ * Singleton design pattern
+ */
 
 public class MapWorld {
 
@@ -14,74 +19,75 @@ public class MapWorld {
      * Absolute coordinates of the visualization in correspondence with the screen.
      * Putting these in temporarily so that we have some reference in case all of our coordinates need to be offset.
      */
-    private float visMapXAbsolute;
-    private float visMapYAbsolute;
-    private float screenHeight;
-    private float screenWidth;
+    private static float visMapXAbsolute;
+    private static float visMapYAbsolute;
+    private static float screenHeight;
+    private static float screenWidth;
+    private static Shape visMapShape;
+    private static Map<String, DomElement> domElements;
 
-    private Shape visMapShape;
-
-    private Map<String, DomElement> domElements;
-
-    public MapWorld(float screenHeight, float screenWidth, Shape visMapShape, Map<String, DomElement> domElements) {
-        this.screenHeight = screenHeight;
-        this.screenWidth = screenWidth;
-        this.visMapShape = visMapShape;
-        this.domElements = domElements;
+    public static void initMapWorld(float screenHeight, float screenWidth, Shape visMapShape, Map<String, DomElement> domElements) {
+        MapWorld.screenHeight = screenHeight;
+        MapWorld.screenWidth = screenWidth;
+        MapWorld.visMapShape = visMapShape;
+        if (domElements != null)
+            MapWorld.domElements = domElements;
+        else
+            MapWorld.domElements = new HashMap<String, DomElement>();
     }
 
-    public float getScreenHeight() {
+    public static float getScreenHeight() {
         return screenHeight;
     }
 
-    public float getScreenWidth() {
+    public static float getScreenWidth() {
         return screenWidth;
     }
 
-    public Map<String, DomElement> getDomElements() {
+    public static Map<String, DomElement> getDomElements() {
         return domElements;
     }
-    public DomElement getDomElement(String id) {
-        return this.domElements.get(id);
+    public static DomElement getDomElement(String id) {
+        return MapWorld.domElements.get(id);
     }
-    public void putDomElement(String id, DomElement domElement) {
-        this.domElements.put(id, domElement);
-    }
-
-    public void setScreenHeight(float screenHeight) {
-        this.screenHeight = screenHeight;
+    public static void putDomElement(String id, DomElement domElement) {
+        MapWorld.domElements.put(id, domElement);
     }
 
-    public void setScreenWidth(float screenWidth) {
-        this.screenWidth = screenWidth;
+    public static void setScreenHeight(float screenHeight) {
+        MapWorld.screenHeight = screenHeight;
     }
 
-    public void setDomElements(Map<String, DomElement> domElements) {
-        this.domElements = domElements;
+    public static void setScreenWidth(float screenWidth) {
+        MapWorld.screenWidth = screenWidth;
     }
 
-    public boolean isInBounds(float x, float y, float x1, float y1, float width, float height) {
+    public static void setDomElements(Map<String, DomElement> domElements) {
+        MapWorld.domElements = domElements;
+    }
+
+    public static boolean isInBounds(float x, float y, float x1, float y1, float width, float height) {
         return (x >= x1 && x <= (x1 + width)) && (y >= y1 && y <= (y1 + height));
     }
 
-    public boolean isInBounds(float x, float y, Shape shape) {
-        return this.isInBounds(x, y, shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight());
+    public static boolean isInBounds(float x, float y, Shape shape) {
+        return MapWorld.isInBounds(x, y, shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight());
     }
 
-    public Cartesian2D translateCoordinatesToScreenCoordinates(Cartesian2D coordinate) {
+    public static Cartesian2D translateCoordinatesToScreenCoordinates(Cartesian2D coordinate) {
         //Right now, just return as is until we figure out math for calculating.
         return coordinate;
     }
-    public DomElement getIntersection(Cartesian2D fixationCoords, List<DomElement> elements) {
+    public static DomElement getIntersection(Cartesian2D fixationCoords, List<DomElement> elements) {
         // Translate fixation coordinates to SVG viewpoint if needed
-        fixationCoords = this.translateCoordinatesToScreenCoordinates(fixationCoords);
+        fixationCoords = MapWorld.translateCoordinatesToScreenCoordinates(fixationCoords);
 
         // Check if fixation is within the SVG bounds
-        if (isInBounds(fixationCoords.getX(), fixationCoords.getY(), this.visMapShape)) {
+        if (isInBounds(fixationCoords.getX(), fixationCoords.getY(), MapWorld.visMapShape)) {
             // Iterate through elements and check bounds
             for (DomElement element : elements) {
                 // Check if fixation intersects with the current element
-                if (this.isInBounds(fixationCoords.getX(), fixationCoords.getY(),  element.getShape())) {
+                if (MapWorld.isInBounds(fixationCoords.getX(), fixationCoords.getY(),  element.getShape())) {
                     return element;
                 }
             }

@@ -1,12 +1,21 @@
 package server.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import geometry.Shape;
 
-public class DataResponse extends Response {
-    @JsonProperty("elementType")
-    public String elementType;
+public class DataResponse extends Response{
 
-    @JsonProperty("coordsAndDimens")
-    public Shape[] coordsAndDimen;
+    @JsonProperty("name")
+    public String name;
+    public DataResponse(String name) {
+        super("data");
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

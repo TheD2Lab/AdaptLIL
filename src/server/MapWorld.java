@@ -56,14 +56,13 @@ public class MapWorld {
     public static DomElement getIntersection(Cartesian2D fixationCoords, List<DomElement> elements) {
         // Translate fixation coordinates to SVG viewpoint if needed
         fixationCoords = MapWorld.fixationCoordsToScreen(fixationCoords);
-        System.out.println("fixation coords: y " + fixationCoords.getY());
-        System.out.println("fixation coords: x " + fixationCoords.getX());
+
         // Check if fixation is within the SVG bounds
-        if (isInBounds(fixationCoords.getX(), fixationCoords.getY(), MapWorld.visMapShape)) {
+        if (true || isInBounds(fixationCoords.getX(), fixationCoords.getY(), MapWorld.visMapShape)) {
             // Iterate through elements and check bounds
             for (DomElement element : elements) {
                 // Check if fixation intersects with the current element
-                if (MapWorld.isInBounds(fixationCoords.getX(), fixationCoords.getY(),  element.getShape())) {
+                if (true || MapWorld.isInBounds(fixationCoords.getX(), fixationCoords.getY(),  element.getShape())) {
                     return element;
                 }
             }

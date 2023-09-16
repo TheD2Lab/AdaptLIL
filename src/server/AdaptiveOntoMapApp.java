@@ -176,6 +176,8 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
 
             DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
             if (intersectionElement != null) {
+                System.out.println("found intersection, continue");
+                System.out.println(intersectionElement.getId());
                 //Fixation intersected with element, invoke tooltip
                 TooltipInvokeRequest invokeRequest = new TooltipInvokeRequest(
                         new String[]{intersectionElement.getId()}
@@ -183,7 +185,6 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
                 this.invokeTooltip(socket, invokeRequest);
             }
             recObject = gp3Socket.readGazeDataFromBuffer();
-            System.out.println("no interscetion, continue");
 
         }
     }

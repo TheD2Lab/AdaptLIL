@@ -160,6 +160,7 @@ public class GP3Socket {
             System.out.println("run method invoked");
             try {
                 this.gp3Socket.writeToGazeBuffer();
+                this.gp3Socket.writeToGazeBuffer();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

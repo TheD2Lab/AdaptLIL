@@ -1,16 +1,18 @@
 package server;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import data_classes.DomElement;
+import geometry.Cartesian2D;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.websockets.WebSocket;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
-import org.glassfish.grizzly.websockets.WebSocketApplication;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 import server.gazepoint.api.XmlObject;
 import data_classes.Fixation;
 import server.gazepoint.api.recv.RecXmlObject;
-import server.gazepoint.api.set.SetEnableSendCommand;
+import server.request.TooltipInvokeRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class ServerMain {
 
@@ -108,16 +110,30 @@ public class ServerMain {
             for (WebSocket socket: adaptiveOntoMapp.getWebSockets()) {
                 RecXmlObject recObject = gp3Socket.readGazeDataFromBuffer();
 
-                //TODO
-                //Check gazepoint for a stop command
-            while ( recObject  != null) {
-                Fixation fixation = recObject.getFixation();
-                System.out.println("buffer size: " + gp3Socket.getGazeDataQueue().size());
-                System.out.println("Fixation ("+fixation.getX() + "," + fixation.getY() + ")");
-                recObject = gp3Socket.readGazeDataFromBuffer();
-                adaptiveOntoMapp.sendGazeData(socket, recObject);
-            }
+                //Request map world dimensions
+                adaptiveOntoMapp.requestDataResponse(socket, "mapWorld");
 
+                //MapWorld most likely intialized due to responded.
+                if (adaptiveOntoMapp.hasResponded()) {
+                    //Request cell coordinates
+                    adaptiveOntoMapp.requestDataResponse(socket, "cellCoordinates");
+                    if (adaptiveOntoMapp.hasResponded()) {
+                        while (recObject != null) {
+                            Fixation fixation = recObject.getFixation();
+                            Cartesian2D fixationCoords = new Cartesian2D(fixation.x, fixation.y);
+                            DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
+                            if (intersectionElement != null) {
+                                //Fixation intersected with element, invoke tooltip
+                                TooltipInvokeRequest invokeRequest = new TooltipInvokeRequest(
+                                        new String[]{intersectionElement.getId()}
+                                );
+                                adaptiveOntoMapp.invokeTooltip(socket, invokeRequest);
+                            }
+                            recObject = gp3Socket.readGazeDataFromBuffer();
+
+                        }
+                    }
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

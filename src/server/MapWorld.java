@@ -26,6 +26,8 @@ public class MapWorld {
     private static Shape visMapShape;
     private static Map<String, DomElement> domElements;
 
+    private static Cartesian2D visMapOffset;
+
     public static void initMapWorld(float screenHeight, float screenWidth, Shape visMapShape, Map<String, DomElement> domElements) {
         MapWorld.screenHeight = screenHeight;
         MapWorld.screenWidth = screenWidth;
@@ -34,36 +36,6 @@ public class MapWorld {
             MapWorld.domElements = domElements;
         else
             MapWorld.domElements = new HashMap<String, DomElement>();
-    }
-
-    public static float getScreenHeight() {
-        return screenHeight;
-    }
-
-    public static float getScreenWidth() {
-        return screenWidth;
-    }
-
-    public static Map<String, DomElement> getDomElements() {
-        return domElements;
-    }
-    public static DomElement getDomElement(String id) {
-        return MapWorld.domElements.get(id);
-    }
-    public static void putDomElement(String id, DomElement domElement) {
-        MapWorld.domElements.put(id, domElement);
-    }
-
-    public static void setScreenHeight(float screenHeight) {
-        MapWorld.screenHeight = screenHeight;
-    }
-
-    public static void setScreenWidth(float screenWidth) {
-        MapWorld.screenWidth = screenWidth;
-    }
-
-    public static void setDomElements(Map<String, DomElement> domElements) {
-        MapWorld.domElements = domElements;
     }
 
     public static boolean isInBounds(float x, float y, float x1, float y1, float width, float height) {
@@ -78,9 +50,12 @@ public class MapWorld {
         //Right now, just return as is until we figure out math for calculating.
         return coordinate;
     }
+    public static Cartesian2D fixationCoordsToScreen(Cartesian2D fixationCoords) {
+        return new Cartesian2D(fixationCoords.getX() * MapWorld.screenWidth, fixationCoords.getY() * MapWorld.screenHeight);
+    }
     public static DomElement getIntersection(Cartesian2D fixationCoords, List<DomElement> elements) {
         // Translate fixation coordinates to SVG viewpoint if needed
-        fixationCoords = MapWorld.translateCoordinatesToScreenCoordinates(fixationCoords);
+        fixationCoords = MapWorld.fixationCoordsToScreen(fixationCoords);
 
         // Check if fixation is within the SVG bounds
         if (isInBounds(fixationCoords.getX(), fixationCoords.getY(), MapWorld.visMapShape)) {
@@ -97,4 +72,67 @@ public class MapWorld {
         return null;
     }
 
+
+    public static float getVisMapXAbsolute() {
+        return visMapXAbsolute;
+    }
+
+    public static float getVisMapYAbsolute() {
+        return visMapYAbsolute;
+    }
+
+    public static Shape getVisMapShape() {
+        return visMapShape;
+    }
+
+    public static float getScreenHeight() {
+        return screenHeight;
+    }
+
+    public static float getScreenWidth() {
+        return screenWidth;
+    }
+
+    public static Map<String, DomElement> getDomElements() {
+        return domElements;
+    }
+    public static DomElement getDomElement(String id) {
+        return MapWorld.domElements.get(id);
+    }
+
+    public static Cartesian2D getVisMapOffset() {
+        return MapWorld.visMapOffset;
+    }
+
+    public static void putDomElement(String id, DomElement domElement) {
+        MapWorld.domElements.put(id, domElement);
+    }
+
+    public static void setScreenHeight(float screenHeight) {
+        MapWorld.screenHeight = screenHeight;
+    }
+
+    public static void setScreenWidth(float screenWidth) {
+        MapWorld.screenWidth = screenWidth;
+    }
+
+    public static void setDomElements(Map<String, DomElement> domElements) {
+        MapWorld.domElements = domElements;
+    }
+
+    public static void setVisMapXAbsolute(float visMapXAbsolute) {
+        MapWorld.visMapXAbsolute = visMapXAbsolute;
+    }
+
+    public static void setVisMapYAbsolute(float visMapYAbsolute) {
+        MapWorld.visMapYAbsolute = visMapYAbsolute;
+    }
+
+    public static void setVisMapShape(Shape visMapShape) {
+        MapWorld.visMapShape = visMapShape;
+    }
+
+    public static void setVisMapOffset(Cartesian2D visMapOffset) {
+        MapWorld.visMapOffset = visMapOffset;
+    }
 }

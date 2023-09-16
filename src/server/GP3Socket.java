@@ -56,11 +56,11 @@ public class GP3Socket {
      * @throws IOException
      */
     public void connect() throws IOException {
-        //socket = new Socket(hostName, port);
-        output = new PrintStream(new FileOutputStream("output_stream_test.txt"));
-        input = new BufferedReader(new FileReader("rec_command_test_3.txt"));
-        //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        //output = new PrintStream(socket.getOutputStream());
+        socket = new Socket(hostName, port);
+//        output = new PrintStream(new FileOutputStream("output_stream_test.txt"));
+//        input = new BufferedReader(new FileReader("rec_command_test_3.txt"));
+        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        output = new PrintStream(socket.getOutputStream());
 
     }
 

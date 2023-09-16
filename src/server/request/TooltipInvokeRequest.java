@@ -2,12 +2,12 @@ package server.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TooltipInvocationRequest extends InvocationRequest {
+public class TooltipInvokeRequest extends InvokeRequest {
     @JsonProperty("elementIds")
     public String[] elementIds;
 
-    public TooltipInvocationRequest(String[] elementIds, String name) {
-        super(name);
+    public TooltipInvokeRequest(String[] elementIds) {
+        super("tooltip");
         this.elementIds = elementIds;
     }
 }

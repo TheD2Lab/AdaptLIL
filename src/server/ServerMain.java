@@ -9,6 +9,7 @@ import org.glassfish.grizzly.websockets.WebSocketEngine;
 import server.gazepoint.api.XmlObject;
 import data_classes.Fixation;
 import server.gazepoint.api.recv.RecXmlObject;
+import server.gazepoint.api.set.SetEnableSendCommand;
 import server.request.TooltipInvokeRequest;
 
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class ServerMain {
             System.out.println("Connected to GP3");
             System.out.println("Starting Data Stream via thread");
             gp3Socket.startGazeDataStream();
-            //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_FIX, true))));
+            gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_FIX, true))));
             //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_BLINK, true))));
             //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_COUNTER, true))));
             //
@@ -64,32 +65,17 @@ public class ServerMain {
 
             //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_CURSOR, true));
 
-            //By this point, the data should have stopped writing.
-
-            //We will now test the data class mapping for fixations
-//            RecXmlObject recObject = gp3Socket.readGazeDataFromBuffer();
-
-            //TODO
-            //Check gazepoint for a stop command
-//            while ( recObject  != null) {
-//                Fixation fixation = recObject.getFixation();
-//                System.out.println("buffer size: " + gp3Socket.getGazeDataQueue().size());
-//                System.out.println("Fixation ("+fixation.getX() + "," + fixation.getY() + ")");
-//                recObject = gp3Socket.readGazeDataFromBuffer();
-//            }
-
             System.out.println("Started gaze data stream.");
 
-//            System.out.println("Starting websocket...");
             server = initWebSocket(gp3Socket);
-////
-//            // All
-////            System.out.println("Sever stays alive by waiting for input so type anything to exit");
-////
+
+            System.out.println("Sever stays alive by waiting for input so type anything to exit");
+
             System.in.read();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
+            assert server != null;
             server.shutdown();
         }
     }
@@ -101,40 +87,13 @@ public class ServerMain {
         final HttpServer server = HttpServer.createSimpleServer("/var/www", port);
         final WebSocketAddOn addon = new WebSocketAddOn();
         server.getListener("grizzly").registerAddOn(addon);
-        AdaptiveOntoMapApp adaptiveOntoMapp = new AdaptiveOntoMapApp();
+        AdaptiveOntoMapApp adaptiveOntoMapp = new AdaptiveOntoMapApp(gp3Socket);
         WebSocketEngine.getEngine().register("", "/gaze", adaptiveOntoMapp);
 
         try {
             server.start();
             System.out.println("Websocket started on  " + url + ":" + port);
-            for (WebSocket socket: adaptiveOntoMapp.getWebSockets()) {
-                RecXmlObject recObject = gp3Socket.readGazeDataFromBuffer();
 
-                //Request map world dimensions
-                adaptiveOntoMapp.requestDataResponse(socket, "mapWorld");
-
-                //MapWorld most likely intialized due to responded.
-                if (adaptiveOntoMapp.hasResponded()) {
-                    //Request cell coordinates
-                    adaptiveOntoMapp.requestDataResponse(socket, "cellCoordinates");
-                    if (adaptiveOntoMapp.hasResponded()) {
-                        while (recObject != null) {
-                            Fixation fixation = recObject.getFixation();
-                            Cartesian2D fixationCoords = new Cartesian2D(fixation.x, fixation.y);
-                            DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
-                            if (intersectionElement != null) {
-                                //Fixation intersected with element, invoke tooltip
-                                TooltipInvokeRequest invokeRequest = new TooltipInvokeRequest(
-                                        new String[]{intersectionElement.getId()}
-                                );
-                                adaptiveOntoMapp.invokeTooltip(socket, invokeRequest);
-                            }
-                            recObject = gp3Socket.readGazeDataFromBuffer();
-
-                        }
-                    }
-                }
-            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

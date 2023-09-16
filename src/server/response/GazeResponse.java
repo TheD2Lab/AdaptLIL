@@ -15,4 +15,7 @@ public class GazeResponse {
         this.type = type;
         this.xmlString = xmlString;
     }
+    public GazeResponse() {
+
+    }
 }

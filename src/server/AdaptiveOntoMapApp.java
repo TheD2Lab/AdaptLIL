@@ -1,8 +1,10 @@
 package server;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import data_classes.DomElement;
+import data_classes.Fixation;
 import geometry.Cartesian2D;
 import org.glassfish.grizzly.websockets.DataFrame;
 import org.glassfish.grizzly.websockets.WebSocket;
@@ -25,13 +27,59 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
     public List<String> responses = new LinkedList<>();
     private ObjectMapper objectMapper;
     protected boolean hasResponded = false;
+    private GP3Socket gp3Socket;
 
-    public AdaptiveOntoMapApp() {
+    public AdaptiveOntoMapApp(GP3Socket gp3Socket) {
+        this.gp3Socket = gp3Socket;
         objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     }
 
     public void onConnect(WebSocket socket) {
-        socket.send("Hello, client, this is server.");
+
+        System.out.println("requesting Map World....");
+        //Request map world dimensions
+        this.requestDataResponse(socket, "mapWorld");
+
+        //MapWorld most likely intialized due to responded.
+//        while (!this.hasResponded) {} //busy wait
+//        System.out.println("MapWorld Response Received");
+//
+//        System.out.println("Requesting Cell Coordinates");
+//        //Request cell coordinates
+//        this.requestDataResponse(socket, "cellCoordinates");
+//        while (!this.hasResponded) {} //busy wait
+//
+//        System.out.println("Cell Coordinates Recieved");
+//
+//        //Start reading gaze data from buffer and test for intersections.
+//        RecXmlObject recObject = null;
+//        do {
+//            recObject = gp3Socket.readGazeDataFromBuffer();
+//
+//        } while (recObject == null || recObject.getFixation() == null);
+//        XmlMapper xmlMapper = new XmlMapper();
+//        try {
+//            System.out.println(xmlMapper.writeValueAsString(recObject));
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+//        while (recObject != null) {
+//            Fixation fixation = recObject.getFixation();
+//
+//            Cartesian2D fixationCoords = new Cartesian2D(fixation.x, fixation.y);
+//            DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
+//            if (intersectionElement != null) {
+//                //Fixation intersected with element, invoke tooltip
+//                TooltipInvokeRequest invokeRequest = new TooltipInvokeRequest(
+//                        new String[]{intersectionElement.getId()}
+//                );
+//                this.invokeTooltip(socket, invokeRequest);
+//            }
+//            recObject = gp3Socket.readGazeDataFromBuffer();
+//
+//        }
     }
 
     /**
@@ -42,11 +90,16 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
      */
     public void onMessage(WebSocket socket, String msg) {
         try {
-            Response response = objectMapper.readValue(msg, Response.class);
+            System.out.println(msg);
+
+            System.out.println("HELLLO???????????????????");
+            DataResponse response = objectMapper.readValue(msg, DataResponse.class);
             if (response.type.equals("data")) {
-                this.handleDataResponse((DataResponse) response);
+                this.handleDataResponse(socket, response);
+
             }
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             System.err.println("JSON failed to parse via websocket");
             System.out.println(msg);
         } finally {
@@ -88,32 +141,75 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
 
     }
 
-    public void handleDataResponse(DataResponse response) {
+    public void handleDataResponse(WebSocket socket, DataResponse response) {
         if (response.name.equals("cellCoordinates")) {
-            this.handleCellCoordinatesResponse((CellCoordinateDataResponse) response);
+            this.handleCellCoordinatesResponse(socket, (CellCoordinateDataResponse) response);
         } else if (response.name.equals("mapWorld")) {
-            this.handleMapWorldResponse((MapWorldDataResponse) response);
+            this.handleMapWorldResponse(socket, (MapWorldDataResponse) response);
         }
     }
 
-    public void handleCellCoordinatesResponse(CellCoordinateDataResponse response) {
+    public void handleCellCoordinatesResponse(WebSocket socket, CellCoordinateDataResponse response) {
+        System.out.println("handling cellCoordinates");
         Map<String, DomElement> domElementMap = MapWorld.getDomElements();
         for (String domId : response.getShapesById().keySet()) {
             DomElement element = new DomElement(domId, response.getElementType(), response.getShapesById().get(domId));
             MapWorld.putDomElement(domId, element);
         }
         MapWorld.setDomElements(domElementMap);
+
+        RecXmlObject recObject = null;
+        do {
+            recObject = gp3Socket.readGazeDataFromBuffer();
+
+        } while (recObject == null || recObject.getFixation() == null);
+        XmlMapper xmlMapper = new XmlMapper();
+        try {
+            System.out.println(xmlMapper.writeValueAsString(recObject));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        while (recObject != null) {
+            Fixation fixation = recObject.getFixation();
+
+            Cartesian2D fixationCoords = new Cartesian2D(fixation.x, fixation.y);
+
+            DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
+            if (intersectionElement != null) {
+                //Fixation intersected with element, invoke tooltip
+                TooltipInvokeRequest invokeRequest = new TooltipInvokeRequest(
+                        new String[]{intersectionElement.getId()}
+                );
+                this.invokeTooltip(socket, invokeRequest);
+            }
+            recObject = gp3Socket.readGazeDataFromBuffer();
+            System.out.println("no interscetion, continue");
+
+        }
     }
 
-    public void handleMapWorldResponse(MapWorldDataResponse response) {
+    public void handleMapWorldResponse(WebSocket socket, MapWorldDataResponse response) {
         MapWorld.setScreenWidth(response.screenWidth);
         MapWorld.setScreenHeight(response.screenHeight);
         MapWorld.setVisMapShape(response.visMapShape);
 
         MapWorld.setVisMapOffset(new Cartesian2D(response.xOffset, response.yOffset));
+        MapWorld.initMapWorld(response.screenHeight, response.screenWidth, response.visMapShape, new HashMap<>());
         //This might not be needed but we will include just in case.
         //MapWorld.setVisMapXAbsolute(response.visMapShape.x + response.xOffset);
         //MapWorld.setVisMapYAbsolute(response.visMapShape.y + response.yOffset);
+
+        System.out.println("MapWorld Response Received");
+//
+//        System.out.println("Requesting Cell Coordinates");
+//        //Request cell coordinates
+        this.requestDataResponse(socket, "cellCoordinates");
+//        while (!this.hasResponded) {} //busy wait
+//
+//        System.out.println("Cell Coordinates Recieved");
+//
+//        //Start reading gaze data from buffer and test for intersections.
+//
     }
 
     public Set<WebSocket> getWebSockets() {

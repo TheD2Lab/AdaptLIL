@@ -19,6 +19,9 @@ public class MapWorldDataResponse extends DataResponse{
       public float screenWidth;
     public MapWorldDataResponse(String name) {
         super("mapWorld");
+    }
+
+    public MapWorldDataResponse() {
 
     }
 }

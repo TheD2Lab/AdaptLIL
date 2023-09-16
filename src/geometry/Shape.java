@@ -19,6 +19,9 @@ public class Shape {
         this.width = width;
         this.height = height;
     }
+    public Shape() {
+
+    }
 
     public float getX() {
         return x;

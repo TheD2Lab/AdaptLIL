@@ -17,6 +17,9 @@ public class CellCoordinateDataResponse extends DataResponse {
         this.elementType = elementType;
         this.shapes = shapes;
     }
+    public CellCoordinateDataResponse() {
+
+    }
 
     public String getElementType() {
         return elementType;

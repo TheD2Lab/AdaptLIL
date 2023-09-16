@@ -60,6 +60,13 @@
             <artifactId>grizzly-websockets</artifactId>
             <version>4.0.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.7.0</version>
+        </dependency>
+
         <!-- deeplearning4j-core: contains main functionality and neural networks -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>

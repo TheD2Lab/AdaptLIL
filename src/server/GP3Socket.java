@@ -1,7 +1,6 @@
 package server;
 
 import javax.websocket.server.ServerEndpoint;
-import javax.xml.crypto.Data;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -9,14 +8,12 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.ack.AckXmlObject;
 import server.gazepoint.api.get.GetCommand;
-import server.gazepoint.api.get.GetEnableSendCommand;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetCommand;
 import server.gazepoint.api.set.SetEnableSendCommand;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -168,4 +165,6 @@ public class GP3Socket {
             }
         }
     }
+
+
 }

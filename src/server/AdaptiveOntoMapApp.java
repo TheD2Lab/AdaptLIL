@@ -16,6 +16,7 @@ import server.request.TooltipInvokeRequest;
 import server.response.*;
 
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -90,9 +91,6 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
      */
     public void onMessage(WebSocket socket, String msg) {
         try {
-            System.out.println(msg);
-
-            System.out.println("HELLLO???????????????????");
             DataResponse response = objectMapper.readValue(msg, DataResponse.class);
             if (response.type.equals("data")) {
                 this.handleDataResponse(socket, response);
@@ -101,7 +99,7 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
         } catch (Exception e) {
             System.out.println(e.getMessage());
             System.err.println("JSON failed to parse via websocket");
-            System.out.println(msg);
+            System.out.println("msg: " + msg);
         } finally {
             this.hasResponded = true;
         }
@@ -170,13 +168,18 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
             throw new RuntimeException(e);
         }
         while (recObject != null) {
+            try {
+                MapWorld.debugFile.write("REC CNT: " + recObject.getCounter() + " buf size: " + gp3Socket.getGazeDataQueue().size() + "\r\n");
+            } catch (Exception e) {
+                System.out.println("erro occured, rec counter/recobject is null");
+                throw new RuntimeException(e);
+            }
             Fixation fixation = recObject.getFixation();
 
             Cartesian2D fixationCoords = new Cartesian2D(fixation.x, fixation.y);
 
             DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
             if (intersectionElement != null) {
-                System.out.println("found intersection, continue");
                 System.out.println(intersectionElement.getId());
                 //Fixation intersected with element, invoke tooltip
                 TooltipInvokeRequest invokeRequest = new TooltipInvokeRequest(

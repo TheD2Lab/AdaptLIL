@@ -4,6 +4,9 @@ import geometry.Cartesian2D;
 import geometry.Shape;
 import data_classes.DomElement;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +31,9 @@ public class MapWorld {
 
     private static Cartesian2D visMapOffset;
 
+    public static FileWriter debugFile;
+    private static boolean debug = true;
+
     public static void initMapWorld(float screenHeight, float screenWidth, Shape visMapShape, Map<String, DomElement> domElements) {
         MapWorld.screenHeight = screenHeight;
         MapWorld.screenWidth = screenWidth;
@@ -36,9 +42,26 @@ public class MapWorld {
             MapWorld.domElements = domElements;
         else
             MapWorld.domElements = new HashMap<String, DomElement>();
+
+        if (debug) {
+            try {
+                debugFile = new FileWriter("debug.txt", false);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 
     public static boolean isInBounds(float x, float y, float x1, float y1, float width, float height) {
+        if (debug) {
+            try {
+                debugFile.write("(" + x + " >= " + x1 + " && " + x + " <= " + (x1 + width) + ") && " +
+                        "(" + y + " <= " + " (" + y1 + " + " + height + " ))\n");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return (x >= x1 && x <= (x1 + width)) && (y >= y1 && y <= (y1 + height));
     }
 
@@ -58,11 +81,11 @@ public class MapWorld {
         fixationCoords = MapWorld.fixationCoordsToScreen(fixationCoords);
 
         // Check if fixation is within the SVG bounds
-        if (true || isInBounds(fixationCoords.getX(), fixationCoords.getY(), MapWorld.visMapShape)) {
+        if (isInBounds(fixationCoords.getX(), fixationCoords.getY(), MapWorld.visMapShape)) {
             // Iterate through elements and check bounds
             for (DomElement element : elements) {
                 // Check if fixation intersects with the current element
-                if (true || MapWorld.isInBounds(fixationCoords.getX(), fixationCoords.getY(),  element.getShape())) {
+                if (MapWorld.isInBounds(fixationCoords.getX(), fixationCoords.getY(),  element.getShape())) {
                     return element;
                 }
             }

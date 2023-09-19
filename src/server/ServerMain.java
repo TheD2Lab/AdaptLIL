@@ -75,8 +75,8 @@ public class ServerMain {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            assert server != null;
-            server.shutdown();
+            //assert server != null;
+            //server.shutdown();
         }
     }
 

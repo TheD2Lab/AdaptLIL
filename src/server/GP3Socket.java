@@ -1,6 +1,7 @@
 package server;
 
 import javax.websocket.server.ServerEndpoint;
+import javax.ws.rs.core.Link;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -14,7 +15,10 @@ import server.gazepoint.api.set.SetEnableSendCommand;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
@@ -34,7 +38,10 @@ public class GP3Socket {
     private PrintStream output;
 
     private final XmlMapper xmlMapper;
-    private volatile boolean isWritingToGazeBuffer = false;
+    private boolean isWritingToGazeBuffer = false;
+    private boolean isReading = false;
+    private ReentrantLock recQueueLock = new ReentrantLock();
+    private ReentrantLock ackQueueLock = new ReentrantLock();
 
 
     /**
@@ -42,8 +49,9 @@ public class GP3Socket {
      * the data will be out of order and you'll only be reading the most recent data.
      */
     private final int windowSize = 60;
-    private final LinkedBlockingQueue<RecXmlObject> gazeDataQueue = new LinkedBlockingQueue<>();
-    private final LinkedBlockingQueue<AckXmlObject> ackDataQueue = new LinkedBlockingQueue<>();
+    private final LinkedList<RecXmlObject> gazeDataQueue = new LinkedList<>();
+    private final LinkedList<AckXmlObject> ackDataQueue = new LinkedList<>();
+    private FileInputStream testFileReader;
 
     public GP3Socket() {
         xmlMapper = new XmlMapper();
@@ -58,7 +66,8 @@ public class GP3Socket {
     public void connect() throws IOException {
         //socket = new Socket(hostName, port);
         output = new PrintStream(new FileOutputStream("output_stream_test.txt"));
-        input = new BufferedReader(new FileReader("rec_command_test_3.txt"));
+        testFileReader =  new FileInputStream("rec_command_test_3.txt");
+        input = new BufferedReader(new InputStreamReader(testFileReader));
         //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         //output = new PrintStream(socket.getOutputStream());
 
@@ -91,37 +100,80 @@ public class GP3Socket {
 
     }
 
-    private void writeToGazeBuffer() throws IOException {
-        isWritingToGazeBuffer = true;
+    private void writeToGazeBuffer() throws IOException, InterruptedException {
 
-        while(isWritingToGazeBuffer) {
-            String msg = input.readLine();
+        String msg = input.readLine();
+//        input.mark(8193);
+        while (msg != null) {
+
             //Only listen for REC
             //Offer data to queue, block if queue is being used.
 
             //Test to see if the command can map and assign it to the proper buffer.
-            if (msg != null) {
-                XmlObject command = GazeApiCommands.mapToXmlObject(msg);
-                if (GazeApiCommands.mapToXmlObject(msg) != null) {
-                    if (command instanceof AckXmlObject)
-                        ackDataQueue.offer((AckXmlObject) command);
-                    else if (command instanceof RecXmlObject)
-                        gazeDataQueue.offer((RecXmlObject) command);
-
+            XmlObject command = GazeApiCommands.mapToXmlObject(msg);
+            if (GazeApiCommands.mapToXmlObject(msg) != null) {
+                if (command instanceof AckXmlObject) {
+                    synchronized (ackDataQueue) {
+                        System.out.println("acquiring ackQLock writeToGazeBuffer");
+                        this.ackQueueLock.lock();
+                        ackDataQueue.add((AckXmlObject) command);
+                        this.ackQueueLock.unlock();
+                        System.out.println("releasing ackQLock writeToGazeBuffer");
+                    }
                 }
-                else
-                    System.out.println("failed to write to datapacket to buffer");
+                else if (command instanceof RecXmlObject) {
+                    synchronized (gazeDataQueue) {
+//                        System.out.println("acquiring recQLock writeToGazeBuffer");
+                        this.recQueueLock.lock();
+                        gazeDataQueue.add((RecXmlObject) command);
+                        this.recQueueLock.unlock();
+
+                        this.gazeDataQueue.notify();
+//                        System.out.println("releasing recQLock writeToGazeBuffer");
+                    }
+                }
+
+            } else
+                System.out.println("failed to write to datapacket to buffer");
+
+            msg = input.readLine();
+
+            //FILE HANDLING ONLY
+            if (msg == null) {
+                //reset file position
+                testFileReader.getChannel().position(0);
+                System.out.println("reseting, input line should point to next now.");
+                input = new BufferedReader(new InputStreamReader(testFileReader));
+                msg = input.readLine();
+//                input.mark(8193);
+
             }
+
+//            System.out.println(msg);
         }
-        System.out.println("ended writing to gaze buffer.");
     }
 
     /**
      * Grabs the head of the gaze data xml object queue (Reference gazepoint API)
      * @return Returns the XML Data Object that details whatever GazeData has been sent from the tracker
      */
-    public RecXmlObject readGazeDataFromBuffer() {
-        return gazeDataQueue.poll();
+    public RecXmlObject readGazeDataFromBuffer() throws InterruptedException {
+        RecXmlObject recXmlObject = null;
+        synchronized (this.gazeDataQueue) {
+            System.out.println("Acquiring lock readGzeDataFromBuffer");
+            this.recQueueLock.lock();
+
+            //queue is empty, release locka dn wait
+            if (gazeDataQueue.isEmpty()) {
+                this.recQueueLock.unlock();
+                this.gazeDataQueue.wait();
+                this.recQueueLock.lock();
+            }
+            recXmlObject = gazeDataQueue.removeFirst();
+            this.recQueueLock.unlock();
+            System.out.println("releasing lock... readGazeDataFromBuffer");
+        }
+        return recXmlObject;
     }
 
     /**
@@ -136,7 +188,7 @@ public class GP3Socket {
         return xmlMapper.readValue(input.readLine(), AckXmlObject.class);
     }
 
-    public LinkedBlockingQueue<RecXmlObject> getGazeDataQueue() {
+    public LinkedList<RecXmlObject> getGazeDataQueue() {
         return gazeDataQueue;
     }
 
@@ -159,8 +211,10 @@ public class GP3Socket {
         public void run() {
             System.out.println("run method invoked");
             try {
+//                MapWorld.debugFile.write("writing to gaze buffer");
+
                 this.gp3Socket.writeToGazeBuffer();
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }

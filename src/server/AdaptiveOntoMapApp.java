@@ -1,6 +1,7 @@
 package server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import data_classes.DomElement;
@@ -96,10 +97,18 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
                 this.handleDataResponse(socket, response);
 
             }
-        } catch (Exception e) {
+        } catch (JsonMappingException e) {
+            System.out.println("JSON MAPPING EXCEPTION");
             System.out.println(e.getMessage());
-            System.err.println("JSON failed to parse via websocket");
-            System.out.println("msg: " + msg);
+//            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            System.out.println("JSON PROCESSING EXCEPTION");
+            System.out.println(e.getMessage());
+//            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            System.out.println("INTERUPTEDEXCEPTION");
+            System.out.println(e.getMessage());
+//            throw new RuntimeException(e);
         } finally {
             this.hasResponded = true;
         }
@@ -139,7 +148,7 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
 
     }
 
-    public void handleDataResponse(WebSocket socket, DataResponse response) {
+    public void handleDataResponse(WebSocket socket, DataResponse response) throws InterruptedException {
         if (response.name.equals("cellCoordinates")) {
             this.handleCellCoordinatesResponse(socket, (CellCoordinateDataResponse) response);
         } else if (response.name.equals("mapWorld")) {
@@ -147,8 +156,9 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
         }
     }
 
-    public void handleCellCoordinatesResponse(WebSocket socket, CellCoordinateDataResponse response) {
+    public void handleCellCoordinatesResponse(WebSocket socket, CellCoordinateDataResponse response) throws InterruptedException {
         System.out.println("handling cellCoordinates");
+        XmlMapper xmlMapper = new XmlMapper();
         Map<String, DomElement> domElementMap = MapWorld.getDomElements();
         for (String domId : response.getShapesById().keySet()) {
             DomElement element = new DomElement(domId, response.getElementType(), response.getShapesById().get(domId));
@@ -161,21 +171,27 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
             recObject = gp3Socket.readGazeDataFromBuffer();
 
         } while (recObject == null || recObject.getFixation() == null);
-        XmlMapper xmlMapper = new XmlMapper();
-        try {
-            System.out.println(xmlMapper.writeValueAsString(recObject));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+
+//        try {
+//            System.out.println(xmlMapper.writeValueAsString(recObject));
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+        int count = 0;
         while (recObject != null) {
+            ++count;
+          while (recObject.getFixation() == null) {
+              //keep reading and ignore the other fixations (only used for testing purposes)
+              recObject = gp3Socket.readGazeDataFromBuffer();
+
+          }
             try {
-                MapWorld.debugFile.write("REC CNT: " + recObject.getCounter() + " buf size: " + gp3Socket.getGazeDataQueue().size() + "\r\n");
+                System.out.println("interal cnt: " + count + "REC CNT: " + recObject.getCounter() + " buf size: " + gp3Socket.getGazeDataQueue().size() + "\r\n");
             } catch (Exception e) {
                 System.out.println("erro occured, rec counter/recobject is null");
                 throw new RuntimeException(e);
             }
             Fixation fixation = recObject.getFixation();
-
             Cartesian2D fixationCoords = new Cartesian2D(fixation.x, fixation.y);
 
             DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
@@ -188,8 +204,8 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
                 this.invokeTooltip(socket, invokeRequest);
             }
             recObject = gp3Socket.readGazeDataFromBuffer();
-
         }
+
     }
 
     public void handleMapWorldResponse(WebSocket socket, MapWorldDataResponse response) {

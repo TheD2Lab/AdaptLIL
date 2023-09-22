@@ -11,4 +11,6 @@ target/*
 desktop.ini
 .DS_Store
 */DS_Store
-
+.idea/*
+.idea/misc.xml
+libs/opencsv-5.7.0.jar

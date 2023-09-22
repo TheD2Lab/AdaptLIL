@@ -96,10 +96,9 @@ public class RecXmlObject extends XmlObject {
 
     public Fixation getFixation() {
         if (fixation == null && this.getFPOGV() != null)
-            fixation = new Fixation(this.getFPOGX(), this.getFPOGY(), this.getFPOGS(), this.getFPOGD(), this.getFPOGV(), this.getFPOGID());
-        else
-            fixation = null;
-        return fixation;
+            return new Fixation(this.getFPOGX(), this.getFPOGY(), this.getFPOGS(), this.getFPOGD(), this.getFPOGV(), this.getFPOGID());
+
+        return null;
     }
 
     public Cursor getCursor() {

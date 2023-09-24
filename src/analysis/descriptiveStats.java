@@ -27,11 +27,12 @@ package analysis;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 
 public class descriptiveStats {
 
-	public static double getSumOfIntegers(ArrayList<Integer> allIntegers){
+	public static double getSumOfIntegers(List<Integer> allIntegers){
 
 		double total = 0.0;
 		for (Integer i:allIntegers){
@@ -40,7 +41,7 @@ public class descriptiveStats {
 		return total;
 	}
 
-	public static double getSumOfDoubles(ArrayList<Double> allDoubles){
+	public static double getSumOfDoubles(List<Double> allDoubles){
 		double total = 0.0;
 		for (Double value : allDoubles) {
 			total += value;
@@ -60,11 +61,11 @@ public class descriptiveStats {
 	}
 
 
-	public static double getMeanOfIntegers(ArrayList<Integer> allIntegers){
+	public static double getMeanOfIntegers(List<Integer> allIntegers){
 		return getSumOfIntegers(allIntegers)/allIntegers.size();
 	}
 
-	public static double getMeanOfDoubles(ArrayList<Double> allDoubles){
+	public static double getMeanOfDoubles(List<Double> allDoubles){
 		return getSumOfDoubles(allDoubles)/allDoubles.size();
 	}
 
@@ -73,7 +74,7 @@ public class descriptiveStats {
 		return average;
 	}
 
-	public static double getMedianOfIntegers(ArrayList<Integer> allIntegers){
+	public static double getMedianOfIntegers(List<Integer> allIntegers){
 		Collections.sort(allIntegers);
 		int middle = allIntegers.size()/2;
 		if(allIntegers.size()%2 == 1){
@@ -83,7 +84,7 @@ public class descriptiveStats {
 		}
 	}
 
-	public static double getMedianOfDoubles(ArrayList<Double> allDoubles){
+	public static double getMedianOfDoubles(List<Double> allDoubles){
 		Collections.sort(allDoubles);
 		int middle = allDoubles.size()/2;
 		if(allDoubles.size()%2 == 1){
@@ -103,7 +104,7 @@ public class descriptiveStats {
 
 	}
 
-	public static double getStDevOfIntegers(ArrayList<Integer> allIntegers){
+	public static double getStDevOfIntegers(List<Integer> allIntegers){
 		double sum = 0;
         double mean = getMeanOfIntegers(allIntegers);
 
@@ -114,7 +115,7 @@ public class descriptiveStats {
         return Math.sqrt( sum / (allIntegers.size()-1) );
 	}
 
-	public static double getStDevOfDoubles(ArrayList<Double> allDoubles){
+	public static double getStDevOfDoubles(List<Double> allDoubles){
 		double sum = 0;
 		double mean = getMeanOfDoubles(allDoubles);
 		for(double i:allDoubles){
@@ -134,11 +135,11 @@ public class descriptiveStats {
         return Math.sqrt( sum / (allDoubles.length-1) );
 	}
 
-	public static double getMinOfIntegers(ArrayList<Integer> allIntegers){
+	public static double getMinOfIntegers(List<Integer> allIntegers){
 		return Collections.min(allIntegers);
 	}
 
-	public static double getMinOfDoubles(ArrayList<Double> allDoubles){
+	public static double getMinOfDoubles(List<Double> allDoubles){
 		return Collections.min(allDoubles);
 	}
 
@@ -146,11 +147,11 @@ public class descriptiveStats {
 		return Collections.min(Arrays.asList(allDoubles));
 	}
 
-	public static double getMaxOfIntegers(ArrayList<Integer> allIntegers){
+	public static double getMaxOfIntegers(List<Integer> allIntegers){
 		return Collections.max(allIntegers);
 	}
 
-	public static double getMaxOfDoubles(ArrayList<Double> allDoubles){
+	public static double getMaxOfDoubles(List<Double> allDoubles){
 		return Collections.max(allDoubles);
 	}
 

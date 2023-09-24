@@ -24,8 +24,6 @@ package analysis;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.awt.Point;
-
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,11 +40,42 @@ import java.util.logging.Level;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
+import data_classes.Fixation;
 
 
 public class fixation {
+/**
+ *
+ //get each fixation's duration
+ String fixationDurationSeconds = nextLine[fixationDurationIndex];
+ double eachDuration = Double.valueOf(fixationDurationSeconds);
+ double fixationID = Double.valueOf(nextLine[fixationIDIndex]);
 
-	public static void processFixation(String inputFile, String outputFile, int SCREEN_WIDTH, int SCREEN_HEIGHT) throws IOException, CsvValidationException{
+ //get each fixation's (x,y) coordinates
+ String eachFixationX = nextLine[fixationXIndex];
+ String eachFixationY = nextLine[fixationYIndex];
+ double x = Double.valueOf(eachFixationX) * SCREEN_WIDTH;
+ double y = Double.valueOf(eachFixationY) * SCREEN_HEIGHT;
+
+ Point2D.Double eachPoint = new Point2D.Double(x,y);
+
+ Double[] eachCoordinate = new Double[3];
+ eachCoordinate[0] = x;
+ eachCoordinate[1] = y;
+ eachCoordinate[2] = fixationID;
+ */
+    public static Fixation getFixationFromCSVLine(int durationColIndex, int xColIndex, int yColIndex, int idColIndex, int timestampColIndex, String[] fixationLine) {
+        float duration = Float.parseFloat(fixationLine[durationColIndex]);
+        float x = Float.parseFloat(fixationLine[xColIndex]);
+        float y = Float.parseFloat(fixationLine[yColIndex]);
+        int id = Integer.parseInt(fixationLine[idColIndex]);
+        float timestamp = Float.parseFloat(fixationLine[timestampColIndex]);
+        return new Fixation(x, y, timestamp, duration, true, id);
+    }
+
+
+
+	public static void processFixationCsvFile(String inputFile, String outputFile, int SCREEN_WIDTH, int SCREEN_HEIGHT) throws IOException, CsvValidationException{
 
         String line = null;
         ArrayList<Double> allFixationDurations = new ArrayList<>();
@@ -76,36 +105,12 @@ public class fixation {
 
             while((nextLine = csvReader.readNext()) != null) {
 
-                //get each fixation's duration
-                String fixationDurationSeconds = nextLine[fixationDurationIndex];
-                double eachDuration = Double.valueOf(fixationDurationSeconds);
-                double fixationID = Double.valueOf(nextLine[fixationIDIndex]);
-
-                //get each fixation's (x,y) coordinates
-                String eachFixationX = nextLine[fixationXIndex];
-                String eachFixationY = nextLine[fixationYIndex];
-                double x = Double.valueOf(eachFixationX) * SCREEN_WIDTH;
-                double y = Double.valueOf(eachFixationY) * SCREEN_HEIGHT;
-
-                Point2D.Double eachPoint = new Point2D.Double(x,y);
-
-                Double[] eachCoordinate = new Double[3];
-                eachCoordinate[0] = x;
-                eachCoordinate[1] = y;
-                eachCoordinate[2] = fixationID;
-
-                //get timestamp of each fixation
-                double timestamp = Double.valueOf(nextLine[timestampIndex]);
-                Double[] eachSaccadeDetail = new Double[3];
-                eachSaccadeDetail[0] = timestamp;
-                eachSaccadeDetail[1] = eachDuration;
-                eachSaccadeDetail[2] = fixationID;
-
-
-                allFixationDurations.add(eachDuration);
-                allCoordinates.add(eachCoordinate);
+                Fixation fixationObj = fixation.getFixationFromCSVLine(fixationDurationIndex, fixationXIndex, fixationYIndex, fixationIDIndex, timestampIndex,nextLine);
+                Point2D.Double eachPoint = new Point2D.Double(fixationObj.getX(),fixationObj.getY());
+                allFixationDurations.add(Double.valueOf(fixationObj.getDuration()));
+                allCoordinates.add(new Double[]{fixationObj.getX(), fixationObj.getY(), (double) fixationObj.getId()});
                 allPoints.add(eachPoint);
-                saccadeDetails.add(eachSaccadeDetail);
+                saccadeDetails.add(new Double[]{fixationObj.getStartTime(), fixationObj.getDuration(), (double) fixationObj.getId()});
             }
 
             ArrayList<String>headers = new ArrayList<>();
@@ -234,7 +239,7 @@ public class fixation {
             //Sort points by polar angle with p to get simple polygon.
             //Consider points in order, and discard those that would create a clockwise turn.
             List<Point2D.Double> boundingPoints = convexHull.getConvexHull(allPoints);
-            Point2D[] points = listToArray(boundingPoints);
+            Point2D[] points = (Point2D[]) boundingPoints.toArray();
 
             headers.add("convex hull area");
             data.add(String.valueOf(convexHull.getPolygonArea(points)));
@@ -276,14 +281,6 @@ public class fixation {
 		}
 
 		return values;
-	}
-
-	public static Point2D.Double[] listToArray(List<Point2D.Double> allPoints){
-		Point2D.Double[] points = new Point2D.Double[allPoints.size()];
-        for(int i=0; i<points.length; i++){
-        	points[i] = allPoints.get(i);
-        }
-        return points;
 	}
 
 	public static String getFixationCount(String inputFile) throws IOException 
@@ -359,13 +356,13 @@ public class fixation {
 		return (totalBlinks/minutes) + "";
 	}
 
-	public static double getScanpathDuration(ArrayList<Double> allFixationDurations, ArrayList<Double> allSaccadeDurations) {
+	public static double getScanpathDuration(List<Double> allFixationDurations, List<Double> allSaccadeDurations) {
 		double fixationDuration = descriptiveStats.getSumOfDoubles(allFixationDurations);
 		double saccadeDuration = descriptiveStats.getSumOfDoubles(allSaccadeDurations);
 		return fixationDuration + saccadeDuration;
 	}
 
-	public static double getFixationToSaccadeRatio(ArrayList<Double> allFixationDurations, ArrayList<Double> allSaccadeDurations){
+	public static double getFixationToSaccadeRatio(List<Double> allFixationDurations, List<Double> allSaccadeDurations){
 		double fixationDuration = descriptiveStats.getSumOfDoubles(allFixationDurations);
 		double saccadeDuration = descriptiveStats.getSumOfDoubles(allSaccadeDurations);
 		return fixationDuration/saccadeDuration;

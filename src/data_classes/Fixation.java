@@ -43,19 +43,19 @@ public class Fixation {
         this.id = -1;
     }
 
-    public Float getX() {
+    public double getX() {
         return x;
     }
 
-    public Float getY() {
+    public double getY() {
         return y;
     }
 
-    public Float getStartTime() {
+    public double getStartTime() {
         return startTime;
     }
 
-    public Float getDuration() {
+    public double getDuration() {
         return duration;
     }
 

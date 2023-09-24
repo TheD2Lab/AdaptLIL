@@ -53,15 +53,8 @@ public class MapWorld {
 
     }
 
-    public static boolean isInBounds(float x, float y, float x1, float y1, float width, float height) {
-        if (debug) {
-//            try {
-//                debugFile.write("(" + x + " >= " + x1 + " && " + x + " <= " + (x1 + width) + ") && " +
-//                        "(" + y + " <= " + " (" + y1 + " + " + height + " ))\n");
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-        }
+    public static boolean isInBounds(double x, double y, double x1, double y1, float width, float height) {
+
         return (x >= x1 && x <= (x1 + width)) && (y >= y1 && y <= (y1 + height));
     }
 

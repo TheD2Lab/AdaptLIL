@@ -192,7 +192,7 @@ public class AOI {
             	
             	// Calculate the convex hull and its area 
             	List<Point2D.Double> boundingPoints = convexHull.getConvexHull(allPoints);
-            	Point2D[] points = fixation.listToArray(boundingPoints);
+            	Point2D[] points =  boundingPoints.toArray(new Point2D[boundingPoints.size()]);
             	data.add(String.valueOf(convexHull.getPolygonArea(points)));
             	
             	data.add(String.valueOf(fixCount.keySet().size()));

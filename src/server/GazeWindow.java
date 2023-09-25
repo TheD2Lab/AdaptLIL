@@ -13,13 +13,15 @@ public class GazeWindow {
     private boolean overlapping;
     private float windowSizeInMilliseconds;
     private int windowSize;
+    private int pollingRateInHz;
 
     private ArrayList<RecXmlObject> gazeData;
 
-    public GazeWindow(boolean overlapping, float windowSizeInMilliseconds) {
+    public GazeWindow(boolean overlapping, float windowSizeInMilliseconds, int pollingRateInHz) {
         this.overlapping = overlapping;
         this.windowSizeInMilliseconds = windowSizeInMilliseconds;
         this.gazeData = new ArrayList<>();
+        this.pollingRateInHz = pollingRateInHz; // default is 150hz
     }
 
     public void setGazeData(ArrayList<RecXmlObject> gazeData) {
@@ -33,7 +35,7 @@ public class GazeWindow {
         this.windowSizeInMilliseconds = windowSizeInMilliseconds;
 
         //do some calculation, set real window size
-        int windowSizeInPackets = (int) windowSizeInMilliseconds;
+        int windowSizeInPackets = (int) windowSizeInMilliseconds * pollingRateInHz;
         this.windowSize = windowSizeInPackets;
     }
 
@@ -41,7 +43,7 @@ public class GazeWindow {
         this.windowSize = windowSize;
 
         //Do some calcuation, set the windowSuize in milliseconds.
-        this.windowSizeInMilliseconds = windowSize;
+        this.windowSizeInMilliseconds = (float) windowSize / pollingRateInHz;
     }
 
     public ArrayList<RecXmlObject> getGazeData() {

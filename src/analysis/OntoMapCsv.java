@@ -1,10 +1,7 @@
 package analysis;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
-import com.opencsv.exceptions.CsvValidationException;
-import data_classes.Fixation;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +11,7 @@ import java.util.regex.Pattern;
 
 public class OntoMapCsv {
 
-    private static Map<String, File> filterForBaseLineFiles(String dir, boolean isGazePointFolder, boolean filterForLinkedList) {
+    private static Map<String, List<File>> filterForBaseLineFiles(String dir, boolean isGazePointFolder, boolean filterForLinkedList) {
         Map<String, List<File>> filteredFiles = new HashMap<>();
         File directoryFile = new File(dir);
         Pattern participantNamePattern = Pattern.compile("P\\d+");
@@ -40,12 +37,14 @@ public class OntoMapCsv {
                         }
                     }
 
-                } else {
+                } else { //Task Data Directory mapping
                     //Going through task data directory.
                     Matcher participiantNameMatcher = participantNamePattern.matcher(fileOrDir.getName());
                     String participantName = participiantNameMatcher.group(0);
-                    //look through files
-                    for (File taskFileOrDir : fileOrDir.listFiles()) {
+                    //look through files of raw data
+                    FilenameFilter filter = (dir1, name) -> name.equals("Raw Data");
+                    File[] rawDataDir = fileOrDir.listFiles(filter);
+                    for (File taskFileOrDir : rawDataDir[0].listFiles()) {
 
                         //check if it has .LIL.
                         if (filterForLinkedList && taskFileOrDir.getName().contains("LIL") || (!filterForLinkedList && taskFileOrDir.getName().contains("Matrix"))) {
@@ -68,16 +67,43 @@ public class OntoMapCsv {
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
-
-        //foreach participant
-            //open participant directory
+        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir, true, true);
+        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir, false, true);
+        for (String participantName : gazePointFilesByParticipant.keySet()) {
+            //foreach participant
             //Create participant object
+            Participant p = new Participant(participantName);
 
-            //Read fixation data
-            //Store fixation data
+            //Store fixation files into the participant object
+            for (File f : gazePointFilesByParticipant.get(participantName)) {
+                if (f.getName().toLowerCase().contains("all_gaze")) //store gaze data
+                {
+                    if (f.getName().toLowerCase().contains("anatomy"))
+                        p.setAnatomyGazeFile(f);
+                    else if (f.getName().toLowerCase().contains("baseline"))
+                        p.setBaselineGazeFile(f);
+                    else if (f.getName().toLowerCase().contains("conf"))
+                        p.setConfGazeFile(f);
+                }
+                else if (f.getName().toLowerCase().contains("_fixations")) //Store fixation data
+                {
+                    if (f.getName().toLowerCase().contains("anatomy"))
+                        p.setAnatomyFixationFile(f);
+                    else if (f.getName().toLowerCase().contains("baseline"))
+                        p.setBaselineFixationFile(f);
+                    else if (f.getName().toLowerCase().contains("conf"))
+                        p.setConfFixationFile(f);
+                }
+            }
 
-            //Open participant directory
-            //Store answers data
+            //Store answers files into participant object
+            for (File f : taskFilesByParticipant.get(participantName)) {
+                if (f.getName().toLowerCase().contains("anatomy"))
+                    p.setAnatomyAnswersFile(f);
+                else if (f.getName().toLowerCase().contains("conf"))
+                    p.setAnatomyAnswersFile(f);
+            }
+        }
 
         //foreach participant
             //Read csv for answers

@@ -90,4 +90,13 @@ public class Participant {
     public void setConfAnswersFile(File confAnswersFile) {
         this.confAnswersFile = confAnswersFile;
     }
+
+    public String toString() {
+        return "id: " + getId() + "\n anatomFile: " +this.anatomyGazeFile.getAbsolutePath()
+                +"\n anatomyFile fix: " + anatomyFixationFile.getAbsolutePath()
+                + "\n anatFileanswer: " + anatomyAnswersFile.getAbsolutePath()
+                + "\n conf gaze: " + confGazeFile.getAbsolutePath()
+                + "\n conf fix: " + confFixationFile.getAbsolutePath()
+                + "\n conf answer: " + confAnswersFile.getAbsolutePath();
+     }
 }

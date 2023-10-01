@@ -29,10 +29,11 @@ public class OntoMapCsv {
 
                         //check if it has .LIL.
                         if (filterForLinkedList && gpFileORDir.getName().contains("LIL") || (!filterForLinkedList && gpFileORDir.getName().contains("Matrix"))) {
+
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
-                            filteredFiles.get(participantName).add(fileOrDir);
+                            filteredFiles.get(participantName).add(gpFileORDir);
 
                         }
                     }
@@ -40,6 +41,7 @@ public class OntoMapCsv {
                 } else { //Task Data Directory mapping
                     //Going through task data directory.
                     Matcher participiantNameMatcher = participantNamePattern.matcher(fileOrDir.getName());
+                    participiantNameMatcher.find();
                     String participantName = participiantNameMatcher.group(0);
                     //look through files of raw data
                     FilenameFilter filter = (dir1, name) -> name.equals("Raw Data");
@@ -47,11 +49,11 @@ public class OntoMapCsv {
                     for (File taskFileOrDir : rawDataDir[0].listFiles()) {
 
                         //check if it has .LIL.
-                        if (filterForLinkedList && taskFileOrDir.getName().contains("LIL") || (!filterForLinkedList && taskFileOrDir.getName().contains("Matrix"))) {
+                        if (filterForLinkedList && taskFileOrDir.getName().contains("list") || (!filterForLinkedList && taskFileOrDir.getName().contains("matrix"))) {
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
-                            filteredFiles.get(participantName).add(fileOrDir);
+                            filteredFiles.get(participantName).add(taskFileOrDir);
 
                         }
                     }
@@ -63,12 +65,13 @@ public class OntoMapCsv {
     }
     public static void main(String[] args) {
 
-        String baseDir = "C:/Users/nickj/Desktop/d2 lab/DataVisStudy/Participant Data/";
+        String baseDir = "D:\\datavisstudy-updated\\DataVisStudy\\Participant Data\\";
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
-        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir, true, true);
-        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir, false, true);
+        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir+"Gazepoint", true, true);
+        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir+"Task Data", false, true);
+
         for (String participantName : gazePointFilesByParticipant.keySet()) {
             //foreach participant
             //Create participant object
@@ -76,6 +79,7 @@ public class OntoMapCsv {
 
             //Store fixation files into the participant object
             for (File f : gazePointFilesByParticipant.get(participantName)) {
+                System.out.println(f.getName());
                 if (f.getName().toLowerCase().contains("all_gaze")) //store gaze data
                 {
                     if (f.getName().toLowerCase().contains("anatomy"))
@@ -98,11 +102,13 @@ public class OntoMapCsv {
 
             //Store answers files into participant object
             for (File f : taskFilesByParticipant.get(participantName)) {
-                if (f.getName().toLowerCase().contains("anatomy"))
+                if (f.getName().toLowerCase().contains("tomy"))
                     p.setAnatomyAnswersFile(f);
                 else if (f.getName().toLowerCase().contains("conf"))
-                    p.setAnatomyAnswersFile(f);
+                    p.setConfAnswersFile(f);
             }
+
+            System.out.println(p);
         }
 
         //foreach participant

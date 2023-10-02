@@ -30,11 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.Level;
 
 import com.opencsv.CSVReader;
@@ -73,6 +69,27 @@ public class fixation {
         return new Fixation(x, y, timestamp, duration, true, id);
     }
 
+    public Map<String, Integer> getFixationDataIndices(String[] header) {
+        HashMap<String, Integer> indices = new HashMap<>();
+        int fixationDurationIndex = Arrays.asList(header).indexOf("FPOGD");
+        int fixationIDIndex = Arrays.asList(header).indexOf("FPOGID");
+        int fixationXIndex = Arrays.asList(header).indexOf("FPOGX");
+        int fixationYIndex = Arrays.asList(header).indexOf("FPOGY");
+        int timestampIndex = -1;
+        for(int i = 0; i < header.length; i++)
+        {
+            if(header[i].contains("TIME") && timestampIndex == -1) {
+                timestampIndex = i;
+            }
+        }
+        indices.put("fixationDurationIndex", fixationDurationIndex);
+        indices.put("fixationIDIndex", fixationIDIndex);
+        indices.put("fixationXIndex", fixationXIndex);
+        indices.put("fixationYIndex", fixationYIndex);
+        indices.put("timestampIndex", timestampIndex);
+
+        return indices;
+    }
 
 
 	public static void processFixationCsvFile(String inputFile, String outputFile, int SCREEN_WIDTH, int SCREEN_HEIGHT) throws IOException, CsvValidationException{

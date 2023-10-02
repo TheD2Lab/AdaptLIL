@@ -1,11 +1,15 @@
 package analysis;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
+import data_classes.Fixation;
+import server.GazeWindow;
+import server.gazepoint.api.recv.RecXmlObject;
+import weka.core.DenseInstance;
+
+import javax.mail.Part;
+import java.io.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,6 +75,8 @@ public class OntoMapCsv {
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
         Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir+"Gazepoint", true, true);
         Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir+"Task Data", false, true);
+        Map<String, Participant> participantsById = new HashMap<>();
+
 
         for (String participantName : gazePointFilesByParticipant.keySet()) {
             //foreach participant
@@ -108,21 +114,97 @@ public class OntoMapCsv {
                     p.setConfAnswersFile(f);
             }
 
-            System.out.println(p);
+            participantsById.put(participantName, p);
+
         }
 
-        //foreach participant
-            //Read csv for answers
-            //Get answers
-            //foreach row
-                //timeCutoff = csv.column(6)
-                //rightOrWrong = csv.column(7)
-                //read fixation data up to timecutoff
-                //Store in fixationData : timeCutoff : rightOrWrong
-            //Store data
+
+        try {
+            testParticipantInstances(participantsById.values().toArray(new Participant[participantsById.size()]));
+        } catch (CsvValidationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
 
         //grab list of classifiers
         //feed data and predict!
+
+    }
+
+    public static void testParticipantInstances(Participant[] participants) throws CsvValidationException, IOException {
+        //Use DenseInstance to create on the fly instances.
+        //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
+        //foreach participant
+        for (Participant p : participants) {
+            GazeWindow participantWindow = new GazeWindow(false, 2000);
+            //Read csv for answers
+            FileReader fileReader = null;
+            List<String> timeCutoffs = new ArrayList<>();
+            List<Boolean> rightOrWrongs = new ArrayList<>();
+            List<DenseInstance> instances = new ArrayList<>();
+            fileReader = new FileReader(p.getAnatomyAnswersFile());
+            CSVReader csvReader = new CSVReader(fileReader);
+            String[] cells = null;
+            //Get answers
+            //foreach row
+            String[] nextLine = csvReader.readNext();
+            int timeStampIndex = 8;
+            int correctIndex = 6;
+            while((cells = csvReader.readNext()) != null) {
+                String timeCutoff = cells[timeStampIndex];
+                Boolean rightOrWrong = Boolean.valueOf(cells[correctIndex]);
+                timeCutoffs.add(timeCutoff);
+                rightOrWrongs.add(rightOrWrong);
+            }
+
+            fileReader.close();
+            csvReader.close();
+
+            //Read fixation file
+            fileReader = new FileReader(p.getAnatomyFixationFile());
+            csvReader = new CSVReader(fileReader);
+            int currentQuestionIndex = 0;
+
+            List<String> headerRow = Arrays.asList(csvReader.readNext());
+
+            while ((cells = csvReader.readNext()) != null) {
+                Float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex)) / 1000;
+                //read fixation data up to timecutoff
+                Fixation fixation = analysis.fixation.getFixationFromCSVLine(
+                        headerRow.indexOf("FPOGD"),
+                        headerRow.indexOf("FPOGX"),
+                        headerRow.indexOf("FPOGY"),
+                        headerRow.indexOf("FPOGID"),
+                        headerRow.indexOf("TIME"),
+                        cells
+                );
+
+                RecXmlObject recXmlObject = new RecXmlObject();
+                recXmlObject.FPOGX = (float) fixation.getX();
+                recXmlObject.FPOGY = (float) fixation.getY();
+                recXmlObject.FPOGID = fixation.getId();
+                recXmlObject.FPOGD = (float) fixation.getDuration();
+                recXmlObject.time = (float) fixation.getStartTime();
+                participantWindow.getGazeData().add(recXmlObject);
+
+                if (fixation.getStartTime() >= timeCutoff) {
+                    //Add to instances
+                    //Parse window as is and store in instance
+                    //User now on other task
+                    currentQuestionIndex++;
+                    participantWindow.getGazeData().clear();
+                } else {
+                    //Add to instance
+                }
+            }
+
+            //Store in fixationData : timeCutoff : rightOrWrong
+            //Store in instances
+
+
+        }
 
     }
 }

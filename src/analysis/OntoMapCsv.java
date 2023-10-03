@@ -5,7 +5,7 @@ import com.opencsv.exceptions.CsvValidationException;
 import data_classes.Fixation;
 import server.GazeWindow;
 import server.gazepoint.api.recv.RecXmlObject;
-import weka.core.DenseInstance;
+import weka.core.*;
 
 import javax.mail.Part;
 import java.io.*;
@@ -120,10 +120,12 @@ public class OntoMapCsv {
 
 
         try {
-            testParticipantInstances(participantsById.values().toArray(new Participant[participantsById.size()]));
+            OntoMapCsv.testParticipantInstances(participantsById.values().toArray(new Participant[participantsById.size()]));
         } catch (CsvValidationException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 
@@ -133,7 +135,7 @@ public class OntoMapCsv {
 
     }
 
-    public static void testParticipantInstances(Participant[] participants) throws CsvValidationException, IOException {
+    public static void testParticipantInstances(Participant[] participants) throws CsvValidationException, IOException, IllegalAccessException {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
@@ -169,7 +171,7 @@ public class OntoMapCsv {
 
             List<String> headerRow = Arrays.asList(csvReader.readNext());
 
-            while ((cells = csvReader.readNext()) != null) {
+            while ((cells = csvReader.readNext()) != null && currentQuestionIndex < timeCutoffs.size() - 2) { //ignore the multiple choice question for now.
                 Float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex)) / 1000;
                 //read fixation data up to timecutoff
                 Fixation fixation = analysis.fixation.getFixationFromCSVLine(
@@ -177,14 +179,14 @@ public class OntoMapCsv {
                         headerRow.indexOf("FPOGX"),
                         headerRow.indexOf("FPOGY"),
                         headerRow.indexOf("FPOGID"),
-                        headerRow.indexOf("TIME"),
+                        headerRow.stream().filter( str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1),
                         cells
                 );
 
                 RecXmlObject recXmlObject = new RecXmlObject();
                 recXmlObject.FPOGX = (float) fixation.getX();
                 recXmlObject.FPOGY = (float) fixation.getY();
-                recXmlObject.FPOGID = fixation.getId();
+                //recXmlObject.FPOGID = fixation.getId();
                 recXmlObject.FPOGD = (float) fixation.getDuration();
                 recXmlObject.time = (float) fixation.getStartTime();
                 participantWindow.getGazeData().add(recXmlObject);
@@ -193,10 +195,37 @@ public class OntoMapCsv {
                     //Add to instances
                     //Parse window as is and store in instance
                     //User now on other task
+                    Instances windowInstances = participantWindow.toDenseInstance();
+                    List<String> nominalValues = new ArrayList<>();
+                    nominalValues.add("1");
+                    nominalValues.add("0");
+                    Attribute correctAttr = new Attribute("correct", nominalValues);
+                    windowInstances.insertAttributeAt(correctAttr, windowInstances.numAttributes());
+                    for (int i = 0; i < windowInstances.numInstances(); ++i) {
+                        windowInstances.get(i).setValue(windowInstances.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
+                        windowInstances.set(i, windowInstances.get(i));
+                    }
+
+                    //We set all instances to have the classification right/wrong
+                    //Any window where the user got it right, is grouped into the good section -> 1
+                    //any window where the user got it wrong, is grouped into the bad section -> 0
+                    //Hopefully we can then compute a probability that they will get it right
+                    //given the current gaze data.
+
+                    //If the above method doesn't work, we can weight the last window higher than the first few.
                     currentQuestionIndex++;
                     participantWindow.getGazeData().clear();
+                    Instance firstInstance = windowInstances.get(0);
+                    Instance lastInstance=  windowInstances.get(windowInstances.numInstances() - 1);
+                    System.out.println("shape:  " + windowInstances.size() + " x "  + windowInstances.get(0).numAttributes()
+                    + " time difference: " + (lastInstance.value(3) - firstInstance.value(3)));
+                    for (int k = 0; k < windowInstances.size(); ++k) {
+                        DenseInstance instance = (DenseInstance) windowInstances.get(k);
+                    }
+
                 } else {
                     //Add to instance
+
                 }
             }
 
@@ -205,6 +234,7 @@ public class OntoMapCsv {
 
 
         }
+
 
     }
 }

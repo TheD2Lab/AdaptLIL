@@ -25,9 +25,11 @@ public class GazeWindow {
 
     public GazeWindow(boolean overlapping, float windowSizeInMilliseconds) {
         this.overlapping = overlapping;
-        this.windowSizeInMilliseconds = windowSizeInMilliseconds;
         this.gazeData = new ArrayList<>();
         this.pollingRateInHz = 150; // default is 150hz
+
+        this.setWindowSizeInMilliseconds(windowSizeInMilliseconds);
+
     }
 
     public void setGazeData(ArrayList<RecXmlObject> gazeData) {
@@ -41,8 +43,8 @@ public class GazeWindow {
         this.windowSizeInMilliseconds = windowSizeInMilliseconds;
 
         //do some calculation, set real window size
-        int windowSizeInPackets = (int) windowSizeInMilliseconds * pollingRateInHz;
-        this.windowSize = windowSizeInPackets;
+        this.windowSize = (int) ((windowSizeInMilliseconds/1000) * pollingRateInHz);
+
     }
 
     public void setWindowSize(int windowSize) {
@@ -79,22 +81,26 @@ public class GazeWindow {
 
         //Specify attributes list
         ArrayList<Attribute> attributeList = new ArrayList<>();
-        for (Field field : gazeData.get(0).getClass().getDeclaredFields()) {
+        for (int i = 0; i < gazeData.size(); ++i) {
+            RecXmlObject recXmlObject = gazeData.get(i);
+            for (Field field : recXmlObject.getClass().getDeclaredFields()) {
+                if (field.canAccess(recXmlObject)) {
+                    try {
+                        if (field.get(recXmlObject) != null && field.getType() != String.class)
+                            attributeList.add(new Attribute(field.getName() + "_" +i));
 
-            if (field.canAccess(gazeData.get(0))) {
-                try {
-                    if (field.get(gazeData.get(0)) != null && field.getType() != String.class)
-                        attributeList.add(new Attribute(field.getName()));
-
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
+
         Instances instances = new Instances("TestInstances",attributeList,0);
 
+        int attrIndex = 0;
+
         for (int i = 0; i < gazeData.size(); ++i) {
-            int attrIndex = 0;
 
             RecXmlObject recXmlObject = gazeData.get(i);
             DenseInstance instance = new DenseInstance(instances.numAttributes());

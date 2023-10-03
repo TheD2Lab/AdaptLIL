@@ -4,8 +4,11 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import data_classes.Fixation;
 import server.GazeWindow;
+import server.MachineLearningExperiments;
 import server.gazepoint.api.recv.RecXmlObject;
+import weka.classifiers.Classifier;
 import weka.core.*;
+import wekaext.WekaExperiment;
 
 import javax.mail.Part;
 import java.io.*;
@@ -78,7 +81,11 @@ public class OntoMapCsv {
         Map<String, Participant> participantsById = new HashMap<>();
 
 
+        int index = 0;
         for (String participantName : gazePointFilesByParticipant.keySet()) {
+            if ( (index++ % 2 == 0) || (index % 3 == 0))
+                continue;
+
             //foreach participant
             //Create participant object
             Participant p = new Participant(participantName);
@@ -125,7 +132,7 @@ public class OntoMapCsv {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
@@ -135,12 +142,14 @@ public class OntoMapCsv {
 
     }
 
-    public static void testParticipantInstances(Participant[] participants) throws CsvValidationException, IOException, IllegalAccessException {
+    public static void testParticipantInstances(Participant[] participants) throws Exception {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
+        float windowSizeInMilliseconds = 500;
+        List<Instances> instancesList = new ArrayList<>();
         for (Participant p : participants) {
-            GazeWindow participantWindow = new GazeWindow(false, 2000);
+            GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
             //Read csv for answers
             FileReader fileReader = null;
             List<String> timeCutoffs = new ArrayList<>();
@@ -165,14 +174,14 @@ public class OntoMapCsv {
             csvReader.close();
 
             //Read fixation file
-            fileReader = new FileReader(p.getAnatomyFixationFile());
+            fileReader = new FileReader(p.getAnatomyGazeFile());
             csvReader = new CSVReader(fileReader);
             int currentQuestionIndex = 0;
 
             List<String> headerRow = Arrays.asList(csvReader.readNext());
-
+            List<GazeWindow> taskWindows = new ArrayList<>();
             while ((cells = csvReader.readNext()) != null && currentQuestionIndex < timeCutoffs.size() - 2) { //ignore the multiple choice question for now.
-                Float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex)) / 1000;
+                Float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
                 //read fixation data up to timecutoff
                 Fixation fixation = analysis.fixation.getFixationFromCSVLine(
                         headerRow.indexOf("FPOGD"),
@@ -189,40 +198,53 @@ public class OntoMapCsv {
                 //recXmlObject.FPOGID = fixation.getId();
                 recXmlObject.FPOGD = (float) fixation.getDuration();
                 recXmlObject.time = (float) fixation.getStartTime();
+
+                //control window size and add to taskwindows once size is too large.
+                if (participantWindow.getGazeData().size() >= participantWindow.getWindowSize()) {
+                    taskWindows.add(participantWindow);
+                    participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
+                    //Add to windows for task
+                }
+
                 participantWindow.getGazeData().add(recXmlObject);
 
-                if (fixation.getStartTime() >= timeCutoff) {
+                if ( (fixation.getStartTime() * 1000) >= timeCutoff) {
                     //Add to instances
                     //Parse window as is and store in instance
                     //User now on other task
-                    Instances windowInstances = participantWindow.toDenseInstance();
-                    List<String> nominalValues = new ArrayList<>();
-                    nominalValues.add("1");
-                    nominalValues.add("0");
-                    Attribute correctAttr = new Attribute("correct", nominalValues);
-                    windowInstances.insertAttributeAt(correctAttr, windowInstances.numAttributes());
-                    for (int i = 0; i < windowInstances.numInstances(); ++i) {
-                        windowInstances.get(i).setValue(windowInstances.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
-                        windowInstances.set(i, windowInstances.get(i));
-                    }
-
-                    //We set all instances to have the classification right/wrong
-                    //Any window where the user got it right, is grouped into the good section -> 1
-                    //any window where the user got it wrong, is grouped into the bad section -> 0
-                    //Hopefully we can then compute a probability that they will get it right
-                    //given the current gaze data.
 
                     //If the above method doesn't work, we can weight the last window higher than the first few.
                     currentQuestionIndex++;
-                    participantWindow.getGazeData().clear();
-                    Instance firstInstance = windowInstances.get(0);
-                    Instance lastInstance=  windowInstances.get(windowInstances.numInstances() - 1);
-                    System.out.println("shape:  " + windowInstances.size() + " x "  + windowInstances.get(0).numAttributes()
-                    + " time difference: " + (lastInstance.value(3) - firstInstance.value(3)));
-                    for (int k = 0; k < windowInstances.size(); ++k) {
-                        DenseInstance instance = (DenseInstance) windowInstances.get(k);
+
+                    //Add all instances for all windows for all tasks
+
+                    for (GazeWindow window : taskWindows) {
+                        //We set all instances to have the classification right/wrong
+                        //Any window where the user got it right, is grouped into the good section -> 1
+                        //any window where the user got it wrong, is grouped into the bad section -> 0
+                        //Hopefully we can then compute a probability that they will get it right
+                        //given the current gaze data.
+                        Instances windowInstances = window.toDenseInstance();
+                        List<String> nominalValues = new ArrayList<>();
+                        nominalValues.add("1");
+                        nominalValues.add("0");
+                        Attribute correctAttr = new Attribute("correct", nominalValues);
+                        windowInstances.insertAttributeAt(correctAttr, windowInstances.numAttributes());
+                        for (int i = 0; i < windowInstances.numInstances(); ++i) {
+                            windowInstances.get(i).setValue(windowInstances.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
+                            windowInstances.set(i, windowInstances.get(i));
+                        }
+
+                        Instance firstInstance = windowInstances.get(0);
+                        Instance lastInstance =  windowInstances.get(windowInstances.numInstances() - 1);
+                        //System.out.println("shape:  " + windowInstances.size() + " x "  + windowInstances.get(0).numAttributes()
+                        //        + " time difference: " + (lastInstance.value(3) - firstInstance.value(3)));
+                        instancesList.add(windowInstances);
                     }
 
+                    //Clear gaze data and task windows
+                    participantWindow.getGazeData().clear();
+                    taskWindows.clear();
                 } else {
                     //Add to instance
 
@@ -236,5 +258,50 @@ public class OntoMapCsv {
         }
 
 
+        Classifier[] classifiers = WekaExperiment.getClassificationClassifiers();
+        HashMap<String, HashMap<String, Double>> totalResultsOfClassifiers = new HashMap<>();
+        for (Classifier c : classifiers) {
+            totalResultsOfClassifiers.put(c.getClass().getName(), new HashMap<>());
+        }
+        int totalNumInstance = 0;
+        Instances allInstances = instancesList.get(0);
+        for (int i = 1; i < instancesList.size(); ++i) {
+            allInstances.addAll(instancesList.get(i));
+        }
+
+        allInstances.setClassIndex(allInstances.numAttributes() - 1);
+
+        Instances trainDataInstance = allInstances.trainCV(10, 0);
+        Instances testDataInstance = trainDataInstance.testCV(10, 0);
+        testDataInstance.setClassIndex(testDataInstance.numAttributes() - 1);
+
+        HashMap<String, HashMap<String, Double>> resultsOfClassifiers = MachineLearningExperiments.evaluateAllClassifiers(classifiers, trainDataInstance, testDataInstance);
+        for (String classifierName : resultsOfClassifiers.keySet()) {
+            for (String resultKey : resultsOfClassifiers.get(classifierName).keySet()) {
+                if (totalResultsOfClassifiers.get(classifierName).containsKey(resultKey)) {
+                    double newAvg = totalResultsOfClassifiers.get(classifierName).get(resultKey) +
+                            resultsOfClassifiers.get(classifierName).get(resultKey);
+
+                    totalResultsOfClassifiers.get(classifierName).put(resultKey, newAvg);
+                } else {
+                    totalResultsOfClassifiers.get(classifierName).put(resultKey, resultsOfClassifiers.get(classifierName).get(resultKey));
+                }
+            }
+        }
+        //
+        //System.out.println("-----------------------------------");
+        //System.out.println("--------------Averages-------------");
+        //System.out.println("-----------------------------------");
+        //
+        //for (String classifierName : totalResultsOfClassifiers.keySet()) {
+        //    System.out.println("--------classifier: " + classifierName + " -------------");
+        //    for (String resultKey : totalResultsOfClassifiers.get(classifierName).keySet()) {
+        //        double avgVal = totalResultsOfClassifiers.get(classifierName).get(resultKey) / testDataFiles.size();
+        //        System.out.println("key: " + resultKey + " Avg Val: " + avgVal);
+        //    }
+        //}
+        //
+        //System.out.printf("%d/%d Process Complete ^^^\n==============================", i + 1, trainDataFiles.size());
+        //
     }
 }

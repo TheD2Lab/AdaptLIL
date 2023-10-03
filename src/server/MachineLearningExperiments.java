@@ -161,7 +161,7 @@ public class MachineLearningExperiments {
 
     }
 
-    private static HashMap<String, HashMap<String, Double>> evaluateAllClassifiers(Classifier[] classifiers, Instances train, Instances test) {
+    public static HashMap<String, HashMap<String, Double>> evaluateAllClassifiers(Classifier[] classifiers, Instances train, Instances test) {
         // classifier evaluations
         ArrayList<String> dnw = new ArrayList<String>();
 
@@ -199,7 +199,7 @@ public class MachineLearningExperiments {
 
     }
 
-    private static HashMap<String, Double> printEvaluationStatistics(Classifier c, Evaluation eval) {
+    public static HashMap<String, Double> printEvaluationStatistics(Classifier c, Evaluation eval) {
         System.out.println("--------------" + c.getClass().getName() + "----------------");
         System.out.println("False Positive Rate of CS 0: " + eval.falsePositiveRate(0));
         System.out.println("False Positive Rate of CS 1: " + eval.falsePositiveRate(1));

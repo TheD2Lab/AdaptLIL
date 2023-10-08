@@ -244,40 +244,42 @@ public class WekaExperiment {
 	}
 
 	public static Classifier[] getRegressionClassifiers() {
-		Classifier[] classifiers = new Classifier[20];
+		ArrayList<Classifier> classifiers = new ArrayList<>();
+
 
 		// set baseline classifier here
-		classifiers[0] = new ZeroR();
+		classifiers.add(new ZeroR());
 
 		// functions
-		classifiers[1] = new GaussianProcesses();
-		classifiers[2] = new LinearRegression();
-		classifiers[3] = new MultilayerPerceptron();
-		classifiers[4] = new SimpleLinearRegression();
-		classifiers[5] = new SMOreg();
+//		classifiers.add(new GaussianProcesses());
+		classifiers.add(new LinearRegression());
+		classifiers.add(new MultilayerPerceptron());
+		classifiers.add(new SimpleLinearRegression());
+		classifiers.add(new SMOreg());
 
 		// meta
-		classifiers[6] = new Bagging();
-		classifiers[7] = new CVParameterSelection();
-		classifiers[8] = new RegressionByDiscretization();
+		classifiers.add( new Bagging());
+		classifiers.add( new CVParameterSelection());
+		classifiers.add( new RegressionByDiscretization());
 
-		classifiers[9] = new MultiScheme();
-		classifiers[10] = new RandomCommittee();
-		classifiers[11] = new RandomizableFilteredClassifier();
-		classifiers[12] = new RandomSubSpace();
-		classifiers[13] = new Stacking();
-		classifiers[14] = new Vote();
-		classifiers[15] = new WeightedInstancesHandlerWrapper();
+		classifiers.add( new MultiScheme());
+		classifiers.add( new RandomCommittee());
+		classifiers.add( new RandomizableFilteredClassifier());
+		classifiers.add( new RandomSubSpace());
+		classifiers.add( new Stacking());
+		classifiers.add( new Vote());
+		classifiers.add( new WeightedInstancesHandlerWrapper());
 
 		// rules
-		classifiers[16] = new DecisionTable();
-		classifiers[17] = new M5Rules();
+		classifiers.add(new DecisionTable());
+		classifiers.add(new M5Rules());
 
 		// trees
-		classifiers[18] = new M5P();
-		classifiers[19] = new REPTree();
+		classifiers.add(new M5P());
+		classifiers.add(new REPTree());
+		Classifier[] classifiersArr = new Classifier[classifiers.size()];
 
-		return classifiers;
+		return classifiers.toArray(classifiersArr);
 	}
 
 	private static void printClassifierOptions(Classifier classifier) {

@@ -23,6 +23,11 @@ public class GazeWindow {
 
     private ArrayList<RecXmlObject> gazeData;
 
+
+    //TODO
+    //If we want to use fixation duration as baseline
+    //we can add a max val here.
+
     public GazeWindow(boolean overlapping, float windowSizeInMilliseconds) {
         this.overlapping = overlapping;
         this.gazeData = new ArrayList<>();

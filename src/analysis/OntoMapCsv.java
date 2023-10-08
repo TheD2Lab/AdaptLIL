@@ -8,6 +8,7 @@ import server.MachineLearningExperiments;
 import server.gazepoint.api.recv.RecXmlObject;
 import weka.classifiers.Classifier;
 import weka.core.*;
+import weka.core.converters.ArffSaver;
 import wekaext.WekaExperiment;
 
 import javax.mail.Part;
@@ -72,7 +73,7 @@ public class OntoMapCsv {
     }
     public static void main(String[] args) {
 
-        String baseDir = "D:\\datavisstudy-updated\\DataVisStudy\\Participant Data\\";
+        String baseDir = "E:\\datavisstudy-updated\\DataVisStudy\\Participant Data\\";
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
@@ -165,8 +166,10 @@ public class OntoMapCsv {
             int correctIndex = 6;
             while((cells = csvReader.readNext()) != null) {
                 String timeCutoff = cells[timeStampIndex];
-                Boolean rightOrWrong = Boolean.valueOf(cells[correctIndex]);
+
+                Boolean rightOrWrong = cells[correctIndex].equals("1") ? true : false;
                 timeCutoffs.add(timeCutoff);
+                System.out.println("right or worng: " + (rightOrWrong ? "true" : "false"));
                 rightOrWrongs.add(rightOrWrong);
             }
 
@@ -237,8 +240,8 @@ public class OntoMapCsv {
 
                         Instance firstInstance = windowInstances.get(0);
                         Instance lastInstance =  windowInstances.get(windowInstances.numInstances() - 1);
-                        //System.out.println("shape:  " + windowInstances.size() + " x "  + windowInstances.get(0).numAttributes()
-                        //        + " time difference: " + (lastInstance.value(3) - firstInstance.value(3)));
+                        System.out.println("shape:  " + windowInstances.size() + " x "  + windowInstances.get(0).numAttributes()
+                                + " time difference: " + (lastInstance.value(3) - firstInstance.value(3)));
                         instancesList.add(windowInstances);
                     }
 
@@ -271,8 +274,10 @@ public class OntoMapCsv {
 
         allInstances.setClassIndex(allInstances.numAttributes() - 1);
 
-        Instances trainDataInstance = allInstances.trainCV(10, 0);
-        Instances testDataInstance = trainDataInstance.testCV(10, 0);
+        OntoMapCsv.saveInstancesToFile(allInstances, "dataDump.arff");
+        /**
+        Instances trainDataInstance = allInstances.trainCV(2, 0);
+        Instances testDataInstance = trainDataInstance.testCV(2, 0);
         testDataInstance.setClassIndex(testDataInstance.numAttributes() - 1);
 
         HashMap<String, HashMap<String, Double>> resultsOfClassifiers = MachineLearningExperiments.evaluateAllClassifiers(classifiers, trainDataInstance, testDataInstance);
@@ -288,6 +293,7 @@ public class OntoMapCsv {
                 }
             }
         }
+         **/
         //
         //System.out.println("-----------------------------------");
         //System.out.println("--------------Averages-------------");
@@ -303,5 +309,13 @@ public class OntoMapCsv {
         //
         //System.out.printf("%d/%d Process Complete ^^^\n==============================", i + 1, trainDataFiles.size());
         //
+    }
+
+    public static void saveInstancesToFile(Instances instances, String fileName) throws IOException {
+        ArffSaver saver = new ArffSaver();
+        saver.setInstances(instances);
+        saver.setFile(new File(fileName));
+        saver.writeBatch();
+
     }
 }

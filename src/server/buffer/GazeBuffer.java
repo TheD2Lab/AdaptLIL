@@ -1,4 +1,4 @@
-package server;
+package server.buffer;
 
 import server.gazepoint.api.recv.RecXmlObject;
 
@@ -8,8 +8,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class GazeBuffer {
     private final LinkedList<RecXmlObject> gazeDataQueue = new LinkedList<>();
-
-
 
     private ReentrantLock reentrantLock;
 

@@ -1,4 +1,4 @@
-package server;
+package server.buffer;
 
 import server.gazepoint.api.ack.AckXmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
@@ -6,6 +6,9 @@ import server.gazepoint.api.recv.RecXmlObject;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Similar to the GazeBuffer it holds
+ */
 public class AckBuffer {
     final LinkedList<AckXmlObject> ackDataQueue = new LinkedList<>();
     private ReentrantLock reentrantLock;

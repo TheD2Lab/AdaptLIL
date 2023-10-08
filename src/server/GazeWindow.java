@@ -28,13 +28,16 @@ public class GazeWindow {
     //If we want to use fixation duration as baseline
     //we can add a max val here.
 
+    /**
+     *
+     * @param overlapping Does nothing lol
+     * @param windowSizeInMilliseconds
+     */
     public GazeWindow(boolean overlapping, float windowSizeInMilliseconds) {
         this.overlapping = overlapping;
         this.gazeData = new ArrayList<>();
         this.pollingRateInHz = 150; // default is 150hz
-
         this.setWindowSizeInMilliseconds(windowSizeInMilliseconds);
-
     }
 
     public void setGazeData(ArrayList<RecXmlObject> gazeData) {
@@ -44,12 +47,15 @@ public class GazeWindow {
     public void setOverlapping(boolean overlapping) {
         this.overlapping = overlapping;
     }
+
+    /**
+     * Sets the # of packets that should belong in the GazeData (non-enforcing)
+     * @param windowSizeInMilliseconds
+     */
     public void setWindowSizeInMilliseconds(float windowSizeInMilliseconds) {
         this.windowSizeInMilliseconds = windowSizeInMilliseconds;
-
         //do some calculation, set real window size
         this.windowSize = (int) ((windowSizeInMilliseconds/1000) * pollingRateInHz);
-
     }
 
     public void setWindowSize(int windowSize) {
@@ -84,6 +90,19 @@ public class GazeWindow {
      */
     public Instances toDenseInstance() {
 
+        //Uses Java.Lang
+        /**
+         * Uses Java.Lang reflection to access the RecXMLObject fields in the current gazeData queue
+         * For each public field in the RecXMLObject, it is set as an attribute in the Instance object as
+         * fieldName_{i} where i is the index it belongs to in the gazeData queue.
+         * Currently only public fields are converted. If it is private it is not viewed. This may be changed
+         * later via the use of Custom annotations.
+         *  https://www.baeldung.com/java-custom-annotation (see field level annotations)
+         *
+         *
+         * After the attributes are set, the method loops over the RecXMLObjects again and constructs an Instance
+         * which contains the data.
+         */
         //Specify attributes list
         ArrayList<Attribute> attributeList = new ArrayList<>();
         for (int i = 0; i < gazeData.size(); ++i) {

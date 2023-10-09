@@ -38,6 +38,18 @@ public class OntoMapCsv {
         });
     }
 
+    private static List<String> participantIdsForTestDataSet() {
+        return List.of(new String[] {
+                "P19",
+                "P13",
+                "P53",
+                "P35",
+                "P11",
+                "P79",
+                "P23"
+        });
+    }
+
     /**
      * Maps participiant names to their task data.
      * Excludes the discarded participants.
@@ -183,14 +195,16 @@ public class OntoMapCsv {
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
         float windowSizeInMilliseconds = 500;
-        List<Instances> instancesList = new ArrayList<>();
+        List<Instances> trainInstancesList = new ArrayList<>();
+        List<Instances> testInstancesList = new ArrayList<>();
+        List<String> participantIdsForTestDataset = OntoMapCsv.participantIdsForTestDataSet();
         for (Participant p : participants) {
 
 
             //TODO
             //See if participant name is within the testing set, if it is, make sure to save their instances in a separate set
             //We want to use select people as the test data to see how the model performs on unseen data.
-
+            boolean useForTrainInstances = participantIdsForTestDataset.contains(p.getId().toUpperCase());
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
             //Read csv for answers
             FileReader fileReader = null;
@@ -316,7 +330,10 @@ public class OntoMapCsv {
                         Instance lastInstance =  windowInstances.get(windowInstances.numInstances() - 1);
                         System.out.println("shape:  " + windowInstances.size() + " x "  + windowInstances.get(0).numAttributes()
                                 + " time difference: " + (lastInstance.value(3) - firstInstance.value(3)));
-                        instancesList.add(windowInstances);
+                        if (useForTrainInstances)
+                            trainInstancesList.add(windowInstances);
+                        else
+                            testInstancesList.add(windowInstances);
                     }
 
                     //Clear gaze data and task windows
@@ -341,14 +358,20 @@ public class OntoMapCsv {
             totalResultsOfClassifiers.put(c.getClass().getName(), new HashMap<>());
         }
         int totalNumInstance = 0;
-        Instances allInstances = instancesList.get(0);
-        for (int i = 1; i < instancesList.size(); ++i) {
-            allInstances.addAll(instancesList.get(i));
+        Instances allTrainDataInstances = trainInstancesList.get(0);
+        Instances allTestDataInstances = testInstancesList.get(0);
+        for (int i = 1; i < trainInstancesList.size(); ++i) {
+            allTrainDataInstances.addAll(trainInstancesList.get(i));
+        }
+        for (int i = 1; i < testInstancesList.size(); ++i) {
+            allTestDataInstances.addAll(testInstancesList.get(i));
         }
 
-        allInstances.setClassIndex(allInstances.numAttributes() - 1);
+        allTrainDataInstances.setClassIndex(allTrainDataInstances.numAttributes() - 1);
+        allTestDataInstances.setClassIndex(allTestDataInstances.numAttributes() - 1);
 
-        OntoMapCsv.saveInstancesToFile(allInstances, "dataDump.arff");
+        OntoMapCsv.saveInstancesToFile(allTrainDataInstances, "trainData.arff");
+        OntoMapCsv.saveInstancesToFile(allTestDataInstances, "testData.arff");
         /**
         Instances trainDataInstance = allInstances.trainCV(2, 0);
         Instances testDataInstance = trainDataInstance.testCV(2, 0);

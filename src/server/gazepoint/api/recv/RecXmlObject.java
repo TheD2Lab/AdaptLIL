@@ -29,16 +29,16 @@ public class RecXmlObject extends XmlObject {
 
     //-----------------ENABLE_SEND_POG_FIX----------------
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGX")
-    public Float FPOGX;
+    public Double FPOGX;
 
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGY")
-    public Float FPOGY;
+    public Double FPOGY;
 
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGS")
-    public Float FPOGS;
+    public Double FPOGS;
 
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGD")
-    public Float FPOGD;
+    public Double FPOGD;
 
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGID")
     public Integer FPOGID;
@@ -49,10 +49,10 @@ public class RecXmlObject extends XmlObject {
 
     //------ENABLE_SEND_POG_BEST-------------------
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGX")
-    public Float BPOGX;
+    public Double BPOGX;
 
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGY")
-    public Float BPOGY;
+    public Double BPOGY;
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGV")
@@ -61,10 +61,10 @@ public class RecXmlObject extends XmlObject {
     //------------ENABLE_SEND_POG_LEFT_---------------
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGX")
-    public Float LPOGX;
+    public Double LPOGX;
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
-    public Float LPOGY;
+    public Double LPOGY;
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
@@ -73,10 +73,10 @@ public class RecXmlObject extends XmlObject {
     //----------ENABLE_SEND_POG_RIGHT-------------------
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGX")
-    public Float RPOGX;
+    public Double RPOGX;
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGY")
-    public Float RPOGY;
+    public Double RPOGY;
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGV")
@@ -84,16 +84,16 @@ public class RecXmlObject extends XmlObject {
 
     //------------ENABLE_SEND_PUPIL_LEFT--------------------
     @JacksonXmlProperty(isAttribute = true, localName = "LPCX")
-    public Float LPCX;
+    public Double LPCX;
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPCY")
-    public Float LPCY;
+    public Double LPCY;
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPD")
-    public Float LPD;
+    public Double LPD;
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPS")
-    public Float LPS;
+    public Double LPS;
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPV")
@@ -102,16 +102,16 @@ public class RecXmlObject extends XmlObject {
     //------------ENABLE_SEND_PUPIL_RIGHT----------------
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPCX")
-    public Float RPCX;
+    public Double RPCX;
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPCY")
-    public Float RPCY;
+    public Double RPCY;
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPD")
-    public Float RPD;
+    public Double RPD;
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPS")
-    public Float RPS;
+    public Double RPS;
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "RPV")
@@ -119,7 +119,7 @@ public class RecXmlObject extends XmlObject {
 
     //-------------ENABLE_SEND_PUPILMM--------------------
     @JacksonXmlProperty(isAttribute = true, localName = "LPMM")
-    public Float LPMM;
+    public Double LPMM;
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPMMV")
@@ -130,7 +130,7 @@ public class RecXmlObject extends XmlObject {
     public Boolean RPMMV;
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPMM")
-    public Float RPMM;
+    public Double RPMM;
 
     //-------------Enable_Send_Cursor--------------------
     /**
@@ -146,9 +146,9 @@ public class RecXmlObject extends XmlObject {
      * down, 3 for left button up, 4 for right button up
      */
     @JacksonXmlProperty(isAttribute = true, localName = "CX")
-    public Float CX;
+    public Double CX;
     @JacksonXmlProperty(isAttribute = true, localName = "CY")
-    public Float CY;
+    public Double CY;
     @JacksonXmlProperty(isAttribute = true,localName = "CS")
     public Integer CS;
 
@@ -159,7 +159,7 @@ public class RecXmlObject extends XmlObject {
 
     //----------Enable_Send_Time---------
     @JacksonXmlProperty(isAttribute = true, localName = "TIME")
-    public Float time;
+    public Double time;
     //------------Enable_Send_Time_Tick
     @JacksonXmlProperty(isAttribute = true, localName = "TIME_TICK")
     public Long timeTick;
@@ -250,19 +250,19 @@ public class RecXmlObject extends XmlObject {
         return cursor;
     }
 
-    public Float getFPOGX() {
+    public Double getFPOGX() {
         return FPOGX;
     }
 
-    public Float getFPOGY() {
+    public Double getFPOGY() {
         return FPOGY;
     }
 
-    public Float getFPOGS() {
+    public Double getFPOGS() {
         return FPOGS;
     }
 
-    public Float getFPOGD() {
+    public Double getFPOGD() {
         return FPOGD;
     }
 
@@ -274,11 +274,11 @@ public class RecXmlObject extends XmlObject {
         return FPOGV;
     }
 
-    public Float getCX() {
+    public Double getCX() {
         return CX;
     }
 
-    public Float getCY() {
+    public Double getCY() {
         return CY;
     }
 
@@ -290,15 +290,15 @@ public class RecXmlObject extends XmlObject {
         return counter;
     }
 
-    public Float getTime() {
+    public Double getTime() {
         return time;
     }
 
-    public Float getBPOGX() {
+    public Double getBPOGX() {
         return BPOGX;
     }
 
-    public Float getBPOGY() {
+    public Double getBPOGY() {
         return BPOGY;
     }
 
@@ -306,11 +306,11 @@ public class RecXmlObject extends XmlObject {
         return BPOGV;
     }
 
-    public Float getLPOGX() {
+    public Double getLPOGX() {
         return LPOGX;
     }
 
-    public Float getLPOGY() {
+    public Double getLPOGY() {
         return LPOGY;
     }
 
@@ -318,11 +318,11 @@ public class RecXmlObject extends XmlObject {
         return LPOGV;
     }
 
-    public Float getRPOGX() {
+    public Double getRPOGX() {
         return RPOGX;
     }
 
-    public Float getRPOGY() {
+    public Double getRPOGY() {
         return RPOGY;
     }
 
@@ -330,19 +330,19 @@ public class RecXmlObject extends XmlObject {
         return RPOGV;
     }
 
-    public Float getLPCX() {
+    public Double getLPCX() {
         return LPCX;
     }
 
-    public Float getLPCY() {
+    public Double getLPCY() {
         return LPCY;
     }
 
-    public Float getLPD() {
+    public Double getLPD() {
         return LPD;
     }
 
-    public Float getLPS() {
+    public Double getLPS() {
         return LPS;
     }
 
@@ -350,19 +350,19 @@ public class RecXmlObject extends XmlObject {
         return LPV;
     }
 
-    public Float getRPCX() {
+    public Double getRPCX() {
         return RPCX;
     }
 
-    public Float getRPCY() {
+    public Double getRPCY() {
         return RPCY;
     }
 
-    public Float getRPD() {
+    public Double getRPD() {
         return RPD;
     }
 
-    public Float getRPS() {
+    public Double getRPS() {
         return RPS;
     }
 
@@ -370,7 +370,7 @@ public class RecXmlObject extends XmlObject {
         return RPV;
     }
 
-    public Float getLPMM() {
+    public Double getLPMM() {
         return LPMM;
     }
 
@@ -382,10 +382,96 @@ public class RecXmlObject extends XmlObject {
         return RPMMV;
     }
 
-    public Float getRPMM() {
+    public Double getRPMM() {
         return RPMM;
     }
     public Long getTimeTick() {
         return timeTick;
+    }
+
+    /**
+     * Sets the fixation object and the relative GazePoint Data metric names [e.g. FPOGX, FPOGY]
+     * @param fixation
+     */
+    public void setFixation(Fixation fixation) {
+        this.fixation = fixation;
+        this.FPOGX = fixation.getX();
+        this.FPOGY = fixation.getY();
+        this.FPOGD = fixation.getDuration();
+        this.FPOGS = fixation.getStartTime();
+        this.FPOGID = fixation.getId();
+        this.FPOGV = fixation.getValid();
+
+    }
+
+    /**
+     * Sets the bestPointOfGaze attribute and its relative GazePoitn data metrics [e.g. BPOGX, BPOGY]
+     * @param bestPointOfGaze The object to set the RecXmlObject bestPointOfGaze attribute to.
+     */
+    public void setBestPointOfGaze(BestPointOfGaze bestPointOfGaze) {
+        this.bestPointOfGaze = bestPointOfGaze;
+        this.BPOGX = bestPointOfGaze.getX();
+        this.BPOGY = bestPointOfGaze.getY();
+        this.BPOGV = bestPointOfGaze.isValid();
+    }
+
+    /**
+     * Sets the leftEyePointOfGaze attribute and its relative GazePoint data metrics [e.g. LPOGX, LPOGY]
+     * @param leftEyePointOfGaze The object to set the RecXmlObject leftEyePointOfGaze attribute to.
+     */
+    public void setLeftEyePointOfGaze(LeftEyePointOfGaze leftEyePointOfGaze) {
+        this.leftEyePointOfGaze = leftEyePointOfGaze;
+        this.LPOGX = leftEyePointOfGaze.getX();
+        this.LPOGY = leftEyePointOfGaze.getY();
+        this.LPOGV = leftEyePointOfGaze.isValid();
+    }
+
+    /**
+     * Sets the rightEyePointOfGaze attribute and its relative GazePoint data metrics [e.g. RPOGX, RPOGY]
+     * @param rightEyePointOfGaze The actual param to set the RecXmlObject.rightEyePointOfGaze to.
+     */
+    public void setRightEyePointOfGaze(RightEyePointOfGaze rightEyePointOfGaze) {
+        this.rightEyePointOfGaze = rightEyePointOfGaze;
+        this.RPOGX = rightEyePointOfGaze.getX();
+        this.RPOGY = rightEyePointOfGaze.getY();
+        this.RPOGV = rightEyePointOfGaze.isValid();
+    }
+
+    /**
+     * Sets the LeftEyePupil attribute and its relative GazePoint data metrics [e.g. LPV, LPCX, LPCY, LPD]
+     * @param leftEyePupil the actual param to set the RecXmlObject.leftEyePupil to.
+     */
+    public void setLeftEyePupil(LeftEyePupil leftEyePupil) {
+        this.leftEyePupil = leftEyePupil;
+        this.LPCX = leftEyePupil.getX();
+        this.LPCY = leftEyePupil.getY();
+        this.LPD = leftEyePupil.getDiameter();
+        this.LPS = leftEyePupil.getScale();
+        this.LPV = leftEyePupil.isValid();
+    }
+
+    /**
+     * Sets the RightEyePupil attribute and its relative GazePoint data metrics [e.g. RPCX, RPCY, RPV, RPD]
+     * @param rightEyePupil the actual param to set the RecXmlObject.rightEyePupil to.
+     */
+    public void setRightEyePupil(RightEyePupil rightEyePupil) {
+        this.rightEyePupil = rightEyePupil;
+        this.RPCX = rightEyePupil.getX();
+        this.RPCY = rightEyePupil.getY();
+        this.RPV = rightEyePupil.isValid();
+        this.RPD = rightEyePupil.getDiameter();
+        this.RPS = rightEyePupil.getScale();
+    }
+
+    /**
+     * Sets the PupilDiameter attribute of this class and its relative GazePoint data metrics [e.g. RPMM, RPMMV, LPMM, LPMMV]
+     * @param pupilDiameter The actual param to set the RecXmlObject.pupilDiameter to.
+     */
+    public void setPupilDiameter(PupilDiameter pupilDiameter) {
+        this.pupilDiameter = pupilDiameter;
+        this.RPMM = pupilDiameter.getDiameterOfRightEyeInMM();
+        this.RPMMV = pupilDiameter.isRightEyeValid();
+        this.LPMM = pupilDiameter.getDiameterOfLeftEyeInMM();
+        this.LPMMV = pupilDiameter.isLeftEyeValid();
     }
 }

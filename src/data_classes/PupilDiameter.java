@@ -6,7 +6,7 @@ public class PupilDiameter {
 
     public PupilDiameter() {} //Empty constructor for Jackson
 
-    public PupilDiameter(float diameterOfLeftEyeInMM, boolean isLeftEyeValid, float diameterOfRightEyeInMM, boolean isRightEyeValid) {
+    public PupilDiameter(double diameterOfLeftEyeInMM, boolean isLeftEyeValid, double diameterOfRightEyeInMM, boolean isRightEyeValid) {
         this.diameterOfLeftEyeInMM = diameterOfLeftEyeInMM;
         this.isLeftEyeValid = isLeftEyeValid;
         this.diameterOfRightEyeInMM = diameterOfRightEyeInMM;
@@ -15,19 +15,19 @@ public class PupilDiameter {
     }
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPMM")
-    private float diameterOfLeftEyeInMM;
+    private double diameterOfLeftEyeInMM;
     @JacksonXmlProperty(isAttribute = true, localName = "LPMMV")
     private boolean isLeftEyeValid;
     @JacksonXmlProperty(isAttribute = true, localName = "RPMMV")
     private boolean isRightEyeValid;
     @JacksonXmlProperty(isAttribute = true, localName = "RPMM")
-    private float diameterOfRightEyeInMM;
+    private double diameterOfRightEyeInMM;
 
     /**
      * The diameter of the left eye pupil in millimeters.
-     * @param diameterOfLeftEyeInMM float
+     * @param diameterOfLeftEyeInMM double
      */
-    public void setDiameterOfLeftEyeInMM(float diameterOfLeftEyeInMM) {
+    public void setDiameterOfLeftEyeInMM(double diameterOfLeftEyeInMM) {
         this.diameterOfLeftEyeInMM = diameterOfLeftEyeInMM;
     }
 
@@ -51,23 +51,23 @@ public class PupilDiameter {
      * The diameter of the right eye pupil in millimeters.
      * @param diameterOfRightEyeInMM The diameter of the right eye pupil in millimeters.
      */
-    public void setDiameterOfRightEyeInMM(float diameterOfRightEyeInMM) {
+    public void setDiameterOfRightEyeInMM(double diameterOfRightEyeInMM) {
         this.diameterOfRightEyeInMM = diameterOfRightEyeInMM;
     }
 
     /**
      * The diameter of the left eye pupil in millimeters.
-     * @return float in mm
+     * @return double in mm
      */
-    public float getDiameterOfLeftEyeInMM() {
+    public double getDiameterOfLeftEyeInMM() {
         return diameterOfLeftEyeInMM;
     }
 
     /**
      * The diameter of the right eye pupil in millimeters.
-     * @return float in mm
+     * @return double in mm
      */
-    public float getDiameterOfRightEyeInMM() {
+    public double getDiameterOfRightEyeInMM() {
         return diameterOfRightEyeInMM;
     }
 

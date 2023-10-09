@@ -136,11 +136,13 @@ public class GazeWindow {
 
                     if (val != null && field.getType() != String.class) {
 
-                        //figure out.
+                        //Check types and cast appropriately.
+                        //If there is a primitive type
+                        //use field.getDouble(recXmlObject)
                         if (field.getType() == Double.class)
-                            instance.setValue(attrIndex, field.getDouble(recXmlObject));
+                            instance.setValue(attrIndex, (Double) val);
                         else if (field.getType() == Float.class)
-                            instance.setValue(attrIndex, ((Float) val));
+                            instance.setValue(attrIndex, (field.getFloat(val)));
                         else if (field.getType() == String.class)
                             instance.setValue(attrIndex, (String) val);
                         ++attrIndex;

@@ -6,26 +6,25 @@ import server.serialization_helpers.IntToBooleanDeserializer;
 
 public class Fixation {
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGX")
-    public Float x;
+    private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGY")
-    public Float y;
+    private double y;
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGS")
-    public Float startTime;
+    private double startTime;
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGD")
-    public Float duration;
+    private double duration;
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGID")
-    public Integer id;
+    private int id;
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGV")
 
-    public Boolean isValid;
+    private boolean isValid;
 
 
-    public Fixation() {
-    }
+    public Fixation() {} //Default constructor for Jackson
 
-    public Fixation(Float x, Float y, Float startTime, Float duration, Boolean isValid, Integer id) {
+    public Fixation(double x, double y, double startTime, double duration, boolean isValid, int id) {
         this.x = x;
         this.y = y;
         this.startTime = startTime;
@@ -34,7 +33,7 @@ public class Fixation {
         this.id = id;
     }
 
-    public Fixation(Float x, Float y, Float startTime, Float duration, Boolean isValid) {
+    public Fixation(double x, double y, double startTime, double duration, boolean isValid) {
         this.x = x;
         this.y = y;
         this.startTime = startTime;
@@ -58,11 +57,35 @@ public class Fixation {
         return duration;
     }
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
     public Boolean getValid() {
         return isValid;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public void setStartTime(double startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setDuration(double duration) {
+        this.duration = duration;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setValid(Boolean valid) {
+        isValid = valid;
     }
 }

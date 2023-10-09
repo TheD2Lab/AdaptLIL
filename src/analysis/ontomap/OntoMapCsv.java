@@ -3,7 +3,7 @@ package analysis.ontomap;
 import analysis.Participant;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import data_classes.Fixation;
+import data_classes.*;
 import server.GazeWindow;
 import server.gazepoint.api.recv.RecXmlObject;
 import weka.classifiers.Classifier;
@@ -11,6 +11,7 @@ import weka.core.*;
 import weka.core.converters.ArffSaver;
 import wekaext.WekaExperiment;
 
+import javax.mail.Header;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -18,11 +19,38 @@ import java.util.regex.Pattern;
 
 public class OntoMapCsv {
 
-    private static Map<String, List<File>> filterForBaseLineFiles(String dir, boolean isGazePointFolder, boolean filterForLinkedList) {
+    /**
+     * List of participantIDs that were discarded from the study.
+     * @return
+     */
+    private static List<String> discardedParticipantIds() {
+        return List.of(new String[]{
+                "P9",
+                "P18",
+                "P21",
+                "P28",
+                "P31",
+                "P33",
+                "P41",
+                "P44",
+                "P57",
+                "P75"
+        });
+    }
+
+    /**
+     * Maps participiant names to their task data.
+     * Excludes the discarded participants.
+     * @param dir
+     * @param isGazePointFolder
+     * @param filterForLinkedList
+     * @return
+     */
+    private static Map<String, List<File>> mapParticipantsToStudyData(String dir, boolean isGazePointFolder, boolean filterForLinkedList) {
         Map<String, List<File>> filteredFiles = new HashMap<>();
         File directoryFile = new File(dir);
         Pattern participantNamePattern = Pattern.compile("P\\d+");
-
+        List<String> discardedParticipantIds = OntoMapCsv.discardedParticipantIds();
         for (File fileOrDir : directoryFile.listFiles()) {
             if (fileOrDir.isDirectory()) {
 
@@ -31,6 +59,8 @@ public class OntoMapCsv {
                 if (isGazePointFolder) {
                     String participantName = fileOrDir.getName();
 
+                    if (discardedParticipantIds.contains(participantName.toUpperCase()))
+                        continue;
                     //look through files
                     for (File gpFileORDir : fileOrDir.listFiles()) {
 
@@ -50,6 +80,11 @@ public class OntoMapCsv {
                     Matcher participiantNameMatcher = participantNamePattern.matcher(fileOrDir.getName());
                     participiantNameMatcher.find();
                     String participantName = participiantNameMatcher.group(0);
+
+                    //Ignore discarded participants.
+                    if (discardedParticipantIds.contains(participantName.toUpperCase()))
+                        continue;
+
                     //look through files of raw data
                     FilenameFilter filter = (dir1, name) -> name.equals("Raw Data");
                     File[] rawDataDir = fileOrDir.listFiles(filter);
@@ -76,11 +111,12 @@ public class OntoMapCsv {
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
-        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir+"Gazepoint", true, true);
-        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.filterForBaseLineFiles(baseDir+"Task Data", false, true);
+        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Gazepoint", true, true);
+        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Task Data", false, true);
         Map<String, Participant> participantsById = new HashMap<>();
 
 
+        //We
         int index = 0;
         for (String participantName : gazePointFilesByParticipant.keySet()) {
             if ( (index++ % 2 == 0) || (index % 3 == 0))
@@ -149,6 +185,12 @@ public class OntoMapCsv {
         float windowSizeInMilliseconds = 500;
         List<Instances> instancesList = new ArrayList<>();
         for (Participant p : participants) {
+
+
+            //TODO
+            //See if participant name is within the testing set, if it is, make sure to save their instances in a separate set
+            //We want to use select people as the test data to see how the model performs on unseen data.
+
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
             //Read csv for answers
             FileReader fileReader = null;
@@ -183,8 +225,11 @@ public class OntoMapCsv {
             List<String> headerRow = Arrays.asList(csvReader.readNext());
             List<GazeWindow> taskWindows = new ArrayList<>();
             while ((cells = csvReader.readNext()) != null && currentQuestionIndex < timeCutoffs.size() - 2) { //ignore the multiple choice question for now.
+                //read fixation data up to the timecutoff
                 Float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
-                //read fixation data up to timecutoff
+
+                RecXmlObject recXmlObject = new RecXmlObject();
+
                 Fixation fixation = analysis.fixation.getFixationFromCSVLine(
                         headerRow.indexOf("FPOGD"),
                         headerRow.indexOf("FPOGX"),
@@ -194,12 +239,42 @@ public class OntoMapCsv {
                         cells
                 );
 
-                RecXmlObject recXmlObject = new RecXmlObject();
-                recXmlObject.FPOGX = (float) fixation.getX();
-                recXmlObject.FPOGY = (float) fixation.getY();
-                //recXmlObject.FPOGID = fixation.getId();
-                recXmlObject.FPOGD = (float) fixation.getDuration();
-                recXmlObject.time = (float) fixation.getStartTime();
+                //Setting the ID of the fixation to null because we don't want it in our training data.
+                //Temp fix, before we introduce annotations to ignore fields in instance construciton
+                recXmlObject.FPOGID = null;
+
+                RightEyePupil rightEyePupil = analysis.gaze.getRightEyePupilFromCsvLine(
+                        headerRow.indexOf("RPCX"),
+                        headerRow.indexOf("RPCY"),
+                        headerRow.indexOf("RPS"),
+                        headerRow.indexOf("RPD"),
+                        headerRow.indexOf("RPV"),
+                        cells
+                );
+
+                LeftEyePupil leftEyePupil = analysis.gaze.getLeftEyePupilFromCsvLine(
+                        headerRow.indexOf("LPCX"),
+                        headerRow.indexOf("LPCY"),
+                        headerRow.indexOf("LPS"),
+                        headerRow.indexOf("LPD"),
+                        headerRow.indexOf("LPV"),
+                        cells
+                );
+
+
+                BestPointOfGaze bestPointOfGaze = analysis.gaze.getBestPointOfGaze(
+                        headerRow.indexOf("BPOGX"),
+                        headerRow.indexOf("BPOGY"),
+                        headerRow.indexOf("BPOGV"),
+                        cells
+                );
+
+
+                recXmlObject.setFixation(fixation);
+                recXmlObject.setBestPointOfGaze(bestPointOfGaze);
+                recXmlObject.setLeftEyePupil(leftEyePupil);
+                recXmlObject.setRightEyePupil(rightEyePupil);
+
 
                 //control window size and add to taskwindows once size is too large.
                 if (participantWindow.getGazeData().size() >= participantWindow.getWindowSize()) {

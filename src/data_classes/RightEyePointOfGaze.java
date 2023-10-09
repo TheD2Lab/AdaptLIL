@@ -13,16 +13,16 @@ public class RightEyePointOfGaze {
      * @param y The Y-coordinate of the right eye POG, as a fraction of the screen size.
      * @param isValid Flag that details if the tracker data is valid or not
      */
-    public RightEyePointOfGaze(float x, float y, boolean isValid) {
+    public RightEyePointOfGaze(double x, double y, boolean isValid) {
         this.x = x;
         this.y = y;
         this.isValid = isValid;
     }
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGX")
-    private float x;
+    private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGY")
-    private float y;
+    private double y;
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGV")
     private boolean isValid;
 
@@ -30,7 +30,7 @@ public class RightEyePointOfGaze {
      * The X-coordinate of the right eye POG, as a fraction of the screen size.
      * @param x X-coordinate of the right eye POG, as a fraction of the screen size.
      */
-    public void setX(float x) {
+    public void setX(double x) {
         this.x = x;
     }
 
@@ -39,7 +39,7 @@ public class RightEyePointOfGaze {
      * @param y Y-coordinate of the right eye POG, as a fraction of the screen size.
      */
 
-    public void setY(float y) {
+    public void setY(double y) {
         this.y = y;
     }
 
@@ -53,17 +53,17 @@ public class RightEyePointOfGaze {
 
     /**
      * The X-coordinate of the right eye POG, as a fraction of the screen size.
-     * @return float
+     * @return double
      */
-    public float getX() {
+    public double getX() {
         return x;
     }
 
     /**
      * The Y-coordinate of the right eye POG, as a fraction of the screen size.
-     * @return float
+     * @return double
      */
-    public float getY() {
+    public double getY() {
         return y;
     }
     /**

@@ -16,16 +16,16 @@ public class LeftEyePointOfGaze {
      * @param y The Y-coordinate of the left eye POG, as a fraction of the screen size.
      * @param isValid Flag that details if the tracker data is valid or not
      */
-    public LeftEyePointOfGaze(float x, float y, boolean isValid) {
+    public LeftEyePointOfGaze(double x, double y, boolean isValid) {
         this.x = x;
         this.y = y;
         this.isValid = isValid;
     }
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGX")
-    private float x;
+    private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
-    private float y;
+    private double y;
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
     private boolean isValid;
@@ -34,7 +34,7 @@ public class LeftEyePointOfGaze {
      * The X-coordinate of the left eye POG, as a fraction of the screen size.
      * @param x X-coordinate of the left eye POG, as a fraction of the screen size.
      */
-    public void setX(float x) {
+    public void setX(double x) {
         this.x = x;
     }
 
@@ -43,7 +43,7 @@ public class LeftEyePointOfGaze {
      * @param y Y-coordinate of the left eye POG, as a fraction of the screen size.
      */
 
-    public void setY(float y) {
+    public void setY(double y) {
         this.y = y;
     }
 
@@ -57,17 +57,17 @@ public class LeftEyePointOfGaze {
 
     /**
      * The X-coordinate of the left eye POG, as a fraction of the screen size.
-     * @return float
+     * @return double
      */
-    public float getX() {
+    public double getX() {
         return x;
     }
 
     /**
      * The Y-coordinate of the left eye POG, as a fraction of the screen size.
-     * @return float
+     * @return double
      */
-    public float getY() {
+    public double getY() {
         return y;
     }
     /**

@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
+import data_classes.*;
 
 
 /*
@@ -39,6 +40,39 @@ import com.opencsv.exceptions.CsvValidationException;
  */
 
 public class gaze {
+
+	public static RightEyePupil getRightEyePupilFromCsvLine(int rpcxIndex, int rpcyIndex, int rpsIndex, int rpdIndex, int rpvIndex, String[] cells) {
+		return new RightEyePupil(Double.parseDouble(cells[rpcxIndex]),
+				Double.parseDouble(cells[rpcyIndex]),
+				Double.parseDouble(cells[rpdIndex]),
+				Double.parseDouble(cells[rpsIndex]),
+				cells[rpvIndex].equals("1"));
+	}
+	public static LeftEyePupil getLeftEyePupilFromCsvLine(int lpcxIndex, int lpcyIndex, int lpsIndex, int lpdIndex, int lpvIndex, String[] cells) {
+		return new LeftEyePupil(Double.parseDouble(cells[lpcxIndex]), Double.parseDouble(cells[lpcyIndex]),
+				Double.parseDouble(cells[lpdIndex]), Double.parseDouble(cells[lpsIndex]), cells[lpvIndex].equals("1"));
+	}
+
+	public static PupilDiameter getPupilDiameterFromCsvLine(int lpmmIndex, int lpmmvIndex, int rpmmIndex, int rpmmvIndex, String[] cells) {
+		return new PupilDiameter(Double.parseDouble(cells[lpmmIndex]), cells[lpmmvIndex].equals("1"), Double.parseDouble(cells[rpmmIndex]),
+				cells[rpmmvIndex].equals("1"));
+	}
+
+	public static RightEyePointOfGaze getRightEyePointOfGaze(int rpogxIndex, int rpogyIndex, int rpogvIndex, String[] cells) {
+		return new RightEyePointOfGaze(
+				Double.parseDouble(cells[rpogxIndex]), Double.parseDouble(cells[rpogyIndex]), cells[rpogvIndex].equals("1")
+		);
+	}
+
+	public static LeftEyePointOfGaze getLeftEyePointOfGaze(int lpogxIndex, int lpogyIndex, int lpogvIndex, String[] cells) {
+		return new LeftEyePointOfGaze(
+				Double.parseDouble(cells[lpogxIndex]), Double.parseDouble(cells[lpogyIndex]), cells[lpogvIndex].equals("1")
+		);
+	}
+
+	public static BestPointOfGaze getBestPointOfGaze(int bpogxIndex, int bpogyIndex, int bpogvIndex, String[] cells) {
+		return new BestPointOfGaze(Double.parseDouble(cells[bpogxIndex]), Double.parseDouble(cells[bpogyIndex]), cells[bpogvIndex].equals("1"));
+	}
 
 	public static void processGaze(String inputFile, String outputFile) throws IOException, CsvValidationException, NumberFormatException{
 		ArrayList<Object> allValidData = new ArrayList<>();

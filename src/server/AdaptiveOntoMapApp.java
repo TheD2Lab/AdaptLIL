@@ -192,7 +192,7 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
                 throw new RuntimeException(e);
             }
             Fixation fixation = recObject.getFixation();
-            Cartesian2D fixationCoords = new Cartesian2D(fixation.x, fixation.y);
+            Cartesian2D fixationCoords = new Cartesian2D((float) fixation.getX(), (float) fixation.getY());
 
             DomElement intersectionElement = MapWorld.getIntersection(fixationCoords, new ArrayList<>(MapWorld.getDomElements().values()));
             if (intersectionElement != null) {

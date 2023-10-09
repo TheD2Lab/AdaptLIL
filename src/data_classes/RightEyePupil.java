@@ -5,13 +5,13 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 public class RightEyePupil {
 
     @JacksonXmlProperty(isAttribute = true, localName = "RPCX")
-    private float x;
+    private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "RPCY")
-    private float y;
+    private double y;
     @JacksonXmlProperty(isAttribute = true, localName = "RPD")
-    private float diameter;
+    private double diameter;
     @JacksonXmlProperty(isAttribute = true, localName = "RPS")
-    private float scale;
+    private double scale;
     @JacksonXmlProperty(isAttribute = true, localName = "RPV")
     private boolean isValid;
 
@@ -24,7 +24,7 @@ public class RightEyePupil {
      * @param scale depth of how far a user's eye is from the tracker
      * @param isValid flag to determine if this object data is valid (determiend by tracker)
      */
-    public RightEyePupil(float x, float y, float diameter, float scale, boolean isValid) {
+    public RightEyePupil(double x, double y, double diameter, double scale, boolean isValid) {
         this.x = x;
         this.y = y;
         this.diameter = diameter;
@@ -36,7 +36,7 @@ public class RightEyePupil {
      * X-Coordinate of right eye
      * @param x fraction of camera image size
      */
-    public void setX(float x) {
+    public void setX(double x) {
         this.x = x;
     }
 
@@ -44,7 +44,7 @@ public class RightEyePupil {
      * Y-Coordinate of right eye
      * @param y fraction of camera image size
      */
-    public void setY(float y) {
+    public void setY(double y) {
         this.y = y;
     }
 
@@ -52,7 +52,7 @@ public class RightEyePupil {
      * The diameter of the right eye pupil in pixels.
      * @param diameter in pixels
      */
-    public void setDiameter(float diameter) {
+    public void setDiameter(double diameter) {
         this.diameter = diameter;
     }
 
@@ -61,7 +61,7 @@ public class RightEyePupil {
      * depth, is less than 1 when user is closer to the eye tracker and greater than 1 when user is further away.
      * @param scale [1,inf]
      */
-    public void setScale(float scale) {
+    public void setScale(double scale) {
         this.scale = scale;
     }
 
@@ -74,7 +74,7 @@ public class RightEyePupil {
      * of the camera image size
      * @return float
      */
-    public float getX() {
+    public double getX() {
         return x;
     }
 
@@ -83,7 +83,7 @@ public class RightEyePupil {
      * of the camera image size
      * @return float
      */
-    public float getY() {
+    public double getY() {
         return y;
     }
 
@@ -91,7 +91,7 @@ public class RightEyePupil {
      * The diameter of the right eye pupil in pixels.
      * @return float
      */
-    public float getDiameter() {
+    public double getDiameter() {
         return diameter;
     }
 
@@ -100,7 +100,7 @@ public class RightEyePupil {
      * depth, is less than 1 when user is closer to the eye tracker and greater than 1 when user is further away
      * @return float
      */
-    public float getScale() {
+    public double getScale() {
         return scale;
     }
 

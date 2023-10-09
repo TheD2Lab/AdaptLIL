@@ -9,32 +9,32 @@ public class BestPointOfGaze {
     //Default constructor for Jackson
     public BestPointOfGaze() {}
 
-    public BestPointOfGaze(float x, float y, boolean isValid) {
+    public BestPointOfGaze(double x, double y, boolean isValid) {
         this.x = x;
         this.y = y;
         this.isValid = isValid;
     }
 
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGX")
-    private float x;
+    private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGY")
-    private float y;
+    private double y;
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGV")
     private boolean isValid;
 
-    public float getX() {
+    public double getX() {
         return x;
     }
 
-    public void setX(float x) {
+    public void setX(double x) {
         this.x = x;
     }
 
-    public float getY() {
+    public double getY() {
         return y;
     }
 
-    public void setY(float y) {
+    public void setY(double y) {
         this.y = y;
     }
 

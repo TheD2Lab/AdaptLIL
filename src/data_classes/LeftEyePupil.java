@@ -4,13 +4,13 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 public class LeftEyePupil {
     @JacksonXmlProperty(isAttribute = true, localName = "LPCX")
-    private float x;
+    private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "LPCY")
-    private float y;
+    private double y;
     @JacksonXmlProperty(isAttribute = true, localName = "LPD")
-    private float diameter;
+    private double diameter;
     @JacksonXmlProperty(isAttribute = true, localName = "LPS")
-    private float scale;
+    private double scale;
     @JacksonXmlProperty(isAttribute = true, localName = "LPV")
     private boolean isValid;
 
@@ -23,7 +23,7 @@ public class LeftEyePupil {
      * @param scale depth of how far a user's eye is from the tracker
      * @param isValid flag to determine if this object data is valid (determiend by tracker)
      */
-    public LeftEyePupil(float x, float y, float diameter, float scale, boolean isValid) {
+    public LeftEyePupil(double x, double y, double diameter, double scale, boolean isValid) {
         this.x = x;
         this.y = y;
         this.diameter = diameter;
@@ -35,7 +35,7 @@ public class LeftEyePupil {
      * X-Coordinate of left eye
      * @param x fraction of camera image size
      */
-    public void setX(float x) {
+    public void setX(double x) {
         this.x = x;
     }
 
@@ -43,7 +43,7 @@ public class LeftEyePupil {
      * Y-Coordinate of left eye
      * @param y fraction of camera image size
      */
-    public void setY(float y) {
+    public void setY(double y) {
         this.y = y;
     }
 
@@ -51,7 +51,7 @@ public class LeftEyePupil {
      * The diameter of the left eye pupil in pixels.
      * @param diameter in pixels
      */
-    public void setDiameter(float diameter) {
+    public void setDiameter(double diameter) {
         this.diameter = diameter;
     }
 
@@ -60,7 +60,7 @@ public class LeftEyePupil {
      * depth, is less than 1 when user is closer to the eye tracker and greater than 1 when user is further away.
      * @param scale [1,inf]
      */
-    public void setScale(float scale) {
+    public void setScale(double scale) {
         this.scale = scale;
     }
 
@@ -71,35 +71,35 @@ public class LeftEyePupil {
     /**
      * The X-coordinate of the left eye pupil in the camera image, as a fraction
      * of the camera image size
-     * @return float
+     * @return double
      */
-    public float getX() {
+    public double getX() {
         return x;
     }
 
     /**
      * The Y-coordinate of the left eye pupil in the camera image, as a fraction
      * of the camera image size
-     * @return float
+     * @return double
      */
-    public float getY() {
+    public double getY() {
         return y;
     }
 
     /**
      * The diameter of the left eye pupil in pixels.
-     * @return float
+     * @return double
      */
-    public float getDiameter() {
+    public double getDiameter() {
         return diameter;
     }
 
     /**
      * The scale factor of the left eye pupil (unitless). Value equals 1 at calibration
      * depth, is less than 1 when user is closer to the eye tracker and greater than 1 when user is further away
-     * @return float
+     * @return double
      */
-    public float getScale() {
+    public double getScale() {
         return scale;
     }
 

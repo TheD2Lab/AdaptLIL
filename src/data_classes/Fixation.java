@@ -50,7 +50,6 @@ public class Fixation {
     public double getY() {
         return y;
     }
-
     public double getStartTime() {
         return startTime;
     }

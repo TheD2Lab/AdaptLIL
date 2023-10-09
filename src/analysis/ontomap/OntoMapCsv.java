@@ -1,17 +1,16 @@
-package analysis;
+package analysis.ontomap;
 
+import analysis.Participant;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import data_classes.Fixation;
 import server.GazeWindow;
-import server.MachineLearningExperiments;
 import server.gazepoint.api.recv.RecXmlObject;
 import weka.classifiers.Classifier;
 import weka.core.*;
 import weka.core.converters.ArffSaver;
 import wekaext.WekaExperiment;
 
-import javax.mail.Part;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;

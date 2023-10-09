@@ -1,6 +1,8 @@
 package data_classes;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import server.serialization_helpers.IntToBooleanDeserializer;
 
 public class LeftEyePointOfGaze {
 
@@ -24,6 +26,7 @@ public class LeftEyePointOfGaze {
     private float x;
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
     private float y;
+    @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
     private boolean isValid;
 

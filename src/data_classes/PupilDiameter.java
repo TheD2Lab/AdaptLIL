@@ -3,6 +3,17 @@ package data_classes;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 public class PupilDiameter {
+
+    public PupilDiameter() {} //Empty constructor for Jackson
+
+    public PupilDiameter(float diameterOfLeftEyeInMM, boolean isLeftEyeValid, float diameterOfRightEyeInMM, boolean isRightEyeValid) {
+        this.diameterOfLeftEyeInMM = diameterOfLeftEyeInMM;
+        this.isLeftEyeValid = isLeftEyeValid;
+        this.diameterOfRightEyeInMM = diameterOfRightEyeInMM;
+        this.isRightEyeValid = isRightEyeValid;
+
+    }
+
     @JacksonXmlProperty(isAttribute = true, localName = "LPMM")
     private float diameterOfLeftEyeInMM;
     @JacksonXmlProperty(isAttribute = true, localName = "LPMMV")

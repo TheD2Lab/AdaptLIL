@@ -1,14 +1,13 @@
 package server;
 
-import org.apache.commons.lang3.ClassUtils;
 import server.gazepoint.api.recv.RecXmlObject;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Intended use of this file is to implement a 'window' in which gaze can be analyzed and conclusions/predictions can be drawn.
@@ -20,8 +19,11 @@ public class GazeWindow {
     private float windowSizeInMilliseconds;
     private int windowSize;
     private int pollingRateInHz;
+    private int bufferIndex;
 
-    private ArrayList<RecXmlObject> gazeData;
+    private RecXmlObject[] gazeBuffer;
+
+//    private ArrayList<RecXmlObject> gazeData;
 
 
     //TODO
@@ -35,13 +37,14 @@ public class GazeWindow {
      */
     public GazeWindow(boolean overlapping, float windowSizeInMilliseconds) {
         this.overlapping = overlapping;
-        this.gazeData = new ArrayList<>();
+
         this.pollingRateInHz = 150; // default is 150hz
         this.setWindowSizeInMilliseconds(windowSizeInMilliseconds);
+        this.gazeBuffer = new RecXmlObject[this.windowSize];
     }
 
-    public void setGazeData(ArrayList<RecXmlObject> gazeData) {
-        this.gazeData = gazeData;
+    public void setGazeBuffer(RecXmlObject[] gazeBuffer) {
+        this.gazeBuffer = gazeBuffer;
     }
 
     public void setOverlapping(boolean overlapping) {
@@ -65,8 +68,34 @@ public class GazeWindow {
         this.windowSizeInMilliseconds = (float) windowSize / pollingRateInHz;
     }
 
-    public ArrayList<RecXmlObject> getGazeData() {
-        return gazeData;
+    /**
+     * Adds a RecXmlObject to the buffer.
+     * @param recXmlObject
+     * @return The index it was inserted into is returned. -1 is returned if the buffer is full.
+     */
+    public int add(RecXmlObject recXmlObject) {
+        if (this.bufferIndex < this.windowSize) {
+            this.gazeBuffer[this.bufferIndex] = recXmlObject;
+            ++this.bufferIndex;
+            return this.bufferIndex - 1;
+        } else {
+            return -1;
+        }
+    }
+
+    public int getInternalIndex() {
+        return this.bufferIndex;
+    }
+
+    /**
+     * Clears the gazeBuffer and resets the internal position.
+     */
+    public void flush() {
+        this.gazeBuffer = new RecXmlObject[this.windowSize];
+        this.bufferIndex = 0;
+    }
+    public RecXmlObject[] getGazeBuffer() {
+        return gazeBuffer;
     }
 
     public int getWindowSize() {
@@ -82,13 +111,21 @@ public class GazeWindow {
     }
 
     /**
+     *
+     * @return returns true if the buffer is full (internal index is equal to the window size)
+     */
+    public boolean isFull() {
+        return this.bufferIndex == this.windowSize;
+    }
+
+    /**
      * https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
      * Converts the window into an instance than can be used for Weka ML
      * Works by going over each declared field/attribute in each RecXmlObject of each
      * gazeData
      * @return
      */
-    public Instances toDenseInstance() {
+    public Instance toDenseInstance(boolean reduceAttributeNames) {
 
         //Uses Java.Lang
         /**
@@ -104,14 +141,27 @@ public class GazeWindow {
          * which contains the data.
          */
         //Specify attributes list
+        ArrayList<Attribute> attributeList = this.getAttributeList(reduceAttributeNames);
+        return getInstancesFromAttributeList(attributeList);
+    }
+
+    public ArrayList<Attribute> getAttributeList(boolean reduceAttributeNames) {
         ArrayList<Attribute> attributeList = new ArrayList<>();
-        for (int i = 0; i < gazeData.size(); ++i) {
-            RecXmlObject recXmlObject = gazeData.get(i);
-            for (Field field : recXmlObject.getClass().getDeclaredFields()) {
+        for (int i = 0; i < gazeBuffer.length; ++i) {
+            RecXmlObject recXmlObject = gazeBuffer[i];
+            for (int j = 0; j < recXmlObject.getClass().getDeclaredFields().length; ++j) {
+                Field field = recXmlObject.getClass().getDeclaredFields()[j];
                 if (field.canAccess(recXmlObject)) {
                     try {
-                        if (field.get(recXmlObject) != null && field.getType() != String.class)
-                            attributeList.add(new Attribute(field.getName() + "_" +i));
+                        if (field.get(recXmlObject) != null && field.getType() != String.class) {
+                            String attributeName = "";
+                            if (reduceAttributeNames)
+                                attributeName = i +"_"+ j;
+                            else
+                                attributeName = field.getName() + "_" + i;
+
+                            attributeList.add(new Attribute(attributeName));
+                        }
 
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
@@ -119,15 +169,21 @@ public class GazeWindow {
                 }
             }
         }
+        return attributeList;
+    }
 
-        Instances instances = new Instances("TestInstances",attributeList,0);
+    public DenseInstance getInstancesFromAttributeList(ArrayList<Attribute> attributeList) {
+
+        //TODO
+        //Revisit data. I understand why it's exponential now
+        //
+        DenseInstance instance = new DenseInstance(attributeList.size());
 
         int attrIndex = 0;
 
-        for (int i = 0; i < gazeData.size(); ++i) {
+        for (int i = 0; i < gazeBuffer.length; ++i) {
 
-            RecXmlObject recXmlObject = gazeData.get(i);
-            DenseInstance instance = new DenseInstance(instances.numAttributes());
+            RecXmlObject recXmlObject = gazeBuffer[i];
             for (Field field : recXmlObject.getClass().getDeclaredFields()) {
                 Object val = new Object();
 
@@ -139,10 +195,12 @@ public class GazeWindow {
                         //Check types and cast appropriately.
                         //If there is a primitive type
                         //use field.getDouble(recXmlObject)
-                        if (field.getType() == Double.class)
+                        if (field.getType() == Double.class) {
+                            System.out.println(val);
                             instance.setValue(attrIndex, (Double) val);
+                        }
                         else if (field.getType() == Float.class)
-                            instance.setValue(attrIndex, (field.getFloat(val)));
+                            instance.setValue(attrIndex, (Double) val);
                         else if (field.getType() == String.class)
                             instance.setValue(attrIndex, (String) val);
                         ++attrIndex;
@@ -152,13 +210,10 @@ public class GazeWindow {
                     continue;
                 }
 
-
             }
-            instances.add(instance);
-            instance.setDataset(instances);
-
         }
-        return instances;
+        System.out.println(instance.toString());
+        return instance;
     }
 
 }

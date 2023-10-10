@@ -11,7 +11,6 @@ import weka.core.*;
 import weka.core.converters.ArffSaver;
 import wekaext.WekaExperiment;
 
-import javax.mail.Header;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -43,10 +42,9 @@ public class OntoMapCsv {
                 "P19",
                 "P13",
                 "P53",
-                "P35",
-                "P11",
-                "P79",
-                "P23"
+                "P23",
+//                "P43",
+//                "P67"
         });
     }
 
@@ -131,9 +129,8 @@ public class OntoMapCsv {
         //We
         int index = 0;
         for (String participantName : gazePointFilesByParticipant.keySet()) {
-            if ( (index++ % 2 == 0) || (index % 3 == 0))
+            if (index++ % 2 == 0 || index%3 == 0 || index % 5 == 0 || index % 7 == 0)
                 continue;
-
             //foreach participant
             //Create participant object
             Participant p = new Participant(participantName);
@@ -195,34 +192,34 @@ public class OntoMapCsv {
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
         float windowSizeInMilliseconds = 500;
-        List<Instances> trainInstancesList = new ArrayList<>();
-        List<Instances> testInstancesList = new ArrayList<>();
+        List<Instance> trainInstanceList = new ArrayList<>();
+        List<Instance> testInstanceList = new ArrayList<>();
+        Instances trainDataInstances = null;
+        Instances testDataInstances = null;
         List<String> participantIdsForTestDataset = OntoMapCsv.participantIdsForTestDataSet();
         for (Participant p : participants) {
 
 
-            //TODO
-            //See if participant name is within the testing set, if it is, make sure to save their instances in a separate set
-            //We want to use select people as the test data to see how the model performs on unseen data.
-            boolean useForTrainInstances = participantIdsForTestDataset.contains(p.getId().toUpperCase());
+            boolean useForTrainInstances = !participantIdsForTestDataset.contains(p.getId().toUpperCase());
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
-            //Read csv for answers
-            FileReader fileReader = null;
+
             List<String> timeCutoffs = new ArrayList<>();
             List<Boolean> rightOrWrongs = new ArrayList<>();
-            List<DenseInstance> instances = new ArrayList<>();
-            fileReader = new FileReader(p.getAnatomyAnswersFile());
+
+            FileReader fileReader = new FileReader(p.getAnatomyAnswersFile());
             CSVReader csvReader = new CSVReader(fileReader);
             String[] cells = null;
-            //Get answers
-            //foreach row
+            List<String> nominalValues = new ArrayList<>();
+            nominalValues.add("1");
+            nominalValues.add("0");
+
+            //Retrieve the time the user answered the question and if they got it wrong/right.
             String[] nextLine = csvReader.readNext();
             int timeStampIndex = 8;
             int correctIndex = 6;
-            while((cells = csvReader.readNext()) != null) {
+            while ((cells = csvReader.readNext()) != null) {
                 String timeCutoff = cells[timeStampIndex];
-
-                Boolean rightOrWrong = cells[correctIndex].equals("1") ? true : false;
+                Boolean rightOrWrong = cells[correctIndex].equals("1");
                 timeCutoffs.add(timeCutoff);
                 System.out.println("right or worng: " + (rightOrWrong ? "true" : "false"));
                 rightOrWrongs.add(rightOrWrong);
@@ -234,144 +231,97 @@ public class OntoMapCsv {
             //Read fixation file
             fileReader = new FileReader(p.getAnatomyGazeFile());
             csvReader = new CSVReader(fileReader);
-            int currentQuestionIndex = 0;
 
+            int currentQuestionIndex = 0;
             List<String> headerRow = Arrays.asList(csvReader.readNext());
-            List<GazeWindow> taskWindows = new ArrayList<>();
+
+            //Loop over each line of gaze data. until we reach the last question and then continue onto next participant.
             while ((cells = csvReader.readNext()) != null && currentQuestionIndex < timeCutoffs.size() - 2) { //ignore the multiple choice question for now.
                 //read fixation data up to the timecutoff
-                Float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
+                float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
+                boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
 
-                RecXmlObject recXmlObject = new RecXmlObject();
+                RecXmlObject recXmlObject = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
+                //If we have any invalid flags, should we discard?
 
-                Fixation fixation = analysis.fixation.getFixationFromCSVLine(
-                        headerRow.indexOf("FPOGD"),
-                        headerRow.indexOf("FPOGX"),
-                        headerRow.indexOf("FPOGY"),
-                        headerRow.indexOf("FPOGID"),
-                        headerRow.stream().filter( str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1),
-                        cells
-                );
+                if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
+                    System.out.println("going to next task: pwindow size: " + participantWindow.getInternalIndex());
+                    //User now on other task
+                    //If the above method doesn't work, we can weight the last window higher than the first few.
+                    incrementCurrentQuestionIndexAfterLoopLogic = true;
 
-                //Setting the ID of the fixation to null because we don't want it in our training data.
-                //Temp fix, before we introduce annotations to ignore fields in instance construciton
-                recXmlObject.FPOGID = null;
-
-                RightEyePupil rightEyePupil = analysis.gaze.getRightEyePupilFromCsvLine(
-                        headerRow.indexOf("RPCX"),
-                        headerRow.indexOf("RPCY"),
-                        headerRow.indexOf("RPS"),
-                        headerRow.indexOf("RPD"),
-                        headerRow.indexOf("RPV"),
-                        cells
-                );
-
-                LeftEyePupil leftEyePupil = analysis.gaze.getLeftEyePupilFromCsvLine(
-                        headerRow.indexOf("LPCX"),
-                        headerRow.indexOf("LPCY"),
-                        headerRow.indexOf("LPS"),
-                        headerRow.indexOf("LPD"),
-                        headerRow.indexOf("LPV"),
-                        cells
-                );
-
-
-                BestPointOfGaze bestPointOfGaze = analysis.gaze.getBestPointOfGaze(
-                        headerRow.indexOf("BPOGX"),
-                        headerRow.indexOf("BPOGY"),
-                        headerRow.indexOf("BPOGV"),
-                        cells
-                );
-
-
-                recXmlObject.setFixation(fixation);
-                recXmlObject.setBestPointOfGaze(bestPointOfGaze);
-                recXmlObject.setLeftEyePupil(leftEyePupil);
-                recXmlObject.setRightEyePupil(rightEyePupil);
-
+                    //Discard current window, we don't want it because of data misalignment.
+                    if (!participantWindow.isFull())
+                        participantWindow.flush();
+                }
+                //Add to windows for task
+                participantWindow.add(recXmlObject);
 
                 //control window size and add to taskwindows once size is too large.
-                if (participantWindow.getGazeData().size() >= participantWindow.getWindowSize()) {
-                    taskWindows.add(participantWindow);
-                    participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
-                    //Add to windows for task
+                if (participantWindow.isFull()) {
+                    //We set all instances to have the classification right/wrong
+                    //Any window where the user got it right, is grouped into the good section -> 1
+                    //any window where the user got it wrong, is grouped into the bad section -> 0
+                    //Hopefully we can then compute a probability that they will get it right
+                    //given the current gaze data.
+                    Instance windowInstance = participantWindow.toDenseInstance(true);
+
+                    //Set the nominal class value for each window if is correct [0,1]
+                    //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
+                    windowInstance.insertAttributeAt(windowInstance.numAttributes());
+                    windowInstance.setValue(windowInstance.numAttributes()-1, rightOrWrongs.get(correctIndex) ? "1" : "0");
+
+                    System.out.println("shape:  " + 1+ " x " + windowInstance.numAttributes());
+
+                    if (useForTrainInstances) {
+                       trainInstanceList.add(windowInstance);
+                    }
+                    else {
+                        testInstanceList.add(windowInstance);
+                    }
+                    //Clear window data by repointing to new instantiation
+                    participantWindow.flush();
+
                 }
+                
 
-                participantWindow.getGazeData().add(recXmlObject);
-
-                if ( (fixation.getStartTime() * 1000) >= timeCutoff) {
-                    //Add to instances
-                    //Parse window as is and store in instance
-                    //User now on other task
-
-                    //If the above method doesn't work, we can weight the last window higher than the first few.
+                if (incrementCurrentQuestionIndexAfterLoopLogic)
                     currentQuestionIndex++;
 
-                    //Add all instances for all windows for all tasks
-
-                    for (GazeWindow window : taskWindows) {
-                        //We set all instances to have the classification right/wrong
-                        //Any window where the user got it right, is grouped into the good section -> 1
-                        //any window where the user got it wrong, is grouped into the bad section -> 0
-                        //Hopefully we can then compute a probability that they will get it right
-                        //given the current gaze data.
-                        Instances windowInstances = window.toDenseInstance();
-                        List<String> nominalValues = new ArrayList<>();
-                        nominalValues.add("1");
-                        nominalValues.add("0");
-                        Attribute correctAttr = new Attribute("correct", nominalValues);
-                        windowInstances.insertAttributeAt(correctAttr, windowInstances.numAttributes());
-                        for (int i = 0; i < windowInstances.numInstances(); ++i) {
-                            windowInstances.get(i).setValue(windowInstances.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
-                            windowInstances.set(i, windowInstances.get(i));
-                        }
-
-                        Instance firstInstance = windowInstances.get(0);
-                        Instance lastInstance =  windowInstances.get(windowInstances.numInstances() - 1);
-                        System.out.println("shape:  " + windowInstances.size() + " x "  + windowInstances.get(0).numAttributes()
-                                + " time difference: " + (lastInstance.value(3) - firstInstance.value(3)));
-                        if (useForTrainInstances)
-                            trainInstancesList.add(windowInstances);
-                        else
-                            testInstancesList.add(windowInstances);
-                    }
-
-                    //Clear gaze data and task windows
-                    participantWindow.getGazeData().clear();
-                    taskWindows.clear();
-                } else {
-                    //Add to instance
-
-                }
             }
-
-            //Store in fixationData : timeCutoff : rightOrWrong
-            //Store in instances
-
-
+            fileReader.close();
+            csvReader.close();
         }
 
-
-        Classifier[] classifiers = WekaExperiment.getClassificationClassifiers();
-        HashMap<String, HashMap<String, Double>> totalResultsOfClassifiers = new HashMap<>();
-        for (Classifier c : classifiers) {
-            totalResultsOfClassifiers.put(c.getClass().getName(), new HashMap<>());
-        }
+//        Classifier[] classifiers = WekaExperiment.getClassificationClassifiers();
+//        HashMap<String, HashMap<String, Double>> totalResultsOfClassifiers = new HashMap<>();
+//        for (Classifier c : classifiers) {
+//            totalResultsOfClassifiers.put(c.getClass().getName(), new HashMap<>());
+//        }
         int totalNumInstance = 0;
-        Instances allTrainDataInstances = trainInstancesList.get(0);
-        Instances allTestDataInstances = testInstancesList.get(0);
-        for (int i = 1; i < trainInstancesList.size(); ++i) {
-            allTrainDataInstances.addAll(trainInstancesList.get(i));
+
+        ArrayList<Attribute> attributeList = Collections.list(trainInstanceList.get(0).enumerateAttributes());
+
+        //Merging all instances together again.
+        trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
+        testDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
+
+        //Set Class index for last attribute.
+        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+        testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
+
+        for (int i = 1; i < trainInstanceList.size(); ++i) {
+            trainDataInstances.add(trainInstanceList.get(i));
         }
-        for (int i = 1; i < testInstancesList.size(); ++i) {
-            allTestDataInstances.addAll(testInstancesList.get(i));
+        for (int i = 1; i < testInstanceList.size(); ++i) {
+            testDataInstances.add(testInstanceList.get(i));
         }
 
-        allTrainDataInstances.setClassIndex(allTrainDataInstances.numAttributes() - 1);
-        allTestDataInstances.setClassIndex(allTestDataInstances.numAttributes() - 1);
+        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+        testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
 
-        OntoMapCsv.saveInstancesToFile(allTrainDataInstances, "trainData.arff");
-        OntoMapCsv.saveInstancesToFile(allTestDataInstances, "testData.arff");
+        OntoMapCsv.saveInstancesToFile(trainDataInstances, "trainData_2sec_window.arff");
+        OntoMapCsv.saveInstancesToFile(testDataInstances, "testData_2sec_window.arff");
         /**
         Instances trainDataInstance = allInstances.trainCV(2, 0);
         Instances testDataInstance = trainDataInstance.testCV(2, 0);
@@ -406,6 +356,56 @@ public class OntoMapCsv {
         //
         //System.out.printf("%d/%d Process Complete ^^^\n==============================", i + 1, trainDataFiles.size());
         //
+    }
+
+    public static RecXmlObject getRecXmlObjectFromCells(List<String> headerRow, String[] cells) {
+        RecXmlObject recXmlObject = new RecXmlObject();
+        Fixation fixation = analysis.fixation.getFixationFromCSVLine(
+                headerRow.indexOf("FPOGD"),
+                headerRow.indexOf("FPOGX"),
+                headerRow.indexOf("FPOGY"),
+                headerRow.indexOf("FPOGID"),
+                headerRow.indexOf("FPOGS"),
+                cells
+        );
+
+
+
+        RightEyePupil rightEyePupil = analysis.gaze.getRightEyePupilFromCsvLine(
+                headerRow.indexOf("RPCX"),
+                headerRow.indexOf("RPCY"),
+                headerRow.indexOf("RPS"),
+                headerRow.indexOf("RPD"),
+                headerRow.indexOf("RPV"),
+                cells
+        );
+
+        LeftEyePupil leftEyePupil = analysis.gaze.getLeftEyePupilFromCsvLine(
+                headerRow.indexOf("LPCX"),
+                headerRow.indexOf("LPCY"),
+                headerRow.indexOf("LPS"),
+                headerRow.indexOf("LPD"),
+                headerRow.indexOf("LPV"),
+                cells
+        );
+
+
+        BestPointOfGaze bestPointOfGaze = analysis.gaze.getBestPointOfGaze(
+                headerRow.indexOf("BPOGX"),
+                headerRow.indexOf("BPOGY"),
+                headerRow.indexOf("BPOGV"),
+                cells
+        );
+        recXmlObject.time = Double.valueOf(cells[headerRow.stream().filter(str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1)]);
+        recXmlObject.setFixation(fixation);
+        recXmlObject.setBestPointOfGaze(bestPointOfGaze);
+        recXmlObject.setLeftEyePupil(leftEyePupil);
+        recXmlObject.setRightEyePupil(rightEyePupil);
+        //Setting the ID of the fixation to null because we don't want it in our training data.
+        //Temp fix, before we introduce annotations to ignore fields in instance construciton
+        recXmlObject.FPOGID = null;
+
+        return recXmlObject;
     }
 
     public static void saveInstancesToFile(Instances instances, String fileName) throws IOException {

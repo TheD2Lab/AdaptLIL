@@ -178,7 +178,6 @@ public class GazeWindow {
         //Revisit data. I understand why it's exponential now
         //
         DenseInstance instance = new DenseInstance(attributeList.size());
-
         int attrIndex = 0;
 
         for (int i = 0; i < gazeBuffer.length; ++i) {
@@ -195,12 +194,10 @@ public class GazeWindow {
                         //Check types and cast appropriately.
                         //If there is a primitive type
                         //use field.getDouble(recXmlObject)
-                        if (field.getType() == Double.class) {
-                            System.out.println(val);
+                        if (field.getType() == Double.class)
                             instance.setValue(attrIndex, (Double) val);
-                        }
                         else if (field.getType() == Float.class)
-                            instance.setValue(attrIndex, (Double) val);
+                            instance.setValue(attrIndex, (Float) val);
                         else if (field.getType() == String.class)
                             instance.setValue(attrIndex, (String) val);
                         ++attrIndex;
@@ -212,7 +209,7 @@ public class GazeWindow {
 
             }
         }
-        System.out.println(instance.toString());
+
         return instance;
     }
 

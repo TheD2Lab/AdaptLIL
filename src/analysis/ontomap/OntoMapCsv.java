@@ -43,8 +43,8 @@ public class OntoMapCsv {
                 "P13",
                 "P53",
                 "P23",
-//                "P43",
-//                "P67"
+                "P43",
+                "P67"
         });
     }
 
@@ -117,7 +117,7 @@ public class OntoMapCsv {
     }
     public static void main(String[] args) {
 
-        String baseDir = "E:\\datavisstudy-updated\\DataVisStudy\\Participant Data\\";
+        String baseDir = "D:\\datavisstudy-updated\\DataVisStudy\\Participant Data\\";
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
@@ -129,8 +129,7 @@ public class OntoMapCsv {
         //We
         int index = 0;
         for (String participantName : gazePointFilesByParticipant.keySet()) {
-            if (index++ % 2 == 0 || index%3 == 0 || index % 5 == 0 || index % 7 == 0)
-                continue;
+
             //foreach participant
             //Create participant object
             Participant p = new Participant(participantName);
@@ -191,7 +190,7 @@ public class OntoMapCsv {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
-        float windowSizeInMilliseconds = 500;
+        float windowSizeInMilliseconds = 2000;
         List<Instance> trainInstanceList = new ArrayList<>();
         List<Instance> testInstanceList = new ArrayList<>();
         Instances trainDataInstances = null;
@@ -264,14 +263,14 @@ public class OntoMapCsv {
                     //any window where the user got it wrong, is grouped into the bad section -> 0
                     //Hopefully we can then compute a probability that they will get it right
                     //given the current gaze data.
-                    Instance windowInstance = participantWindow.toDenseInstance(true);
-
+                    Instance windowInstance = participantWindow.toDenseInstance(false);
+                    Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false), 1);
+                    dataset.insertAttributeAt(new Attribute("correct", nominalValues), dataset.numAttributes() - 1);
                     //Set the nominal class value for each window if is correct [0,1]
                     //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
-                    windowInstance.insertAttributeAt(windowInstance.numAttributes());
+                    windowInstance.setDataset(dataset);
                     windowInstance.setValue(windowInstance.numAttributes()-1, rightOrWrongs.get(correctIndex) ? "1" : "0");
 
-                    System.out.println("shape:  " + 1+ " x " + windowInstance.numAttributes());
 
                     if (useForTrainInstances) {
                        trainInstanceList.add(windowInstance);
@@ -291,6 +290,7 @@ public class OntoMapCsv {
             }
             fileReader.close();
             csvReader.close();
+            System.out.println("processed: " + p.getId());
         }
 
 //        Classifier[] classifiers = WekaExperiment.getClassificationClassifiers();

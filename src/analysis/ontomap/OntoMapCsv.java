@@ -117,7 +117,7 @@ public class OntoMapCsv {
     }
     public static void main(String[] args) {
 
-        String baseDir = "D:\\datavisstudy-updated\\DataVisStudy\\Participant Data\\";
+        String baseDir = "E:\\datavisstudy-updated\\DataVisStudy\\Participant Data\\";
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
@@ -190,7 +190,7 @@ public class OntoMapCsv {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
-        float windowSizeInMilliseconds = 2000;
+        float windowSizeInMilliseconds = 500;
         List<Instance> trainInstanceList = new ArrayList<>();
         List<Instance> testInstanceList = new ArrayList<>();
         Instances trainDataInstances = null;
@@ -264,8 +264,10 @@ public class OntoMapCsv {
                     //Hopefully we can then compute a probability that they will get it right
                     //given the current gaze data.
                     Instance windowInstance = participantWindow.toDenseInstance(false);
+
                     Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false), 1);
                     dataset.insertAttributeAt(new Attribute("correct", nominalValues), dataset.numAttributes() - 1);
+                    dataset.setClassIndex(dataset.numAttributes()-1);
                     //Set the nominal class value for each window if is correct [0,1]
                     //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
                     windowInstance.setDataset(dataset);
@@ -320,8 +322,8 @@ public class OntoMapCsv {
         trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
 
-        OntoMapCsv.saveInstancesToFile(trainDataInstances, "trainData_2sec_window.arff");
-        OntoMapCsv.saveInstancesToFile(testDataInstances, "testData_2sec_window.arff");
+        OntoMapCsv.saveInstancesToFile(trainDataInstances, "trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
+        OntoMapCsv.saveInstancesToFile(testDataInstances, "testData_"+windowSizeInMilliseconds+"msec_window_1.arff");
         /**
         Instances trainDataInstance = allInstances.trainCV(2, 0);
         Instances testDataInstance = trainDataInstance.testCV(2, 0);
@@ -396,15 +398,21 @@ public class OntoMapCsv {
                 headerRow.indexOf("BPOGV"),
                 cells
         );
-        recXmlObject.time = Double.valueOf(cells[headerRow.stream().filter(str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1)]);
+        recXmlObject.setTime(Double.valueOf(cells[headerRow.stream().filter(str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1)]));
         recXmlObject.setFixation(fixation);
         recXmlObject.setBestPointOfGaze(bestPointOfGaze);
         recXmlObject.setLeftEyePupil(leftEyePupil);
         recXmlObject.setRightEyePupil(rightEyePupil);
+
         //Setting the ID of the fixation to null because we don't want it in our training data.
         //Temp fix, before we introduce annotations to ignore fields in instance construciton
         recXmlObject.FPOGID = null;
-
+        recXmlObject.LPCX=null;
+        recXmlObject.LPCY=null;
+        recXmlObject.LPS=null;
+        recXmlObject.RPCX=null;
+        recXmlObject.RPCY=null;
+        recXmlObject.RPS=null;
         return recXmlObject;
     }
 

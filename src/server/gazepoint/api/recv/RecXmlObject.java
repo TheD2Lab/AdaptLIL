@@ -159,7 +159,7 @@ public class RecXmlObject extends XmlObject {
 
     //----------Enable_Send_Time---------
     @JacksonXmlProperty(isAttribute = true, localName = "TIME")
-    public Double time;
+    private Double time;
     //------------Enable_Send_Time_Tick
     @JacksonXmlProperty(isAttribute = true, localName = "TIME_TICK")
     public Long timeTick;
@@ -473,5 +473,9 @@ public class RecXmlObject extends XmlObject {
         this.RPMMV = pupilDiameter.isRightEyeValid();
         this.LPMM = pupilDiameter.getDiameterOfLeftEyeInMM();
         this.LPMMV = pupilDiameter.isLeftEyeValid();
+    }
+
+    public void setTime(Double time) {
+        this.time = time;
     }
 }

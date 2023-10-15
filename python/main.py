@@ -4,14 +4,10 @@ import sklearn.metrics
 from sklearn import model_selection
 
 import tensorflow as tf
-import tensorflow.keras
 from tensorflow.keras import Sequential
-from tensorflow.keras import models
-from tensorflow.keras import optimizers
+from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense
-from tensorflow.keras import metrics
 from scipy.io import arff
-import pandas as pd
 import numpy as np
 # This is a sample Python script.
 
@@ -34,31 +30,89 @@ def print_hi(name):
 
 def getModelConfig():
     model = Sequential()
-    model.add(Dense(450, activation='relu'))
-    model.add(Dense(30, activation='relu'))
+    model.add(layers.LSTM(4, input_shape=(300,8)))
+    model.add(Dense(10, activation='relu'))
+    model.add(Dense(20, activation='relu'))
+    # model.add(Dense(130, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
     return model
 
+def convertDataToLTSMFormat(data):
+    x = []
+    y = []
+    for i in data:
+        correct = i[-1]
+        reshaped = i[:-1]
+        x.append(np.array_split(np.array(reshaped).flatten(), windowSize, axis=0))
+        # for j in range(windowSize):
+
+        y.append(correct)
+
+    x = np.array(x)
+    y = np.array(y)
+    return {'x': x, 'y': y}
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    windowSize=300
+    metrics=[
+        # tf.keras.metrics.BinaryCrossentropy(name='cross entropy'),  # same as model's loss
+        # tf.keras.metrics.MeanSquaredError(name='Brier score'),
+        tf.keras.metrics.TruePositives(name='tp'),
+        # tf.keras.metrics.FalsePositives(name='fp'),
+        tf.keras.metrics.TrueNegatives(name='tn'),
+        # tf.keras.metrics.FalseNegatives(name='fn'),
+        tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+        tf.keras.metrics.Precision(name='precision'),
+        # tf.keras.metrics.Recall(name='recall'),
+        # tf.keras.metrics.AUC(name='auc'),
+        # tf.keras.metrics.AUC(name='prc', curve='PR'),  # precision-recall curve
+
+    ]
+
     optimizers = [tf.keras.optimizers.Adam(learning_rate=1e-3), 'rmsprop']
     trainData = convertArffToDataFrame("C:\\Users\\nickj\\Documents\\trainData_2sec_window_1_no_v.arff")
-    print(trainData.shape)
     targetColumn = "correct"
-    x = trainData[:, :-1]
-    y = trainData[:,-1]
-    print(y.shape)
+
+    '''
+    Can't use reshape, must do mannualy
+    Take the 2D stretched window and make it to a 3D window represented by
+    (samples,windowSize,attributes)
+    Also pair the correct answers together.
+    '''
+    x,y = convertDataToLTSMFormat(trainData)
+    print(x.shape)
+    print(y.reshape(-1).flatten().shape)
+        #how do we add here?
+        #split the whole row by 300
+
+
+    print(y)
     #split ^^ 80/20, preserve order
-    x_train, x_test, y_train, y_test = model_selection.train_test_split(trainData, y, test_size=0.2, random_state=42, shuffle=False)
-
+    x_train, x_test, y_train, y_test = model_selection.train_test_split(x, y, test_size=0.2, random_state=0, shuffle=False)
+    print(x_train.shape)
     validationData = convertArffToDataFrame("C:\\Users\\nickj\\Documents\\testData_2sec_window_1_no_v.arff")
-    xVal = validationData[:,:-1]
-    yVal = validationData[:,-1:]
-
+    xVal, yVal = convertDataToLTSMFormat(validationData)
     model = getModelConfig()
+    '''
+    Weight biasing
+    25% are only wrong, that leads to data training bias.
+    '''
+    neg = len([i for i in y_train if i!=1])
+    # print(neg)
+    pos = len([i for i in y_train if i==1])
+    # print(pos)
+    total = len(y_train)
+    weight_for_0 = (1 / neg) * (total/2.0)
+    weight_for_1 = (1 / pos) * (total / 2.0)
+    print('weight0: ' + str(weight_for_0))
+    print('weight1: ' + str(weight_for_1))
 
     for optimizer in optimizers:
-        model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy())
-        y_hat = model.fit(x_train, y_train, validation_data=(x_test, y_test), shuffle=False, epochs=100)
-        print(sklearn.metrics.confusion_matrix(y_train, y_hat))
+        model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),metrics=metrics)
+        hist = model.fit(x_train, y_train, validation_data=(x_test, y_test), shuffle=False, epochs=10, class_weight={0: weight_for_0, 1: weight_for_1})
+        y_hat = model.predict(xVal)
+        y_hat = [(1.0 if y_pred > 0.5 else 0.0) for y_pred in y_hat]
+        print(y_hat)
+        print(sklearn.metrics.confusion_matrix(yVal, y_hat))
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

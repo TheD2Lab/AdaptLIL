@@ -5,7 +5,6 @@ from sklearn import model_selection
 import tensorflow as tf
 
 from keras.callbacks import CSVLogger
-tf.config.experimental.enable_op_determinism()
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM
@@ -18,6 +17,8 @@ resultDir = str(datetime.datetime.now()).replace(":", "_").replace(".", ",")
 os.mkdir(resultDir)
 
 outputFile = open(os.path.join(resultDir, "output.txt"), 'wt')
+
+tf.config.experimental.enable_op_determinism()
 tf.keras.utils.set_random_seed(0)
 # This is a sample Python script.
 
@@ -51,6 +52,12 @@ def getModelConfig():
     model_one_layer_ltsm.add(LSTM(4, input_shape=(300,8)))
     model_one_layer_ltsm.add(Dense(8, activation='relu'))
     model_one_layer_ltsm.add(Dense(1, activation='sigmoid'))
+
+    model_one_layer_ltsm_smaller = Sequential()
+    model_one_layer_ltsm_smaller.add(LSTM(4, input_shape=(300,8)))
+    model_one_layer_ltsm_smaller.add(Dense(8, activation='relu'))
+    model_one_layer_ltsm_smaller.add(Dense(1, activation='sigmoid'))
+
     #v2 has 4 more nodes in the intermediate dense layer
     model_one_layer_ltsm_v2 = Sequential()
     model_one_layer_ltsm_v2.add(LSTM(4, input_shape=(300,8)))
@@ -62,27 +69,30 @@ def getModelConfig():
     model_bigger_lstm.add(Dense(8, activation='relu'))
     model_bigger_lstm.add(Dense(2, activation='relu'))
     model_bigger_lstm.add(Dense(1, activation='sigmoid'))
+
     model_bigger_bigger_lstm = Sequential()
     model_bigger_bigger_lstm.add(LSTM(12, input_shape=(300, 8)))
     model_bigger_bigger_lstm.add(Dense(8, activation='relu'))
-    model_bigger_bigger_lstm.add(Dense(2, activation='relu'))
     model_bigger_bigger_lstm.add(Dense(1, activation='sigmoid'))
+
     model_bigger_biggest_lstm = Sequential()
     model_bigger_biggest_lstm.add(LSTM(16, input_shape=(300, 8)))
-    model_bigger_biggest_lstm.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm.add(Dense(2, activation='relu'))
+    model_bigger_biggest_lstm.add(Dense(4, activation='relu'))
     model_bigger_biggest_lstm.add(Dense(1, activation='sigmoid'))
+
     model_bigger_lstm_v2 = Sequential()
     model_bigger_lstm_v2.add(LSTM(8, input_shape=(300, 8)))
     model_bigger_lstm_v2.add(Dense(12, activation='relu'))
     model_bigger_lstm_v2.add(Dense(36, activation='relu'))
     model_bigger_lstm_v2.add(Dense(1, activation='sigmoid'))
+
     model_double_lstm = Sequential()
     model_double_lstm.add(LSTM(8, input_shape=(300,8), return_sequences=True))
     model_double_lstm.add(LSTM(16))
     model_double_lstm.add(Dense(8, activation='relu'))
     model_double_lstm.add(Dense(4, activation='relu'))
     model_double_lstm.add(Dense(1, activation='sigmoid'))
+
     model_double_lstm_double_layers = Sequential()
     model_double_lstm_double_layers.add(LSTM(8, input_shape=(300,8), return_sequences=True))
     model_double_lstm_double_layers.add(LSTM(16))
@@ -98,16 +108,18 @@ def getModelConfig():
     model_double_lstm_double_layers_more_nodes.add(Dense(36, activation='relu'))
     model_double_lstm_double_layers_more_nodes.add(Dense(8, activation='relu'))
     model_double_lstm_double_layers_more_nodes.add(Dense(1, activation='sigmoid'))
-    models['model_bigger_lstm'] = model_bigger_lstm;
+
+    models['model_simple_ltsm'] = model_simple_ltsm
     models['model_one_layer_ltsm'] = model_one_layer_ltsm
-    models['one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
+    models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
+    models['model_bigger_lstm'] = model_bigger_lstm;
     models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm;
+    models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
     #Past here, overfitting occurs
-    models['model_double_stm'] = model_double_lstm;
-    models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
-    models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
-    models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
-    # models['model_simple_ltsm'] = model_simple_ltsm
+    #models['model_double_stm'] = model_double_lstm;
+    #models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
+    #models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
+    #models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
 
     return models
 
@@ -194,47 +206,55 @@ if __name__ == '__main__':
     print_both('weight0: ' + str(weight_for_0))
     print_both('weight1: ' + str(weight_for_1))
 
-    for model_name,model in models.items():
+    for model_name,model_uncloned in models.items():
+        model = tf.keras.models.clone_model(model_uncloned)
         optimizers = [
-                        tf.keras.optimizers.Adam(learning_rate=85e-4),
-                        tf.keras.optimizers.Adam(learning_rate=90e-4),
-                        tf.keras.optimizers.Adam(learning_rate=95e-4),
-                        tf.keras.optimizers.Adam(learning_rate=98e-4),
-                        tf.keras.optimizers.Adam(learning_rate=99e-4),
                         tf.keras.optimizers.Adam(learning_rate=1e-3),
+                        tf.keras.optimizers.Adam(learning_rate=1.2e-3),
                         tf.keras.optimizers.Adam(learning_rate=1.4e-3),
+                        tf.keras.optimizers.Adam(learning_rate=1.8e-3),
                         tf.keras.optimizers.Adam(learning_rate=2e-3),
-                        tf.keras.optimizers.Nadam(learning_rate=88e-4),
                         tf.keras.optimizers.Nadam(learning_rate=1e-3),
+                        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
                       # tf.keras.optimizers.RMSprop
                       ]
 
         print_both("*****************************************")
         print_both(model_name)
+        temp = sys.stdout  # assign console output to a variable
+        sys.stdout = outputFile
+        model.summary()
+        sys.stdout = temp  # set stdout back to console output
+        model.summary()
         print_both("*****************************************")
         for optimizer in optimizers:
-            print_both("-------------------------------")
-            if type(optimizer) != type(''):
-                print_both("optimizer: " + str(optimizer._name) + str(optimizer.learning_rate))
-            else:
-                print_both("optimizer: " + optimizer)
-
             try:
                 print_both("-------------------------------")
-                temp = sys.stdout  # assign console output to a variable
-                sys.stdout = outputFile
-                model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),metrics=metrics)
-                hist = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=10, class_weight={0: weight_for_0, 1: weight_for_1})
-                sys.stdout = temp  # set stdout back to console output
+                if type(optimizer) != type(''):
+                    print_both("optimizer: " + str(optimizer._name) + str(optimizer.learning_rate))
+                else:
+                    print_both("optimizer: " + optimizer)
 
+                print_both("-------------------------------")
+                # temp = sys.stdout  # assign console output to a variable
+                # sys.stdout = outputFile
+                model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),metrics=metrics)
+                hist = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=20, class_weight={0: weight_for_0, 1: weight_for_1})
+                # sys.stdout = temp  # set stdout back to console output
+                hist_str = ''
+                for key in hist.history.keys():
+                    hist_str += str(key) + " : " + str(hist.history[key]) + "\n"
+                print_both(hist_str)
                 y_hat = model.predict(xVal)
                 #results = model.evlauate(xVal, yVal)
                 y_hat = [(1.0 if y_pred > 0.5 else 0.0) for y_pred in y_hat]
                 print_both(y_hat)
-
                 print_both(sklearn.metrics.confusion_matrix(yVal, y_hat, labels=[1.0,0.0]))
+                #Saving breaks the rest of the trianings and corrupts the rest of the configurations!
+                #Only save when using Linux keras 2.14!!!
+                #model.save(resultDir+"\\"+model_name+"-"+str(type(model.optimizer).__name__)+str(tf.keras.backend.eval(model.optimizer.lr)).replace(".",","))
             except:
-                pass
+                pass;
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 os.close(outputFile)

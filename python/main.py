@@ -2,8 +2,9 @@ import os, shutil
 
 import sklearn.metrics
 from sklearn import model_selection
-from keras.callbacks import CSVLogger
 import tensorflow as tf
+
+from keras.callbacks import CSVLogger
 tf.config.experimental.enable_op_determinism()
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
@@ -61,6 +62,16 @@ def getModelConfig():
     model_bigger_lstm.add(Dense(8, activation='relu'))
     model_bigger_lstm.add(Dense(2, activation='relu'))
     model_bigger_lstm.add(Dense(1, activation='sigmoid'))
+    model_bigger_bigger_lstm = Sequential()
+    model_bigger_bigger_lstm.add(LSTM(12, input_shape=(300, 8)))
+    model_bigger_bigger_lstm.add(Dense(8, activation='relu'))
+    model_bigger_bigger_lstm.add(Dense(2, activation='relu'))
+    model_bigger_bigger_lstm.add(Dense(1, activation='sigmoid'))
+    model_bigger_biggest_lstm = Sequential()
+    model_bigger_biggest_lstm.add(LSTM(16, input_shape=(300, 8)))
+    model_bigger_biggest_lstm.add(Dense(8, activation='relu'))
+    model_bigger_biggest_lstm.add(Dense(2, activation='relu'))
+    model_bigger_biggest_lstm.add(Dense(1, activation='sigmoid'))
     model_bigger_lstm_v2 = Sequential()
     model_bigger_lstm_v2.add(LSTM(8, input_shape=(300, 8)))
     model_bigger_lstm_v2.add(Dense(12, activation='relu'))
@@ -90,6 +101,8 @@ def getModelConfig():
     models['model_bigger_lstm'] = model_bigger_lstm;
     models['model_one_layer_ltsm'] = model_one_layer_ltsm
     models['one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
+    models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm;
+    #Past here, overfitting occurs
     models['model_double_stm'] = model_double_lstm;
     models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
     models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
@@ -182,19 +195,17 @@ if __name__ == '__main__':
     print_both('weight1: ' + str(weight_for_1))
 
     for model_name,model in models.items():
-        optimizers = [tf.keras.optimizers.Adam(learning_rate=1e-3),
-                      tf.keras.optimizers.Adam(learning_rate=1.4e-3),
-                      tf.keras.optimizers.Adam(learning_rate=2e-3),
-                      tf.keras.optimizers.Adam(learning_rate=1e-2),
-                      tf.keras.optimizers.Adam(learning_rate=5e-2),
-                      tf.keras.optimizers.Adam(learning_rate=9e-2),
-                      tf.keras.optimizers.Adam(learning_rate=1e-1),
-                      tf.keras.optimizers.Adam(learning_rate=9e-1),
-                      tf.keras.optimizers.Nadam(learning_rate=1e-3),
-                      tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
-                      tf.keras.optimizers.Nadam(learning_rate=1e-2),
-                      tf.keras.optimizers.Nadam(learning_rate=3e-2),
-                      tf.keras.optimizers.Nadam(learning_rate=1e-1),
+        optimizers = [
+                        tf.keras.optimizers.Adam(learning_rate=85e-4),
+                        tf.keras.optimizers.Adam(learning_rate=90e-4),
+                        tf.keras.optimizers.Adam(learning_rate=95e-4),
+                        tf.keras.optimizers.Adam(learning_rate=98e-4),
+                        tf.keras.optimizers.Adam(learning_rate=99e-4),
+                        tf.keras.optimizers.Adam(learning_rate=1e-3),
+                        tf.keras.optimizers.Adam(learning_rate=1.4e-3),
+                        tf.keras.optimizers.Adam(learning_rate=2e-3),
+                        tf.keras.optimizers.Nadam(learning_rate=88e-4),
+                        tf.keras.optimizers.Nadam(learning_rate=1e-3),
                       # tf.keras.optimizers.RMSprop
                       ]
 

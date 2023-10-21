@@ -38,6 +38,7 @@ public class OntoMapCsv {
     }
 
     private static List<String> participantIdsForTestDataSet() {
+        //We should do this randomly.
         return List.of(new String[] {
                 "P19",
                 "P13",
@@ -407,12 +408,16 @@ public class OntoMapCsv {
         //Setting the ID of the fixation to null because we don't want it in our training data.
         //Temp fix, before we introduce annotations to ignore fields in instance construciton
         recXmlObject.FPOGID = null;
+        recXmlObject.FPOGV=null;
         recXmlObject.LPCX=null;
         recXmlObject.LPCY=null;
         recXmlObject.LPS=null;
+        recXmlObject.LPV=null;
         recXmlObject.RPCX=null;
         recXmlObject.RPCY=null;
         recXmlObject.RPS=null;
+        recXmlObject.RPV=null;
+        recXmlObject.BPOGV=null;
         return recXmlObject;
     }
 

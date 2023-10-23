@@ -12,6 +12,7 @@ import weka.core.converters.ArffSaver;
 import wekaext.WekaExperiment;
 
 import java.io.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -187,6 +188,21 @@ public class OntoMapCsv {
 
     }
 
+    private static List<String> getRandomTestParticipantsIds(int numTestParticipants) {
+        String[] testParticipants = new String[numTestParticipants];
+        List<String> excludedParticipants = OntoMapCsv.discardedParticipantIds();
+        Random random = new Random();
+        for (int i = 0; i < numTestParticipants; ++i) {
+            int randomId = random.nextInt(1,81);
+            String randParticipantId = "P" + randomId;
+            while (excludedParticipants.contains(randParticipantId)) {
+                randParticipantId = "P" + random.nextInt(1, 81);
+            }
+            testParticipants[i] = randParticipantId;
+        }
+        return List.of(testParticipants);
+    }
+
     public static void testParticipantInstances(Participant[] participants) throws Exception {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
@@ -196,103 +212,107 @@ public class OntoMapCsv {
         List<Instance> testInstanceList = new ArrayList<>();
         Instances trainDataInstances = null;
         Instances testDataInstances = null;
-        List<String> participantIdsForTestDataset = OntoMapCsv.participantIdsForTestDataSet();
-        for (Participant p : participants) {
 
+        int numParticipantsForTestData = (int) Math.ceil(participants.length / 0.20); // 20% split
+        List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData);
+        for (Participant p : participants) {
 
             boolean useForTrainInstances = !participantIdsForTestDataset.contains(p.getId().toUpperCase());
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
 
             List<String> timeCutoffs = new ArrayList<>();
             List<Boolean> rightOrWrongs = new ArrayList<>();
+            File[] answersFiles = new File[]{p.getAnatomyAnswersFile(), p.getConfAnswersFile()};
+            for (File answerFile : answersFiles){
+                System.out.println("Answers file: " + answerFile.getName());
 
-            FileReader fileReader = new FileReader(p.getAnatomyAnswersFile());
-            CSVReader csvReader = new CSVReader(fileReader);
-            String[] cells = null;
-            List<String> nominalValues = new ArrayList<>();
-            nominalValues.add("1");
-            nominalValues.add("0");
+                FileReader answersFileReader = new FileReader(answerFile);
+                CSVReader answersCsvReader = new CSVReader(answersFileReader);
+                String[] cells = null;
+                List<String> nominalValues = new ArrayList<>();
+                nominalValues.add("1");
+                nominalValues.add("0");
 
-            //Retrieve the time the user answered the question and if they got it wrong/right.
-            String[] nextLine = csvReader.readNext();
-            int timeStampIndex = 8;
-            int correctIndex = 6;
-            while ((cells = csvReader.readNext()) != null) {
-                String timeCutoff = cells[timeStampIndex];
-                Boolean rightOrWrong = cells[correctIndex].equals("1");
-                timeCutoffs.add(timeCutoff);
-                System.out.println("right or worng: " + (rightOrWrong ? "true" : "false"));
-                rightOrWrongs.add(rightOrWrong);
-            }
+                //Retrieve the time the user answered the question and if they got it wrong/right.
+                String[] nextLine = answersCsvReader.readNext();
+                int timeStampIndex = 8;
+                int correctIndex = 6;
+                while ((cells = answersCsvReader.readNext()) != null) {
+                    String timeCutoff = cells[timeStampIndex];
+                    Boolean rightOrWrong = cells[correctIndex].equals("1");
+                    timeCutoffs.add(timeCutoff);
+                    System.out.println("right or worng: " + (rightOrWrong ? "true" : "false"));
+                    rightOrWrongs.add(rightOrWrong);
+                }
 
-            fileReader.close();
-            csvReader.close();
+                answersFileReader.close();
+                answersCsvReader.close();
 
-            //Read fixation file
-            fileReader = new FileReader(p.getAnatomyGazeFile());
-            csvReader = new CSVReader(fileReader);
+                //Read fixation file
+                FileReader fixationFileReader = new FileReader(p.getAnatomyGazeFile());
+                CSVReader fixationCsvReader = new CSVReader(fixationFileReader);
 
-            int currentQuestionIndex = 0;
-            List<String> headerRow = Arrays.asList(csvReader.readNext());
+                int currentQuestionIndex = 0;
+                List<String> headerRow = Arrays.asList(fixationCsvReader.readNext());
 
-            //Loop over each line of gaze data. until we reach the last question and then continue onto next participant.
-            while ((cells = csvReader.readNext()) != null && currentQuestionIndex < timeCutoffs.size() - 2) { //ignore the multiple choice question for now.
-                //read fixation data up to the timecutoff
-                float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
-                boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
+                //Loop over each line of gaze data. until we reach the last question and then continue onto next participant.
+                while ((cells = fixationCsvReader.readNext()) != null && currentQuestionIndex < timeCutoffs.size() - 2) { //ignore the multiple choice question for now.
+                    //read fixation data up to the timecutoff
+                    float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
+                    boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
 
-                RecXmlObject recXmlObject = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
-                //If we have any invalid flags, should we discard?
+                    RecXmlObject recXmlObject = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
+                    //If we have any invalid flags, should we discard?
 
-                if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
-                    System.out.println("going to next task: pwindow size: " + participantWindow.getInternalIndex());
-                    //User now on other task
-                    //If the above method doesn't work, we can weight the last window higher than the first few.
-                    incrementCurrentQuestionIndexAfterLoopLogic = true;
+                    if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
+                        System.out.println("going to next task: pwindow size: " + participantWindow.getInternalIndex());
+                        //User now on other task
+                        //If the above method doesn't work, we can weight the last window higher than the first few.
+                        incrementCurrentQuestionIndexAfterLoopLogic = true;
 
-                    //Discard current window, we don't want it because of data misalignment.
-                    if (!participantWindow.isFull())
+                        //Discard current window, we don't want it because of data misalignment.
+                        if (!participantWindow.isFull())
+                            participantWindow.flush();
+                    }
+                    //Add to windows for task
+                    participantWindow.add(recXmlObject);
+
+                    //control window size and add to taskwindows once size is too large.
+                    if (participantWindow.isFull()) {
+                        //We set all instances to have the classification right/wrong
+                        //Any window where the user got it right, is grouped into the good section -> 1
+                        //any window where the user got it wrong, is grouped into the bad section -> 0
+                        //Hopefully we can then compute a probability that they will get it right
+                        //given the current gaze data.
+                        Instance windowInstance = participantWindow.toDenseInstance(false);
+
+                        Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false), 1);
+                        dataset.insertAttributeAt(new Attribute("correct", nominalValues), dataset.numAttributes() - 1);
+                        dataset.setClassIndex(dataset.numAttributes() - 1);
+                        //Set the nominal class value for each window if is correct [0,1]
+                        //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
+                        windowInstance.setDataset(dataset);
+                        windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(correctIndex) ? "1" : "0");
+
+
+                        if (useForTrainInstances) {
+                            trainInstanceList.add(windowInstance);
+                        } else {
+                            testInstanceList.add(windowInstance);
+                        }
+                        //Clear window data by repointing to new instantiation
                         participantWindow.flush();
-                }
-                //Add to windows for task
-                participantWindow.add(recXmlObject);
 
-                //control window size and add to taskwindows once size is too large.
-                if (participantWindow.isFull()) {
-                    //We set all instances to have the classification right/wrong
-                    //Any window where the user got it right, is grouped into the good section -> 1
-                    //any window where the user got it wrong, is grouped into the bad section -> 0
-                    //Hopefully we can then compute a probability that they will get it right
-                    //given the current gaze data.
-                    Instance windowInstance = participantWindow.toDenseInstance(false);
-
-                    Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false), 1);
-                    dataset.insertAttributeAt(new Attribute("correct", nominalValues), dataset.numAttributes() - 1);
-                    dataset.setClassIndex(dataset.numAttributes()-1);
-                    //Set the nominal class value for each window if is correct [0,1]
-                    //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
-                    windowInstance.setDataset(dataset);
-                    windowInstance.setValue(windowInstance.numAttributes()-1, rightOrWrongs.get(correctIndex) ? "1" : "0");
-
-
-                    if (useForTrainInstances) {
-                       trainInstanceList.add(windowInstance);
                     }
-                    else {
-                        testInstanceList.add(windowInstance);
-                    }
-                    //Clear window data by repointing to new instantiation
-                    participantWindow.flush();
+
+
+                    if (incrementCurrentQuestionIndexAfterLoopLogic)
+                        currentQuestionIndex++;
 
                 }
-                
-
-                if (incrementCurrentQuestionIndexAfterLoopLogic)
-                    currentQuestionIndex++;
-
+                fixationFileReader.close();
+                fixationCsvReader.close();
             }
-            fileReader.close();
-            csvReader.close();
             System.out.println("processed: " + p.getId());
         }
 
@@ -322,9 +342,15 @@ public class OntoMapCsv {
 
         trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
-
-        OntoMapCsv.saveInstancesToFile(trainDataInstances, "trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
-        OntoMapCsv.saveInstancesToFile(testDataInstances, "testData_"+windowSizeInMilliseconds+"msec_window_1.arff");
+        File outputDir = new File("" + LocalDateTime.now());
+        outputDir.mkdirs();
+        FileWriter testParticipantsFile = new FileWriter(outputDir.getAbsolutePath()+"/test_participants.txt");
+        for (String participantId : participantIdsForTestDataset) {
+            testParticipantsFile.write(participantId+"\n");
+        }
+        testParticipantsFile.close();
+        OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
+        OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath()+"/testData_"+windowSizeInMilliseconds+"msec_window_1.arff");
         /**
         Instances trainDataInstance = allInstances.trainCV(2, 0);
         Instances testDataInstance = trainDataInstance.testCV(2, 0);

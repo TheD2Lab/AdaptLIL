@@ -231,8 +231,8 @@ def calc_conf_matrix_rates(conf_matrix):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     windowSize=300
-    epochs=16
-    shuffle=True
+    epochs=3
+    shuffle=False
     debug=False
 
     # if not debug:

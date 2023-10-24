@@ -17,6 +17,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * This is a hacky one time use to make training data for participants. This is really messy. please dont read it.
+ */
 public class OntoMapCsv {
 
     /**
@@ -203,45 +206,67 @@ public class OntoMapCsv {
         return List.of(testParticipants);
     }
 
+    private static void logTestParticipants(File outputDir, List<String> testParticipantIds) throws IOException {
+        FileWriter testParticipantsFile = new FileWriter(outputDir.getAbsolutePath()+"/test_participants.txt");
+
+        for (String participantId : testParticipantIds) {
+            testParticipantsFile.write(participantId+"\n");
+        }
+        testParticipantsFile.close();
+    }
     public static void testParticipantInstances(Participant[] participants) throws Exception {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
-        float windowSizeInMilliseconds = 500;
+        float windowSizeInMilliseconds = 2000;
+        int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.35); // 20% split
+
         List<Instance> trainInstanceList = new ArrayList<>();
         List<Instance> testInstanceList = new ArrayList<>();
         Instances trainDataInstances = null;
         Instances testDataInstances = null;
+        List<String> nominalValues = new ArrayList<>(Arrays.asList("1", "0"));
 
-        int numParticipantsForTestData = (int) Math.ceil(participants.length / 0.20); // 20% split
         List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData);
+
+        File outputDir = new File("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\" + LocalDateTime.now().toString().replace(':', ';'));
+        outputDir.mkdirs();
+        OntoMapCsv.logTestParticipants(outputDir, participantIdsForTestDataset);
         for (Participant p : participants) {
 
-            boolean useForTrainInstances = !participantIdsForTestDataset.contains(p.getId().toUpperCase());
+            boolean useParticipantForTrainingData = !participantIdsForTestDataset.contains(p.getId().toUpperCase());
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
 
             List<String> timeCutoffs = new ArrayList<>();
             List<Boolean> rightOrWrongs = new ArrayList<>();
-            File[] answersFiles = new File[]{p.getAnatomyAnswersFile(), p.getConfAnswersFile()};
+            File[] answersFiles = new File[]{p.getAnatomyAnswersFile()
+//            };
+                    , p.getConfAnswersFile()};
+
             for (File answerFile : answersFiles){
                 System.out.println("Answers file: " + answerFile.getName());
-
+                String[] cells = null;
                 FileReader answersFileReader = new FileReader(answerFile);
                 CSVReader answersCsvReader = new CSVReader(answersFileReader);
-                String[] cells = null;
-                List<String> nominalValues = new ArrayList<>();
-                nominalValues.add("1");
-                nominalValues.add("0");
 
+
+                int numCorrect = 0; //used for validation
+                int numWrong = 0; // used for validation
                 //Retrieve the time the user answered the question and if they got it wrong/right.
-                String[] nextLine = answersCsvReader.readNext();
+                answersCsvReader.readNext(); //Skip first line.
                 int timeStampIndex = 8;
                 int correctIndex = 6;
-                while ((cells = answersCsvReader.readNext()) != null) {
+                while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() < 13) {
                     String timeCutoff = cells[timeStampIndex];
-                    Boolean rightOrWrong = cells[correctIndex].equals("1");
+                    Boolean rightOrWrong = cells[correctIndex].trim().contains("1");
+
+                    if (rightOrWrong)
+                        numCorrect++;
+                    else
+                        numWrong++;
+
                     timeCutoffs.add(timeCutoff);
-                    System.out.println("right or worng: " + (rightOrWrong ? "true" : "false"));
+                    System.out.println("right or wrong: " + (rightOrWrong ? "true" : "false"));
                     rightOrWrongs.add(rightOrWrong);
                 }
 
@@ -249,6 +274,10 @@ public class OntoMapCsv {
                 answersCsvReader.close();
 
                 //Read fixation file
+                //@Nick
+                //TODO move this over to a method
+                //Input: fixxationFile, timecutoffs, wrong or rights, numWrong/numRight (validation)
+                //Output: Instance (train or test depends on participant id)
                 FileReader fixationFileReader = new FileReader(p.getAnatomyGazeFile());
                 CSVReader fixationCsvReader = new CSVReader(fixationFileReader);
 
@@ -256,7 +285,7 @@ public class OntoMapCsv {
                 List<String> headerRow = Arrays.asList(fixationCsvReader.readNext());
 
                 //Loop over each line of gaze data. until we reach the last question and then continue onto next participant.
-                while ((cells = fixationCsvReader.readNext()) != null && currentQuestionIndex < timeCutoffs.size() - 2) { //ignore the multiple choice question for now.
+                while ((cells = fixationCsvReader.readNext()) != null && currentQuestionIndex < rightOrWrongs.size()) { //ignore the multiple choice question for now.
                     //read fixation data up to the timecutoff
                     float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
                     boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
@@ -287,15 +316,17 @@ public class OntoMapCsv {
                         Instance windowInstance = participantWindow.toDenseInstance(false);
 
                         Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false), 1);
-                        dataset.insertAttributeAt(new Attribute("correct", nominalValues), dataset.numAttributes() - 1);
-                        dataset.setClassIndex(dataset.numAttributes() - 1);
+                        Attribute correctAttribute = new Attribute("correct", nominalValues);
+                        dataset.insertAttributeAt(correctAttribute, dataset.numAttributes());
+                        windowInstance.insertAttributeAt(windowInstance.numAttributes()); //Insert a slot for the correct attribute for the window instance
+                        dataset.setClassIndex(dataset.attribute(correctAttribute.name()).index());
                         //Set the nominal class value for each window if is correct [0,1]
                         //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
                         windowInstance.setDataset(dataset);
-                        windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(correctIndex) ? "1" : "0");
-
-
-                        if (useForTrainInstances) {
+                        windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
+                        if (useParticipantForTrainingData)
+                            System.out.println(windowInstance.numAttributes());
+                        if (useParticipantForTrainingData) {
                             trainInstanceList.add(windowInstance);
                         } else {
                             testInstanceList.add(windowInstance);
@@ -306,10 +337,21 @@ public class OntoMapCsv {
                     }
 
 
-                    if (incrementCurrentQuestionIndexAfterLoopLogic)
+                    if (incrementCurrentQuestionIndexAfterLoopLogic) {
+
+                        if (rightOrWrongs.get(currentQuestionIndex))
+                            numCorrect--;
+                        else
+                            numWrong--;
                         currentQuestionIndex++;
+                    }
 
                 }
+                System.out.println(numCorrect == 0 ? " validation passed for numCorrect" : "FAILED numCorrect");
+                System.out.println(numCorrect);
+
+                System.out.println(numWrong == 0 ? " validation passed for numWrong" : "FAILED numWrong");
+                System.out.println(numWrong);
                 fixationFileReader.close();
                 fixationCsvReader.close();
             }
@@ -324,12 +366,12 @@ public class OntoMapCsv {
         int totalNumInstance = 0;
 
         ArrayList<Attribute> attributeList = Collections.list(trainInstanceList.get(0).enumerateAttributes());
-
+        attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
         //Merging all instances together again.
         trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
         testDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
 
-        //Set Class index for last attribute.
+        //Set Class index for last attribute (correct attr).
         trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
 
@@ -342,13 +384,8 @@ public class OntoMapCsv {
 
         trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
-        File outputDir = new File("" + LocalDateTime.now());
-        outputDir.mkdirs();
-        FileWriter testParticipantsFile = new FileWriter(outputDir.getAbsolutePath()+"/test_participants.txt");
-        for (String participantId : participantIdsForTestDataset) {
-            testParticipantsFile.write(participantId+"\n");
-        }
-        testParticipantsFile.close();
+
+
         OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
         OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath()+"/testData_"+windowSizeInMilliseconds+"msec_window_1.arff");
         /**

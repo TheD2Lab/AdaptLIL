@@ -20,8 +20,8 @@ os.mkdir(resultDir)
 
 outputFile = open(os.path.join(resultDir, "output.txt"), 'wt')
 
-tf.config.experimental.enable_op_determinism()
-tf.keras.utils.set_random_seed(0)
+# tf.config.experimental.enable_op_determinism()
+# tf.keras.utils.set_random_seed(0)
 # This is a sample Python script.
 
 # Press Shift+F10 to execute it or replace it with your code.
@@ -177,16 +177,16 @@ def getModelConfig():
     models['model_one_layer_ltsm'] = model_one_layer_ltsm
     models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
     models['model_bigger_lstm'] = model_bigger_lstm;
-    models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
+#     models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
     models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
-    models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
-    models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
-    models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
-    models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
-    models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
-    models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
-    models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
-    models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
+    # models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
+    # models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
+    # models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
+    # models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
+    # models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
+    # models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
+    # models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
+    # models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
     models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
     #Past here, overfitting occurs
     # models['model_double_stm'] = model_double_lstm;
@@ -197,13 +197,15 @@ def getModelConfig():
 
     return models
 
-def convertDataToLTSMFormat(data):
+def convertDataToLTSMFormat(data,windowSize):
     x = []
     y = []
     for i in data:
         correct = i[-1]
-        reshaped = i[:-1]
-        x.append(np.array_split(np.array(reshaped).flatten(), windowSize, axis=0))
+        reshaped = np.array(i[:-1], dtype=np.float32)
+
+        split_data = np.array(np.array_split(np.array(reshaped).flatten(), windowSize, axis=0))
+        x.append(split_data)
         # for j in range(windowSize):
 
         y.append(correct)
@@ -228,17 +230,17 @@ def calc_conf_matrix_rates(conf_matrix):
         'true_negative': true_negative
     }
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    windowSize=300
-    epochs=3
-    shuffle=False
-    debug=False
-
-    # if not debug:
-    #     sys.stdout = open(os.path.join(resultDir,'output.txt'), 'wt')
-    # csvLogger = CSVLogger(os.path.join(resultDir, "log.csv"), append=True)
-    metrics=[
+def get_weight_bias(y_data):
+    neg = len([i for i in y_data if i == 0])
+    # print(neg)
+    pos = len([i for i in y_data if i == 1])
+    # print(pos)
+    total = len(y_data)
+    weight_for_0 = (1 / neg) * (total / 2.0)  # TODO, pay more attention to this sample.
+    weight_for_1 = (1 / pos) * (total / 2.0)
+    return {0: weight_for_0, 1: weight_for_1}
+def get_metrics_for_model():
+    return [
         # tf.keras.metrics.BinaryCrossentropy(name='cross entropy'),  # same as model's loss
         # tf.keras.metrics.MeanSquaredError(name='Brier score'),
         tf.keras.metrics.TruePositives(name='tp'),
@@ -253,7 +255,16 @@ if __name__ == '__main__':
 
     ]
 
-    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Documents\\trainData_2sec_window_1_no_v.arff")
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    windowSize=300
+    epochs=16    #20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    shuffle=True
+
+
+
+    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500\\trainData_2000.0mssec_window_1.arff")
+    # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
 
     '''
@@ -262,7 +273,7 @@ if __name__ == '__main__':
     (samples,windowSize,attributes)
     Also pair the correct answers together.
     '''
-    x,y = convertDataToLTSMFormat(trainData)
+    x,y = convertDataToLTSMFormat(trainData,windowSize)
     print_both(x.shape)
     print_both(y.reshape(-1).flatten().shape)
     print_both('epochs: ' + str(epochs))
@@ -275,22 +286,18 @@ if __name__ == '__main__':
     #split ^^ 80/20, preserve order
     x_train, x_test, y_train, y_test = model_selection.train_test_split(x, y, test_size=0.2, random_state=0, shuffle=shuffle)
     print_both(x_train.shape)
-    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Documents\\testData_2sec_window_1_no_v.arff")
-    xVal, yVal = convertDataToLTSMFormat(validationData)
+    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500\\testData_2000.0msec_window_1.arff")
+    # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
+    xVal, yVal = convertDataToLTSMFormat(validationData, windowSize)
     models = getModelConfig()
     '''
     Weight biasing
     25% are only wrong, that leads to data training bias.
     '''
-    neg = len([i for i in y_train if i!=1])
-    # print(neg)
-    pos = len([i for i in y_train if i==1])
-    # print(pos)
-    total = len(y_train)
-    weight_for_0 = (1 / neg) * (total/2.0) #TODO, pay more attention to this sample.
-    weight_for_1 = (1 / pos) * (total / 2.0)
-    print_both('weight0: ' + str(weight_for_0))
-    print_both('weight1: ' + str(weight_for_1))
+    weights = get_weight_bias(y_train)
+
+    print_both('weight0: ' + str(weights[0]))
+    print_both('weight1: ' + str(weights[1]))
     all_models_by_tp_and_tn = {};
 
     for model_name,model_uncloned in models.items():
@@ -330,23 +337,15 @@ if __name__ == '__main__':
         print_both("*****************************************")
         for optimizer in optimizers:
             try:
-                unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
-                    tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
+                unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
+
                 print_both("-------------------------------")
                 print_both("unique model id: " + unique_model_id)
-                if type(optimizer) != type(''):
-                    print_both("optimizer: " + str(optimizer._name) + str(optimizer.learning_rate))
-                else:
-                    print_both("optimizer: " + optimizer)
-
+                print_both("optimizer: " + str(optimizer._name) + str(optimizer.learning_rate))
                 print_both("-------------------------------")
 
-                # temp = sys.stdout  # assign console output to a variable
-                # sys.stdout = outputFile
-                model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),metrics=metrics)
-                #20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
-                hist = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, class_weight={0: weight_for_0, 1: weight_for_1}, shuffle=shuffle)
-                # sys.stdout = temp  # set stdout back to console output
+                model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),metrics=get_metrics_for_model())
+                hist = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, class_weight=weights, shuffle=shuffle)
                 hist_str = ''
                 for key in hist.history.keys():
                     hist_str += str(key) + " : " + str(hist.history[key]) + "\n"
@@ -354,7 +353,7 @@ if __name__ == '__main__':
                 y_hat = model.predict(xVal)
                 #results = model.evlauate(xVal, yVal)
                 y_hat = [(1.0 if y_pred > 0.5 else 0.0) for y_pred in y_hat]
-                print_both(y_hat)
+
                 conf_matrix = sklearn.metrics.confusion_matrix(yVal, y_hat, labels=[1.0,0.0])
                 all_models_by_tp_and_tn[unique_model_id] = conf_matrix
                 print_both(conf_matrix)

@@ -159,7 +159,8 @@ public class GazeWindow {
                                 attributeName = i +"_"+ j;
                             else
                                 attributeName = field.getName() + "_" + i;
-
+//                                if (i == 299 && field.getName().equals("RPD"))
+//                                    System.out.println(attributeName);
                             attributeList.add(new Attribute(attributeName));
                         }
 

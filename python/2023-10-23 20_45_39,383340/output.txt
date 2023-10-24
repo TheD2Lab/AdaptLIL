@@ -1,0 +1,217 @@
+(15346, 300)
+(15346,)
+epochs: 1
+Shuffle: True
+[1. 1. 1. ... 1. 1. 1.]
+(12276, 300)
+weight0: 3.5194954128440368
+weight1: 0.5827952905431067
+*****************************************
+model_simple_ltsm
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm (LSTM)                 (None, 4)                 208       
+                                                                 
+ dense (Dense)               (None, 8)                 40        
+                                                                 
+ dense_1 (Dense)             (None, 16)                144       
+                                                                 
+ dense_2 (Dense)             (None, 4)                 68        
+                                                                 
+ dense_3 (Dense)             (None, 1)                 5         
+                                                                 
+=================================================================
+Total params: 465
+Trainable params: 465
+Non-trainable params: 0
+_________________________________________________________________
+*****************************************
+-------------------------------
+unique model id: model_simple_ltsm-Adagrad0,008
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.008>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-SGD0,08
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.08>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adagrad0,001
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.001>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adagrad0,0015
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0015>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adagrad0,002
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.002>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-SGD0,01
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.01>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-SGD0,012
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.012>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-SGD0,015
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.015>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adam0,001
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.001>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adam0,0012
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0012>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adam0,0014
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0014>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adam0,0018
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0018>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adam0,002
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.002>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Adam0,01
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.01>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Nadam0,001
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.001>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Nadam0,0015
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0015>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Nadam0,002
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.002>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Nadam0,01
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.01>
+-------------------------------
+-------------------------------
+unique model id: model_simple_ltsm-Nadam0,1
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.1>
+-------------------------------
+*****************************************
+model_one_layer_ltsm
+Model: "sequential_1"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm_1 (LSTM)               (None, 4)                 208       
+                                                                 
+ dense_4 (Dense)             (None, 8)                 40        
+                                                                 
+ dense_5 (Dense)             (None, 1)                 9         
+                                                                 
+=================================================================
+Total params: 257
+Trainable params: 257
+Non-trainable params: 0
+_________________________________________________________________
+*****************************************
+-------------------------------
+unique model id: model_one_layer_ltsm-Adagrad0,008
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.008>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-SGD0,08
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.08>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adagrad0,001
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.001>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adagrad0,0015
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0015>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adagrad0,002
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.002>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-SGD0,01
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.01>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-SGD0,012
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.012>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-SGD0,015
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.015>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adam0,001
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.001>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adam0,0012
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0012>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adam0,0014
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0014>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adam0,0018
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0018>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adam0,002
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.002>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Adam0,01
+optimizer: Adam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.01>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Nadam0,001
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.001>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Nadam0,0015
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.0015>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Nadam0,002
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.002>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Nadam0,01
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.01>
+-------------------------------
+-------------------------------
+unique model id: model_one_layer_ltsm-Nadam0,1
+optimizer: Nadam<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.1>
+-------------------------------
+*****************************************
+model_one_layer_ltsm_v2
+Model: "sequential_3"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm_3 (LSTM)               (None, 4)                 208       
+                                                                 
+ dense_8 (Dense)             (None, 12)                60        
+                                                                 
+ dense_9 (Dense)             (None, 1)                 13        
+                                                                 
+=================================================================
+Total params: 281
+Trainable params: 281
+Non-trainable params: 0
+_________________________________________________________________

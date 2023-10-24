@@ -20,8 +20,8 @@ os.mkdir(resultDir)
 
 outputFile = open(os.path.join(resultDir, "output.txt"), 'wt')
 
-# tf.config.experimental.enable_op_determinism()
-# tf.keras.utils.set_random_seed(0)
+tf.config.experimental.enable_op_determinism()
+tf.keras.utils.set_random_seed(0)
 # This is a sample Python script.
 
 # Press Shift+F10 to execute it or replace it with your code.
@@ -177,16 +177,16 @@ def getModelConfig():
     models['model_one_layer_ltsm'] = model_one_layer_ltsm
     models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
     models['model_bigger_lstm'] = model_bigger_lstm;
-#     models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
+    models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
     models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
-    # models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
-    # models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
-    # models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
-    # models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
-    # models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
-    # models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
-    # models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
-    # models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
+    models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
+    models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
+    models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
+    models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
+    models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
+    models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
+    models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
+    models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
     models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
     #Past here, overfitting occurs
     # models['model_double_stm'] = model_double_lstm;
@@ -254,16 +254,41 @@ def get_metrics_for_model():
         # tf.keras.metrics.AUC(name='prc', curve='PR'),  # precision-recall curve
 
     ]
+def get_optimizers():
+    return [
+        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        # tf.keras.optimizers.SGD(learning_rate=0.001),
+        # tf.keras.optimizers.SGD(learning_rate=0.008),
+        # tf.keras.optimizers.SGD(learning_rate=0.04),
+        # tf.keras.optimizers.SGD(learning_rate=0.08),
+        tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
+        # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
+        tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
+        # tf.keras.optimizers.SGD(learning_rate=0.01),
+        # tf.keras.optimizers.SGD(learning_rate=0.012),
+        # tf.keras.optimizers.SGD(learning_rate=0.015),
+        tf.keras.optimizers.Adam(learning_rate=1e-3),
+        tf.keras.optimizers.Adam(learning_rate=1.2e-3),
+        tf.keras.optimizers.Adam(learning_rate=1.4e-3),
+        tf.keras.optimizers.Adam(learning_rate=1.8e-3),
+        tf.keras.optimizers.Adam(learning_rate=2e-3),
+        tf.keras.optimizers.Adam(learning_rate=1e-2),
+        tf.keras.optimizers.Nadam(learning_rate=1e-3),
+        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        tf.keras.optimizers.Nadam(learning_rate=2e-3),
+        tf.keras.optimizers.Nadam(learning_rate=1e-2),
+        tf.keras.optimizers.Nadam(learning_rate=1e-1),
 
+        # tf.keras.optimizers.RMSprop
+    ]
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     windowSize=300
-    epochs=16    #20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
-    shuffle=True
+    epochs=20    #20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    shuffle=False
+    consoleOut = sys.stdout  # assign console output to a variable
 
-
-
-    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500\\trainData_2000.0mssec_window_1.arff")
+    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;36;37.310313800 anat,conf\\trainData_2000.0mssec_window_1.arff")
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
 
@@ -286,7 +311,7 @@ if __name__ == '__main__':
     #split ^^ 80/20, preserve order
     x_train, x_test, y_train, y_test = model_selection.train_test_split(x, y, test_size=0.2, random_state=0, shuffle=shuffle)
     print_both(x_train.shape)
-    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500\\testData_2000.0msec_window_1.arff")
+    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;36;37.310313800 anat,conf\\testData_2000.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
     xVal, yVal = convertDataToLTSMFormat(validationData, windowSize)
     models = getModelConfig()
@@ -299,41 +324,20 @@ if __name__ == '__main__':
     print_both('weight0: ' + str(weights[0]))
     print_both('weight1: ' + str(weights[1]))
     all_models_by_tp_and_tn = {};
+    all_models_stats = []
 
     for model_name,model_uncloned in models.items():
         model = tf.keras.models.clone_model(model_uncloned)
-        optimizers = [
-                        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
-                        tf.keras.optimizers.SGD(learning_rate=0.08),
-                        tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
-                        tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
-                        tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
-                        tf.keras.optimizers.SGD(learning_rate=0.01),
-                        tf.keras.optimizers.SGD(learning_rate=0.012),
-                        tf.keras.optimizers.SGD(learning_rate=0.015),
-                        tf.keras.optimizers.Adam(learning_rate=1e-3),
-                        tf.keras.optimizers.Adam(learning_rate=1.2e-3),
-                        tf.keras.optimizers.Adam(learning_rate=1.4e-3),
-                        tf.keras.optimizers.Adam(learning_rate=1.8e-3),
-                        tf.keras.optimizers.Adam(learning_rate=2e-3),
-                        tf.keras.optimizers.Adam(learning_rate=1e-2),
-                        tf.keras.optimizers.Nadam(learning_rate=1e-3),
-                        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
-                        tf.keras.optimizers.Nadam(learning_rate=2e-3),
-                        tf.keras.optimizers.Nadam(learning_rate=1e-2),
-                        tf.keras.optimizers.Nadam(learning_rate=1e-1),
-
-
-            # tf.keras.optimizers.RMSprop
-                      ]
+        optimizers = get_optimizers()
 
         print_both("*****************************************")
         print_both(model_name)
-        temp = sys.stdout  # assign console output to a variable
+
         sys.stdout = outputFile
         model.summary()
-        sys.stdout = temp  # set stdout back to console output
+        sys.stdout = consoleOut  # set stdout back to console output
         model.summary()
+
         print_both("*****************************************")
         for optimizer in optimizers:
             try:
@@ -352,11 +356,20 @@ if __name__ == '__main__':
                 print_both(hist_str)
                 y_hat = model.predict(xVal)
                 #results = model.evlauate(xVal, yVal)
-                y_hat = [(1.0 if y_pred > 0.5 else 0.0) for y_pred in y_hat]
+                y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
 
+                '''
+                Metrics
+                '''
                 conf_matrix = sklearn.metrics.confusion_matrix(yVal, y_hat, labels=[1.0,0.0])
                 all_models_by_tp_and_tn[unique_model_id] = conf_matrix
                 print_both(conf_matrix)
+
+                all_models_stats.append({
+                    'model_name': model_name, 'optimizer' : str(type(optimizer).__name__), 'lr': str(tf.keras.backend.eval(optimizer.lr)),
+                    'accuracy': hist.history['accuracy'],
+                    'val_accuracy': hist.history['val_accuracy']
+                })
                 #Saving breaks the rest of the trianings and corrupts the rest of the configurations!
                 #Only save when using Linux keras 2.14!!!
                 # model.save(resultDir+"\\"+unique_model_id)

@@ -14,7 +14,7 @@ from scipy.io import arff
 import numpy as np
 import datetime
 import sys
-
+import csv
 resultDir = str(datetime.datetime.now()).replace(":", "_").replace(".", ",")
 os.mkdir(resultDir)
 
@@ -173,26 +173,30 @@ def getModelConfig():
     model_ltsm_straight_to_output.add(LSTM(8, input_shape=(300,8)))
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
 
-    models['model_simple_ltsm'] = model_simple_ltsm
-    models['model_one_layer_ltsm'] = model_one_layer_ltsm
-    models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
-    models['model_bigger_lstm'] = model_bigger_lstm;
-    models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
+    # models['model_simple_ltsm'] = model_simple_ltsm
+    # models['model_one_layer_ltsm'] = model_one_layer_ltsm
+    # models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
+    # models['model_bigger_lstm'] = model_bigger_lstm;
+    # models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
     models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
-    models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
-    models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
-    models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
+    # models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
+    # models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
+    # models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
+    '''
     models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
     models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
     models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
     models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
     models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
     models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
+    '''
     #Past here, overfitting occurs
     # models['model_double_stm'] = model_double_lstm;
+    '''
     models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
     models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
-    models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
+    '''
+    # models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
     # models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
 
     return models
@@ -236,8 +240,8 @@ def get_weight_bias(y_data):
     pos = len([i for i in y_data if i == 1])
     # print(pos)
     total = len(y_data)
-    weight_for_0 = (1 / neg) * (total / 2.0)  # TODO, pay more attention to this sample.
-    weight_for_1 = (1 / pos) * (total / 2.0)
+    weight_for_0 = (1 / neg) * (total / 2.0)
+    weight_for_1 = (1 / pos) * (total / 2.0) * 1.1 # TODO, pay more attention to this weight distrib.
     return {0: weight_for_0, 1: weight_for_1}
 def get_metrics_for_model():
     return [
@@ -284,8 +288,8 @@ def get_optimizers():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     windowSize=300
-    epochs=20    #20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
-    shuffle=False
+    epochs=30    #20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    shuffle=True
     consoleOut = sys.stdout  # assign console output to a variable
 
     trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;36;37.310313800 anat,conf\\trainData_2000.0mssec_window_1.arff")
@@ -349,7 +353,11 @@ if __name__ == '__main__':
                 print_both("-------------------------------")
 
                 model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),metrics=get_metrics_for_model())
-                hist = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, class_weight=weights, shuffle=shuffle)
+                hist = model.fit(x_train, y_train,
+                                 validation_data=(x_test, y_test),
+                                 epochs=epochs,
+                                 class_weight=weights,
+                                 shuffle=shuffle)
                 hist_str = ''
                 for key in hist.history.keys():
                     hist_str += str(key) + " : " + str(hist.history[key]) + "\n"
@@ -368,7 +376,9 @@ if __name__ == '__main__':
                 all_models_stats.append({
                     'model_name': model_name, 'optimizer' : str(type(optimizer).__name__), 'lr': str(tf.keras.backend.eval(optimizer.lr)),
                     'accuracy': hist.history['accuracy'],
-                    'val_accuracy': hist.history['val_accuracy']
+                    'val_accuracy': hist.history['val_accuracy'],
+                    'tp %': str(conf_matrix[0][0]/(conf_matrix[0][0]+conf_matrix[0][1])),
+                    'tn %': str(conf_matrix[1][1]/(conf_matrix[1][1]+conf_matrix[1][0]))
                 })
                 #Saving breaks the rest of the trianings and corrupts the rest of the configurations!
                 #Only save when using Linux keras 2.14!!!
@@ -386,6 +396,11 @@ if __name__ == '__main__':
         print_both(model_id)
         print_both(conf_matrix)
         print_both('tn: %: ' + str(conf_matrix[1][1]/(conf_matrix[1][1]+conf_matrix[1][0])) + ' tp %: ' + str(conf_matrix[0][0]/(conf_matrix[0][0]+conf_matrix[0][1])))
+    keys = all_models_stats[0].keys()
 
+    with open(os.path.join(resultDir, 'modelResults.csv'),  'w', encoding='utf8', newline='') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(all_models_stats)
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 # os.close(outputFile)

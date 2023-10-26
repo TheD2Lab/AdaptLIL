@@ -1,0 +1,37 @@
+(7775, 300, 8)
+(7775,)
+epochs: 30
+Shuffle: True
+[1. 1. 1. ... 1. 1. 1.]
+(6220, 300, 8)
+weight0: 1.5932377049180328
+weight1: 0.7286785379568885
+*****************************************
+model_bigger_biggest_lstm_v8
+Model: "sequential_14"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm_14 (LSTM)              (None, 256)               271360    
+                                                                 
+ dense_36 (Dense)            (None, 8)                 2056      
+                                                                 
+ dense_37 (Dense)            (None, 8)                 72        
+                                                                 
+ dense_38 (Dense)            (None, 8)                 72        
+                                                                 
+ dense_39 (Dense)            (None, 8)                 72        
+                                                                 
+ dense_40 (Dense)            (None, 8)                 72        
+                                                                 
+ dense_41 (Dense)            (None, 8)                 72        
+                                                                 
+ dense_42 (Dense)            (None, 8)                 72        
+                                                                 
+ dense_43 (Dense)            (None, 1)                 9         
+                                                                 
+=================================================================
+Total params: 273,857
+Trainable params: 273,857
+Non-trainable params: 0
+_________________________________________________________________

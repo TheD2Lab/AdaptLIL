@@ -1,0 +1,66 @@
+(13696, 300, 8)
+(13696,)
+epochs: 30
+Shuffle: True
+[1. 1. 1. ... 1. 1. 1.]
+(10956, 300, 8)
+weight0: 2.973941368078176
+weight1: 1.5066006600660065
+*****************************************
+model_stacked_v6
+Model: "sequential_18"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ lstm_17 (LSTM)              (None, 64)                18688     
+                                                                 
+ repeat_vector (RepeatVector  (None, 8, 64)            0         
+ )                                                               
+                                                                 
+ lstm_18 (LSTM)              (None, 64)                33024     
+                                                                 
+ repeat_vector_1 (RepeatVect  (None, 8, 64)            0         
+ or)                                                             
+                                                                 
+ lstm_19 (LSTM)              (None, 64)                33024     
+                                                                 
+ repeat_vector_2 (RepeatVect  (None, 8, 64)            0         
+ or)                                                             
+                                                                 
+ lstm_20 (LSTM)              (None, 64)                33024     
+                                                                 
+ repeat_vector_3 (RepeatVect  (None, 8, 64)            0         
+ or)                                                             
+                                                                 
+ lstm_21 (LSTM)              (None, 64)                33024     
+                                                                 
+ repeat_vector_4 (RepeatVect  (None, 8, 64)            0         
+ or)                                                             
+                                                                 
+ lstm_22 (LSTM)              (None, 64)                33024     
+                                                                 
+ repeat_vector_5 (RepeatVect  (None, 8, 64)            0         
+ or)                                                             
+                                                                 
+ lstm_23 (LSTM)              (None, 64)                33024     
+                                                                 
+ repeat_vector_6 (RepeatVect  (None, 8, 64)            0         
+ or)                                                             
+                                                                 
+ time_distributed (TimeDistr  (None, 8, 1)             65        
+ ibuted)                                                         
+                                                                 
+=================================================================
+Total params: 216,897
+Trainable params: 216,897
+Non-trainable params: 0
+_________________________________________________________________
+*****************************************
+-------------------------------
+unique model id: model_stacked_v6-SGD1e-04
+optimizer: SGD<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=1e-04>
+-------------------------------
+-------------------------------
+unique model id: model_stacked_v6-Adagrad0,001
+optimizer: Adagrad<tf.Variable 'learning_rate:0' shape=() dtype=float32, numpy=0.001>
+-------------------------------

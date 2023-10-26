@@ -324,8 +324,7 @@ public class OntoMapCsv {
                         //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
                         windowInstance.setDataset(dataset);
                         windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
-                        if (useParticipantForTrainingData)
-                            System.out.println(windowInstance.numAttributes());
+
                         if (useParticipantForTrainingData) {
                             trainInstanceList.add(windowInstance);
                         } else {

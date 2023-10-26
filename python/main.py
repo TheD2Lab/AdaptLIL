@@ -3,10 +3,12 @@ import os, shutil
 from collections import OrderedDict
 
 import sklearn.metrics
+from keras.layers import RepeatVector, TimeDistributed
 from sklearn import model_selection
 import tensorflow as tf
 
 from keras.callbacks import CSVLogger
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM
@@ -51,7 +53,7 @@ def getModelConfig():
     model_simple_ltsm.add(Dense(1, activation='sigmoid'))
 
     model_one_layer_ltsm = Sequential()
-    model_one_layer_ltsm.add(LSTM(4, input_shape=(300,8)))
+    model_one_layer_ltsm.add(LSTM(2400, input_shape=(300,8)))
     model_one_layer_ltsm.add(Dense(8, activation='relu'))
     model_one_layer_ltsm.add(Dense(1, activation='sigmoid'))
 
@@ -133,6 +135,57 @@ def getModelConfig():
     model_bigger_biggest_lstm_v8.add(Dense(8, activation='leaky_relu'))
     model_bigger_biggest_lstm_v8.add(Dense(1, activation='sigmoid'))
 
+    model_bigger_biggest_lstm_v12_half_bank = Sequential()
+    model_bigger_biggest_lstm_v12_half_bank.add(LSTM(256, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='leaky_relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='leaky_relu'))
+    model_bigger_biggest_lstm_v12_half_bank.add(Dense(1, activation='sigmoid'))
+
+    model_bigger_biggest_lstm_v16 = Sequential()
+    model_bigger_biggest_lstm_v16.add(LSTM(256, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(16, activation='leaky_relu'))
+    model_bigger_biggest_lstm_v16.add(Dense(1, activation='sigmoid'))
+    model_bigger_biggest_lstm_v16 = Sequential()
+
+    '''
+    Inspired by https://arxiv.org/abs/1406.1078
+    and my love for cars,
+    Imagine a DOHC engine. For each cylinder, there are two cam shafts per bank of cylinder head. One shaft for intake valves, and the other for exhaust valves.
+    Each bank will look like this intake -> cylinder -> exhaust.
+    The RNN will look like this: Dense -> LSTM -> Dense
+    we can think of each lstm as a 'cyinder', remembering and storing data, dense nodes are used for information traversal.
+    
+    '''
+    model_stacked_v6 = Sequential()
+    model_stacked_v6.add(LSTM(256, input_shape=(300, 8), return_sequences=True))
+    model_stacked_v6.add(LSTM(256, return_sequences=True))
+    model_stacked_v6.add(LSTM(128, return_sequences=True))
+    model_stacked_v6.add(LSTM(128, return_sequences=True))
+
+    model_stacked_v6.add(LSTM(64, ))
+    model_stacked_v6.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v9 = Sequential()
     model_bigger_biggest_lstm_v9.add(LSTM(128, input_shape=(300, 8)))
@@ -174,40 +227,77 @@ def getModelConfig():
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
 
     # models['model_simple_ltsm'] = model_simple_ltsm
-    # models['model_one_layer_ltsm'] = model_one_layer_ltsm
+    models['model_one_layer_ltsm'] = model_one_layer_ltsm
     # models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
     # models['model_bigger_lstm'] = model_bigger_lstm;
     # models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
-    models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
+    # models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
     # models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
     # models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
     # models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
-    '''
-    models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
-    models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
-    models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
+
+
+
+    # models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
+    # models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
+    # models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
     models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
-    models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
-    models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
-    '''
+    # models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
+    # models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
+    # models['model_bigger_biggest_lstm_v12_half_bank'] = model_bigger_biggest_lstm_v12_half_bank
+    # models['model_bigger_biggest_lstm_v16'] = model_bigger_biggest_lstm_v16
     #Past here, overfitting occurs
     # models['model_double_stm'] = model_double_lstm;
-    '''
-    models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
-    models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
-    '''
+    # models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
+    # models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
     # models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
     # models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
 
-    return models
 
+    '''Unique Architectures'''
+    # models['model_stacked_v6'] = model_stacked_v6
+    return models
+def normalizeData(data):
+    '''
+    Given 3D data
+    [
+        window_0[
+            poll_0: [
+
+                [attr_0,...,attr_8], size k = 8
+            ],
+            ...
+            poll_n (300): [
+                [attr_0,...,attr_8],
+            ]
+        ]
+        window_m[]
+    where m = # of windows, n = # of sequences per window
+    calculate the min an max for each attribute_k
+    '''
+
+    #get min max
+    attribute_min_max = {}
+    for i in range(len(data)):
+        for j in range(len(data[i])):
+            for k in range(len(data[i][j])):
+                if (k not in attribute_min_max):
+                    attribute_min_max[k] = {'min': float('inf'), 'max': float('-inf') }
+                else:
+                    attribute_min_max[k]['min'] = min(attribute_min_max[k]['min'], data[i][j][k])
+                    attribute_min_max[k]['max'] = max(attribute_min_max[k]['max'], data[i][j][k])
+    #normalize and return
+    for i in range(len(data)):
+        for j in range(len(data[i])):
+            for k in range(len(data[i][j])):
+                data[i][j][k] = (data[i][j][k] - attribute_min_max[k]['min']) / (attribute_min_max[k]['max'] - attribute_min_max[k]['min'])
+    return data
 def convertDataToLTSMFormat(data,windowSize):
     x = []
     y = []
     for i in data:
         correct = i[-1]
         reshaped = np.array(i[:-1], dtype=np.float32)
-
         split_data = np.array(np.array_split(np.array(reshaped).flatten(), windowSize, axis=0))
         x.append(split_data)
         # for j in range(windowSize):
@@ -241,7 +331,7 @@ def get_weight_bias(y_data):
     # print(pos)
     total = len(y_data)
     weight_for_0 = (1 / neg) * (total / 2.0)
-    weight_for_1 = (1 / pos) * (total / 2.0) * 1.1 # TODO, pay more attention to this weight distrib.
+    weight_for_1 = (1 / pos) * (total / 2.0) # TODO, pay more attention to this weight distrib.
     return {0: weight_for_0, 1: weight_for_1}
 def get_metrics_for_model():
     return [
@@ -260,28 +350,35 @@ def get_metrics_for_model():
     ]
 def get_optimizers():
     return [
-        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
-        # tf.keras.optimizers.SGD(learning_rate=0.001),
+        #tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
         # tf.keras.optimizers.SGD(learning_rate=0.04),
         # tf.keras.optimizers.SGD(learning_rate=0.08),
-        tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
+
+        #tf.keras.optimizers.Adagrad(learning_rate=0.0013, name='Adagrad'),
+        #tf.keras.optimizers.Adagrad(learning_rate=0.0014, name='Adagrad'),
+        #tf.keras.optimizers.Adagrad(learning_rate=0.0011, name='Adagrad'),
+
+        # tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
-        tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
+       # tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
         # tf.keras.optimizers.SGD(learning_rate=0.01),
         # tf.keras.optimizers.SGD(learning_rate=0.012),
         # tf.keras.optimizers.SGD(learning_rate=0.015),
+
         tf.keras.optimizers.Adam(learning_rate=1e-3),
-        tf.keras.optimizers.Adam(learning_rate=1.2e-3),
+        #tf.keras.optimizers.Adam(learning_rate=1.2e-3),
         tf.keras.optimizers.Adam(learning_rate=1.4e-3),
-        tf.keras.optimizers.Adam(learning_rate=1.8e-3),
-        tf.keras.optimizers.Adam(learning_rate=2e-3),
-        tf.keras.optimizers.Adam(learning_rate=1e-2),
-        tf.keras.optimizers.Nadam(learning_rate=1e-3),
-        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
-        tf.keras.optimizers.Nadam(learning_rate=2e-3),
-        tf.keras.optimizers.Nadam(learning_rate=1e-2),
-        tf.keras.optimizers.Nadam(learning_rate=1e-1),
+        # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
+
+        #tf.keras.optimizers.Adam(learning_rate=2e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1e-2),
+        #tf.keras.optimizers.Nadam(learning_rate=1e-3),
+        # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        # tf.keras.optimizers.Nadam(learning_rate=2e-3),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-2),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-1),
 
         # tf.keras.optimizers.RMSprop
     ]
@@ -292,7 +389,7 @@ if __name__ == '__main__':
     shuffle=True
     consoleOut = sys.stdout  # assign console output to a variable
 
-    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;36;37.310313800 anat,conf\\trainData_2000.0mssec_window_1.arff")
+    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500 anat\\trainData_2000.0mssec_window_1.arff")
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
 
@@ -303,6 +400,7 @@ if __name__ == '__main__':
     Also pair the correct answers together.
     '''
     x,y = convertDataToLTSMFormat(trainData,windowSize)
+    x = normalizeData(x)
     print_both(x.shape)
     print_both(y.reshape(-1).flatten().shape)
     print_both('epochs: ' + str(epochs))
@@ -315,9 +413,10 @@ if __name__ == '__main__':
     #split ^^ 80/20, preserve order
     x_train, x_test, y_train, y_test = model_selection.train_test_split(x, y, test_size=0.2, random_state=0, shuffle=shuffle)
     print_both(x_train.shape)
-    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;36;37.310313800 anat,conf\\testData_2000.0msec_window_1.arff")
+    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500 anat\\testData_2000.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
     xVal, yVal = convertDataToLTSMFormat(validationData, windowSize)
+    xVal = normalizeData(xVal)
     models = getModelConfig()
     '''
     Weight biasing
@@ -357,7 +456,8 @@ if __name__ == '__main__':
                                  validation_data=(x_test, y_test),
                                  epochs=epochs,
                                  class_weight=weights,
-                                 shuffle=shuffle)
+                                 shuffle=shuffle,
+                                 )
                 hist_str = ''
                 for key in hist.history.keys():
                     hist_str += str(key) + " : " + str(hist.history[key]) + "\n"

@@ -222,7 +222,8 @@ public class OntoMapCsv {
         //foreach participant
         float windowSizeInMilliseconds = 500;
         int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.2); // 20% split
-
+        Map<String, List<Instance>> participantTrainingInstances = new HashMap<>();
+        Map<String, List<Instance>> participantTestInstances = new HashMap<>();
         List<Instance> trainInstanceList = new ArrayList<>();
         List<Instance> testInstanceList = new ArrayList<>();
         Instances trainDataInstances = null;
@@ -331,7 +332,14 @@ public class OntoMapCsv {
                         windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
 
                         if (useParticipantForTrainingData) {
-                            trainInstanceList.add(windowInstance);
+
+                            //TODO, here we will add the trainInstance List to belong only to
+                            //the current participant,
+                            if (!participantTrainingInstances.containsKey(p.getId()))
+                                participantTestInstances.put(p.getId(), new ArrayList<Instance>());
+
+                            participantTrainingInstances.get(p.getId()).add(windowInstance);
+//                            trainInstanceList.add(windowInstance);
                         } else {
                             testInstanceList.add(windowInstance);
                         }
@@ -368,6 +376,18 @@ public class OntoMapCsv {
                 fixationCsvReader.close();
             }
             System.out.println("processed: " + p.getId());
+            List<Instance> participantTrainInstanceList = participantTrainingInstances.get(p.getId());
+            ArrayList<Attribute> attributeList = Collections.list(participantTrainInstanceList.get(0).enumerateAttributes());
+            attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
+            trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, participantTrainInstanceList.get(0).numAttributes());
+
+            for (int i = 1; i < participantTrainInstanceList.size(); ++i) {
+                trainDataInstances.add(participantTrainInstanceList.get(i));
+            }
+            trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+            OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData_"+windowSizeInMilliseconds+"mssec_"+p.getId()+".arff");
+
+
         }
 
 //        Classifier[] classifiers = WekaExperiment.getClassificationClassifiers();
@@ -380,25 +400,25 @@ public class OntoMapCsv {
         ArrayList<Attribute> attributeList = Collections.list(trainInstanceList.get(0).enumerateAttributes());
         attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
         //Merging all instances together again.
-        trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
-        testDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
+//        trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
+        testDataInstances = new Instances("OntoMapTestGaze", attributeList, trainInstanceList.get(0).numAttributes());
 
         //Set Class index for last attribute (correct attr).
-        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+//        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
 
-        for (int i = 1; i < trainInstanceList.size(); ++i) {
-            trainDataInstances.add(trainInstanceList.get(i));
-        }
+//        for (int i = 1; i < trainInstanceList.size(); ++i) {
+//            trainDataInstances.add(trainInstanceList.get(i));
+//        }
         for (int i = 1; i < testInstanceList.size(); ++i) {
             testDataInstances.add(testInstanceList.get(i));
         }
 
-        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+//        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
 
 
-        OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
+//        OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
         OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath()+"/testData_"+windowSizeInMilliseconds+"msec_window_1.arff");
         /**
         Instances trainDataInstance = allInstances.trainCV(2, 0);

@@ -101,9 +101,11 @@ public class OntoMapCsv {
                         continue;
 
                     //look through files of raw data
-                    FilenameFilter filter = (dir1, name) -> name.equals("Raw Data");
-                    File[] rawDataDir = fileOrDir.listFiles(filter);
-                    for (File taskFileOrDir : rawDataDir[0].listFiles()) {
+                    FilenameFilter filter = (dir1, name) -> !name.equals("Raw Data");
+                    File[] answerFiles = fileOrDir.listFiles(filter);
+                    for (File taskFileOrDir : answerFiles) {
+                        if (taskFileOrDir.getName().contains("xlsx") || taskFileOrDir.isDirectory()) //ignore, cant read this in opencsv
+                            continue;
 
                         //check if it has .LIL.
                         if (filterForLinkedList && taskFileOrDir.getName().contains("list") || (!filterForLinkedList && taskFileOrDir.getName().contains("matrix"))) {
@@ -218,8 +220,8 @@ public class OntoMapCsv {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
-        float windowSizeInMilliseconds = 2000;
-        int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.35); // 20% split
+        float windowSizeInMilliseconds = 500;
+        int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.2); // 20% split
 
         List<Instance> trainInstanceList = new ArrayList<>();
         List<Instance> testInstanceList = new ArrayList<>();
@@ -233,17 +235,18 @@ public class OntoMapCsv {
         outputDir.mkdirs();
         OntoMapCsv.logTestParticipants(outputDir, participantIdsForTestDataset);
         for (Participant p : participants) {
-
+            System.out.println(p.getId());
             boolean useParticipantForTrainingData = !participantIdsForTestDataset.contains(p.getId().toUpperCase());
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
 
-            List<String> timeCutoffs = new ArrayList<>();
-            List<Boolean> rightOrWrongs = new ArrayList<>();
+
             File[] answersFiles = new File[]{p.getAnatomyAnswersFile()
 //            };
                     , p.getConfAnswersFile()};
 
             for (File answerFile : answersFiles){
+                List<String> timeCutoffs = new ArrayList<>();
+                List<Boolean> rightOrWrongs = new ArrayList<>();
                 System.out.println("Answers file: " + answerFile.getName());
                 String[] cells = null;
                 FileReader answersFileReader = new FileReader(answerFile);
@@ -256,7 +259,7 @@ public class OntoMapCsv {
                 answersCsvReader.readNext(); //Skip first line.
                 int timeStampIndex = 8;
                 int correctIndex = 6;
-                while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() < 13) {
+                while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() < 14) {
                     String timeCutoff = cells[timeStampIndex];
                     Boolean rightOrWrong = cells[correctIndex].trim().contains("1");
 
@@ -278,15 +281,17 @@ public class OntoMapCsv {
                 //TODO move this over to a method
                 //Input: fixxationFile, timecutoffs, wrong or rights, numWrong/numRight (validation)
                 //Output: Instance (train or test depends on participant id)
-                FileReader fixationFileReader = new FileReader(p.getAnatomyGazeFile());
+                FileReader fixationFileReader = new FileReader(answerFile.equals(p.getAnatomyAnswersFile()) ? p.getAnatomyGazeFile() : p.getConfGazeFile());
                 CSVReader fixationCsvReader = new CSVReader(fixationFileReader);
 
                 int currentQuestionIndex = 0;
                 List<String> headerRow = Arrays.asList(fixationCsvReader.readNext());
 
+                String[] last = new String[0];
                 //Loop over each line of gaze data. until we reach the last question and then continue onto next participant.
                 while ((cells = fixationCsvReader.readNext()) != null && currentQuestionIndex < rightOrWrongs.size()) { //ignore the multiple choice question for now.
                     //read fixation data up to the timecutoff
+                    last=cells;
                     float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
                     boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
 
@@ -300,7 +305,7 @@ public class OntoMapCsv {
                         incrementCurrentQuestionIndexAfterLoopLogic = true;
 
                         //Discard current window, we don't want it because of data misalignment.
-                        if (!participantWindow.isFull())
+                        if (!participantWindow.isFull() && participantWindow.getInternalIndex() < participantWindow.getWindowSize() - 1)
                             participantWindow.flush();
                     }
                     //Add to windows for task
@@ -347,6 +352,14 @@ public class OntoMapCsv {
 
                 }
                 System.out.println(numCorrect == 0 ? " validation passed for numCorrect" : "FAILED numCorrect");
+                if (numCorrect != 0)
+                {
+                    System.out.println(last);
+                System.out.println("Debug line");
+                }
+                if (numWrong != 0) {
+                    System.out.println("Debug line");
+                }
                 System.out.println(numCorrect);
 
                 System.out.println(numWrong == 0 ? " validation passed for numWrong" : "FAILED numWrong");

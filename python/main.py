@@ -43,89 +43,97 @@ def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
-def getModelConfig():
+def getModelConfig(windowSize):
     models = {}
     model_simple_ltsm = Sequential()
-    model_simple_ltsm.add(LSTM(4, input_shape=(300,8)))
+    model_simple_ltsm.add(LSTM(4, input_shape=(windowSize,8)))
     model_simple_ltsm.add(Dense(8, activation='relu'))
     model_simple_ltsm.add(Dense(16, activation='relu'))
     model_simple_ltsm.add(Dense(4, activation='relu'))
     model_simple_ltsm.add(Dense(1, activation='sigmoid'))
 
     model_one_layer_ltsm = Sequential()
-    model_one_layer_ltsm.add(LSTM(2400, input_shape=(300,8)))
+    model_one_layer_ltsm.add(LSTM(2400, input_shape=(windowSize,8)))
     model_one_layer_ltsm.add(Dense(8, activation='relu'))
     model_one_layer_ltsm.add(Dense(1, activation='sigmoid'))
 
     model_one_layer_ltsm_smaller = Sequential()
-    model_one_layer_ltsm_smaller.add(LSTM(4, input_shape=(300,8)))
+    model_one_layer_ltsm_smaller.add(LSTM(4, input_shape=(windowSize,8)))
     model_one_layer_ltsm_smaller.add(Dense(8, activation='relu'))
     model_one_layer_ltsm_smaller.add(Dense(1, activation='sigmoid'))
 
     #v2 has 4 more nodes in the intermediate dense layer
     model_one_layer_ltsm_v2 = Sequential()
-    model_one_layer_ltsm_v2.add(LSTM(4, input_shape=(300,8)))
+    model_one_layer_ltsm_v2.add(LSTM(4, input_shape=(windowSize,8)))
     model_one_layer_ltsm_v2.add(Dense(12, activation='relu'))
     model_one_layer_ltsm_v2.add(Dense(1, activation='sigmoid'))
 
     model_bigger_lstm = Sequential()
-    model_bigger_lstm.add(LSTM(8, input_shape=(300, 8)))
+    model_bigger_lstm.add(LSTM(8, input_shape=(windowSize, 8)))
     model_bigger_lstm.add(Dense(8, activation='relu'))
     model_bigger_lstm.add(Dense(2, activation='relu'))
     model_bigger_lstm.add(Dense(1, activation='sigmoid'))
 
     model_bigger_bigger_lstm = Sequential()
-    model_bigger_bigger_lstm.add(LSTM(12, input_shape=(300, 8)))
+    model_bigger_bigger_lstm.add(LSTM(12, input_shape=(windowSize, 8)))
     model_bigger_bigger_lstm.add(Dense(8, activation='relu'))
     model_bigger_bigger_lstm.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm = Sequential()
-    model_bigger_biggest_lstm.add(LSTM(16, input_shape=(300, 8)))
+    model_bigger_biggest_lstm.add(LSTM(16, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm.add(Dense(4, activation='relu'))
     model_bigger_biggest_lstm.add(Dense(1, activation='sigmoid'))
 
+
+    stacked_lstm = Sequential()
+    stacked_lstm.add(LSTM(256, input_shape=(windowSize, 8), return_sequences=True))
+    stacked_lstm.add(LSTM(128, input_shape=(windowSize, 8)))
+    stacked_lstm.add(LSTM(64, input_shape=(windowSize, 8)))
+    stacked_lstm.add(Dense(4, activation='relu'))
+    stacked_lstm.add(Dense(1, activation='sigmoid'))
+
     model_bigger_biggest_lstm_v2_leaky_relu = Sequential()
-    model_bigger_biggest_lstm_v2_leaky_relu.add(LSTM(32, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v2_leaky_relu.add(LSTM(32, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v2_leaky_relu.add(Dense(16, activation='leaky_relu'))
     model_bigger_biggest_lstm_v2_leaky_relu.add(Dense(4, activation='leaky_relu'))
     model_bigger_biggest_lstm_v2_leaky_relu.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v2 = Sequential()
-    model_bigger_biggest_lstm_v2.add(LSTM(32, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v2.add(LSTM(32, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v2.add(Dense(16, activation='relu'))
     model_bigger_biggest_lstm_v2.add(Dense(4, activation='relu'))
     model_bigger_biggest_lstm_v2.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v3 = Sequential()
-    model_bigger_biggest_lstm_v3.add(LSTM(64, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v3.add(LSTM(64, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v3.add(Dense(16, activation='relu'))
     model_bigger_biggest_lstm_v3.add(Dense(4, activation='relu'))
     model_bigger_biggest_lstm_v3.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v4 = Sequential()
-    model_bigger_biggest_lstm_v4.add(LSTM(56, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v4.add(LSTM(56, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v4.add(Dense(4, activation='relu'))
     model_bigger_biggest_lstm_v4.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v5 = Sequential()
-    model_bigger_biggest_lstm_v5.add(LSTM(24, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v5.add(LSTM(24, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v5.add(Dense(4, activation='relu'))
     model_bigger_biggest_lstm_v5.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v6 = Sequential()
-    model_bigger_biggest_lstm_v6.add(LSTM(128, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v6.add(LSTM(128, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v6.add(Dense(8, activation='relu'))
     model_bigger_biggest_lstm_v6.add(Dense(8, activation='relu'))
     model_bigger_biggest_lstm_v6.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v7 = Sequential()
-    model_bigger_biggest_lstm_v7.add(LSTM(256, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v7.add(LSTM(256, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v7.add(Dense(8, activation='relu'))
     model_bigger_biggest_lstm_v7.add(Dense(8, activation='relu'))
     model_bigger_biggest_lstm_v7.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v8 = Sequential()
-    model_bigger_biggest_lstm_v8.add(LSTM(256, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v8.add(LSTM(256, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
     model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
     model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
@@ -136,7 +144,7 @@ def getModelConfig():
     model_bigger_biggest_lstm_v8.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v12_half_bank = Sequential()
-    model_bigger_biggest_lstm_v12_half_bank.add(LSTM(256, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v12_half_bank.add(LSTM(256, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
     model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
     model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
@@ -151,7 +159,7 @@ def getModelConfig():
     model_bigger_biggest_lstm_v12_half_bank.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v16 = Sequential()
-    model_bigger_biggest_lstm_v16.add(LSTM(256, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v16.add(LSTM(256, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
     model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
     model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
@@ -179,7 +187,7 @@ def getModelConfig():
     
     '''
     model_stacked_v6 = Sequential()
-    model_stacked_v6.add(LSTM(256, input_shape=(300, 8), return_sequences=True))
+    model_stacked_v6.add(LSTM(256, input_shape=(windowSize, 8), return_sequences=True))
     model_stacked_v6.add(LSTM(256, return_sequences=True))
     model_stacked_v6.add(LSTM(128, return_sequences=True))
     model_stacked_v6.add(LSTM(128, return_sequences=True))
@@ -188,34 +196,34 @@ def getModelConfig():
     model_stacked_v6.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v9 = Sequential()
-    model_bigger_biggest_lstm_v9.add(LSTM(128, input_shape=(300, 8)))
+    model_bigger_biggest_lstm_v9.add(LSTM(128, input_shape=(windowSize, 8)))
     model_bigger_biggest_lstm_v9.add(Dense(16, activation='relu'))
     model_bigger_biggest_lstm_v9.add(Dense(4, activation='relu'))
     model_bigger_biggest_lstm_v9.add(Dense(1, activation='sigmoid'))
 
 
     model_bigger_lstm_v2 = Sequential()
-    model_bigger_lstm_v2.add(LSTM(8, input_shape=(300, 8)))
+    model_bigger_lstm_v2.add(LSTM(8, input_shape=(windowSize, 8)))
     model_bigger_lstm_v2.add(Dense(12, activation='relu'))
     model_bigger_lstm_v2.add(Dense(36, activation='relu'))
     model_bigger_lstm_v2.add(Dense(1, activation='sigmoid'))
 
     model_double_lstm = Sequential()
-    model_double_lstm.add(LSTM(8, input_shape=(300,8), return_sequences=True))
+    model_double_lstm.add(LSTM(8, input_shape=(windowSize,8), return_sequences=True))
     model_double_lstm.add(LSTM(16))
     model_double_lstm.add(Dense(8, activation='relu'))
     model_double_lstm.add(Dense(4, activation='relu'))
     model_double_lstm.add(Dense(1, activation='sigmoid'))
 
     model_double_lstm_double_layers = Sequential()
-    model_double_lstm_double_layers.add(LSTM(16, input_shape=(300,8), return_sequences=True))
+    model_double_lstm_double_layers.add(LSTM(16, input_shape=(windowSize,8), return_sequences=True))
     model_double_lstm_double_layers.add(LSTM(16, return_sequences=True))
     model_double_lstm_double_layers.add(LSTM(8))
     model_double_lstm_double_layers.add(Dense(4, activation='relu'))
     model_double_lstm_double_layers.add(Dense(1, activation='sigmoid'))
 
     model_double_lstm_double_layers_more_nodes = Sequential()
-    model_double_lstm_double_layers_more_nodes.add(LSTM(8, input_shape=(300,8), return_sequences=True))
+    model_double_lstm_double_layers_more_nodes.add(LSTM(8, input_shape=(windowSize,8), return_sequences=True))
     model_double_lstm_double_layers_more_nodes.add(LSTM(16))
     model_double_lstm_double_layers_more_nodes.add(Dense(12, activation='relu'))
     model_double_lstm_double_layers_more_nodes.add(Dense(36, activation='relu'))
@@ -223,11 +231,11 @@ def getModelConfig():
     model_double_lstm_double_layers_more_nodes.add(Dense(1, activation='sigmoid'))
 
     model_ltsm_straight_to_output = Sequential()
-    model_ltsm_straight_to_output.add(LSTM(8, input_shape=(300,8)))
+    model_ltsm_straight_to_output.add(LSTM(8, input_shape=(windowSize,8)))
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
 
-    # models['model_simple_ltsm'] = model_simple_ltsm
-    models['model_one_layer_ltsm'] = model_one_layer_ltsm
+    models['model_simple_ltsm'] = model_simple_ltsm
+    # models['model_one_layer_ltsm'] = model_one_layer_ltsm
     # models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
     # models['model_bigger_lstm'] = model_bigger_lstm;
     # models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
@@ -235,13 +243,12 @@ def getModelConfig():
     # models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
     # models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
     # models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
-
-
+    models['stacked_lstm'] = stacked_lstm;
 
     # models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
     # models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
     # models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
-    models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
+    # models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
     # models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
     # models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
     # models['model_bigger_biggest_lstm_v12_half_bank'] = model_bigger_biggest_lstm_v12_half_bank
@@ -250,7 +257,7 @@ def getModelConfig():
     # models['model_double_stm'] = model_double_lstm;
     # models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
     # models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
-    # models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
+    models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
     # models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
 
 
@@ -350,7 +357,7 @@ def get_metrics_for_model():
     ]
 def get_optimizers():
     return [
-        #tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
         tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
         # tf.keras.optimizers.SGD(learning_rate=0.04),
@@ -360,7 +367,7 @@ def get_optimizers():
         #tf.keras.optimizers.Adagrad(learning_rate=0.0014, name='Adagrad'),
         #tf.keras.optimizers.Adagrad(learning_rate=0.0011, name='Adagrad'),
 
-        # tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
+        tf.keras.optimizers.Adagrad(learning_rate=0.01, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
        # tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
         # tf.keras.optimizers.SGD(learning_rate=0.01),
@@ -373,7 +380,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
 
         #tf.keras.optimizers.Adam(learning_rate=2e-3),
-        # tf.keras.optimizers.Adam(learning_rate=1e-2),
+        tf.keras.optimizers.Adam(learning_rate=1e-2),
         #tf.keras.optimizers.Nadam(learning_rate=1e-3),
         # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
@@ -384,12 +391,12 @@ def get_optimizers():
     ]
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    windowSize=300
+    windowSize=75
     epochs=30    #20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     shuffle=True
     consoleOut = sys.stdout  # assign console output to a variable
 
-    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500 anat\\trainData_2000.0mssec_window_1.arff")
+    trainData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-26T15;17;59.575004\\trainData_500.0mssec_window_1.arff")
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
 
@@ -413,11 +420,11 @@ if __name__ == '__main__':
     #split ^^ 80/20, preserve order
     x_train, x_test, y_train, y_test = model_selection.train_test_split(x, y, test_size=0.2, random_state=0, shuffle=shuffle)
     print_both(x_train.shape)
-    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-23T23;13;15.386301500 anat\\testData_2000.0msec_window_1.arff")
+    validationData = convertArffToDataFrame("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\train_test_data_output\\2023-10-26T15;17;59.575004\\testData_500.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
     xVal, yVal = convertDataToLTSMFormat(validationData, windowSize)
     xVal = normalizeData(xVal)
-    models = getModelConfig()
+    models = getModelConfig(windowSize)
     '''
     Weight biasing
     25% are only wrong, that leads to data training bias.
@@ -455,7 +462,7 @@ if __name__ == '__main__':
                 hist = model.fit(x_train, y_train,
                                  validation_data=(x_test, y_test),
                                  epochs=epochs,
-                                 class_weight=weights,
+                                 # class_weight=weights,
                                  shuffle=shuffle,
                                  )
                 hist_str = ''

@@ -119,8 +119,8 @@ def get_weight_bias(y_data):
     pos = len([i for i in y_data if i == 1])
     # print(pos)
     total = len(y_data)
-    weight_for_0 = (1 / neg) * (total / 2.0)
-    weight_for_1 = (1 / pos) * (total / 2.0) # TODO, pay more attention to this weight distrib.
+    weight_for_0 = (1 / neg) * (total)
+    weight_for_1 = (1 / pos) * (total ) # TODO, pay more attention to this weight distrib.
     return {0: weight_for_0, 1: weight_for_1}
 def get_metrics_for_model():
     return [
@@ -140,7 +140,7 @@ def get_metrics_for_model():
 def get_optimizers():
     return [
         # tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
-        tf.keras.optimizers.Adam(learning_rate=1e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1e-3),
         # tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
         # tf.keras.optimizers.SGD(learning_rate=0.04),
@@ -148,26 +148,57 @@ def get_optimizers():
 
         # tf.keras.optimizers.Adagrad(learning_rate=0.0013, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0014, name='Adagrad'),
-        tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
+        # tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
 
-        tf.keras.optimizers.Adagrad(learning_rate=0.01, name='Adagrad'),
-        tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
+        # tf.keras.optimizers.Adagrad(learning_rate=0.01, name='Adagrad'),
+        # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=True),
+        tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=True),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.53, use_ema=True),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.54, use_ema=True),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.55, use_ema=True),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.65, use_ema=True),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.6, use_ema=True),
+        #
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.45, use_ema=True, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.48, use_ema=True, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.47, use_ema=True, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.49, use_ema=True, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.40, use_ema=True, weight_decay=2e-4),
+        #
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=False), #control
+        # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=False),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.38, use_ema=False),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.39, use_ema=False),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.35, use_ema=False),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.32, use_ema=False),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.6, use_ema=False),
+        #
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.8, use_ema=False, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.95, use_ema=False, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.85, use_ema=False, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.7, use_ema=False, weight_decay=2e-4),
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.6, use_ema=False, weight_decay=2e-4),
+
         # tf.keras.optimizers.SGD(learning_rate=0.01),
         # tf.keras.optimizers.SGD(learning_rate=0.012),
         # tf.keras.optimizers.SGD(learning_rate=0.015),
-
-        tf.keras.optimizers.Adam(learning_rate=1.2e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1.1e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1.2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3),
-        tf.keras.optimizers.Adam(learning_rate=1.8e-3),
-
+        # tf.keras.optimizers.Adam(learning_rate=1.6e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1.9e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
-        tf.keras.optimizers.Adam(learning_rate=1e-2),
-        tf.keras.optimizers.Nadam(learning_rate=1e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1e-2),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-3),
         # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
-        tf.keras.optimizers.Nadam(learning_rate=1e-2),
-        tf.keras.optimizers.Nadam(learning_rate=1e-1),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-2),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-1),
 
         # tf.keras.optimizers.RMSprop
     ]
@@ -217,6 +248,9 @@ def getModelConfig(timeSequences, attributes):
     '''
     10-27-2023 I am noticing a bigger first lstm layer followed by two subsequent smaller lstm layers (size 16 each) and a dense layer of size 16
     works better when the first layer is larger than the other layers
+    It's possible that 148 was a good sweet spot because there are 75 attributes, this leads one lstm node per attribute
+    and therefore can trigger it to forget or keep the memory for each 0,1 class.
+    I.e., for each attribute, allocate 1 node per class.
     '''
     stacked_lstm.add(LSTM(148, input_shape=(timeSequences, attributes), return_sequences=True))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
@@ -368,33 +402,33 @@ def getModelConfig(timeSequences, attributes):
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
 
     models['stacked_lstm'] = stacked_lstm;
-    models['model_simple_ltsm'] = model_simple_ltsm
-    models['model_one_layer_ltsm'] = model_one_layer_ltsm
-    models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
-    models['model_bigger_lstm'] = model_bigger_lstm;
-    models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
-    models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
-    models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
-    models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
-    models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
-
-    models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
-    models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
-    models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
-    models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
-    models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
-    models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
-    models['model_bigger_biggest_lstm_v12_half_bank'] = model_bigger_biggest_lstm_v12_half_bank
-    models['model_bigger_biggest_lstm_v16'] = model_bigger_biggest_lstm_v16
-    # Past here, overfitting occurs
-    models['model_double_stm'] = model_double_lstm;
-    models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
-    models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
-    models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
-    models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
-
-    '''Unique Architectures'''
-    models['model_stacked_v6'] = model_stacked_v6
+    # models['model_simple_ltsm'] = model_simple_ltsm
+    # models['model_one_layer_ltsm'] = model_one_layer_ltsm
+    # models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
+    # models['model_bigger_lstm'] = model_bigger_lstm;
+    # models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
+    # models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
+    # models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
+    # models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
+    # models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
+    #
+    # models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
+    # models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
+    # models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
+    # models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
+    # models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
+    # models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
+    # models['model_bigger_biggest_lstm_v12_half_bank'] = model_bigger_biggest_lstm_v12_half_bank
+    # models['model_bigger_biggest_lstm_v16'] = model_bigger_biggest_lstm_v16
+    # # Past here, overfitting occurs
+    # models['model_double_stm'] = model_double_lstm;
+    # models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
+    # models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
+    # models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
+    # models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
+    #
+    # '''Unique Architectures'''
+    # models['model_stacked_v6'] = model_stacked_v6
     return models
 
 # Press the green button in the gutter to run the script.
@@ -428,12 +462,12 @@ if __name__ == '__main__':
 
     print_both(y)
     #split ^^ 80/20, preserve order
-    x_train, x_test, y_train, y_test = model_selection.train_test_split(x, y, test_size=0.2, random_state=0, shuffle=False)
+    x_train, x_val, y_train, y_val = model_selection.train_test_split(x, y, test_size=0.2, random_state=0, shuffle=shuffle)
     print_both(x_train.shape)
     validationData = convertArffToDataFrame("/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/2023-10-26T15;17;59.575004/testData_500.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
-    xVal, yVal = convertDataToLTSMFormat(validationData, timeSequences)
-    xVal = normalizeData(xVal)
+    xTest, yTest = convertDataToLTSMFormat(validationData, timeSequences)
+    xTest = normalizeData(xTest)
     models = getModelConfig(timeSequences,numAttributes*windowSize)
     '''
     Weight biasing
@@ -462,7 +496,12 @@ if __name__ == '__main__':
         for optimizer in optimizers:
             try:
                 unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
-
+                if hasattr(optimizer, 'beta_1'):
+                    unique_model_id += " b1: " + str(optimizer.beta_1)
+                if hasattr(optimizer, 'weight_decay'):
+                    unique_model_id += " wdecay: " + str(optimizer.weight_decay)
+                if hasattr(optimizer, 'use_ema'):
+                    unique_model_id += " ema:" + str(optimizer.use_ema)
                 print_both("-------------------------------")
                 print_both("unique model id: " + unique_model_id)
                 print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
@@ -474,23 +513,23 @@ if __name__ == '__main__':
                 #have a representation of that person
                 #then we retrain on the next person, so on and so forth.
                 hist = model.fit(x_train, y_train,
-                                 validation_data=(x_test, y_test),
+                                 validation_data=(x_val, y_val),
                                  epochs=epochs,
-                                 # class_weight=weights,
+                                 class_weight=weights,
                                  shuffle=shuffle,
                                  )
                 hist_str = ''
                 for key in hist.history.keys():
                     hist_str += str(key) + " : " + str(hist.history[key]) + "\n"
                 print_both(hist_str)
-                y_hat = model.predict(xVal)
-                #results = model.evlauate(xVal, yVal)
+                y_hat = model.predict(xTest)
+                #results = model.evlauate(xVal, yTest)
                 y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
 
                 '''
                 Metrics
                 '''
-                conf_matrix = sklearn.metrics.confusion_matrix(yVal, y_hat, labels=[1.0,0.0])
+                conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0,0.0])
                 all_models_by_tp_and_tn[unique_model_id] = conf_matrix
                 print_both(conf_matrix)
 
@@ -503,7 +542,7 @@ if __name__ == '__main__':
                 })
                 #Saving breaks the rest of the trianings and corrupts the rest of the configurations!
                 #Only save when using Linux keras 2.14!!!
-                # model.save(resultDir+"\\"+unique_model_id)
+                model.save(resultDir+"\\"+unique_model_id)
 
             except Exception as e:
                 print(e)

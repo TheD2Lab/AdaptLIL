@@ -1,7 +1,10 @@
 package data_classes;
 
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+
+import interpolation.Interpolation;
 import server.serialization_helpers.IntToBooleanDeserializer;
 
 public class Fixation {
@@ -87,5 +90,34 @@ public class Fixation {
 
     public void setValid(Boolean valid) {
         isValid = valid;
+    }
+
+    /**
+     * Right now this is simple linear interpolation, view academic research on most accurate estimations
+
+     * @param a
+     * @param b
+     * @param steps
+     * @return
+     */
+    public Fixation[] interpolate(Fixation a, Fixation b, int steps) {
+	    Fixation[] interpolFixations = new Fixation[steps];
+        Interpolation interpolation = new Interpolation();
+        double[] aCoords = new double[]{a.getX(), a.getY()};
+        double[] bCoords = new double[]{b.getX(), b.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
+        double[] startTimes = interpolation.interpolate(a.getStartTime(), b.getStartTime(), steps);
+        double[] durations = interpolation.interpolate(a.getDuration(), b.getDuration(), steps);
+	    for (int i = 0; i < steps; ++i) {
+    	    Fixation c = new Fixation();
+            double[] cCoord = interpolCoords[i];
+            c.setX(cCoord[0]);
+            c.setY(cCoord[1]);
+            c.setId(a.getId() + 1);
+            c.setStartTime(startTimes[i]);
+            c.setDuration(durations[i]);
+            interpolFixations[i] = c;
+	    }
+        return interpolFixations;
     }
 }

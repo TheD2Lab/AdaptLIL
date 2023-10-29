@@ -6,7 +6,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import data_classes.*;
 import server.gazepoint.api.XmlObject;
 import server.serialization_helpers.IntToBooleanDeserializer;
-
+import interpolation.*;
 /**
  * Implements GazeAPI for real time processing of gaze data.
  * public class attributes are used to convert this object to a WEKA instance for machine learning.
@@ -478,4 +478,32 @@ public class RecXmlObject extends XmlObject {
     public void setTime(Double time) {
         this.time = time;
     }
+	
+    public RecXmlObject[] interpolate(RecXmlObject a, RecXmlObject b, int steps){
+        RecXmlObject[] interpolationObjs = new RecXmlObject[steps];
+        BestPointOfGaze[] bestPointOfGazes = a.getBestPointOfGaze().interpolate(a.getBestPointOfGaze(), b.getBestPointOfGaze(), steps);
+        LeftEyePointOfGaze[] leftEyePointOfGazes = a.getLeftEyePointOfGaze().interpolate(a.getLeftEyePointOfGaze(), b.getLeftEyePointOfGaze(), steps);
+        RightEyePointOfGaze[] rightEyePointOfGazes = a.getRightEyePointOfGaze().interpolate(a.getRightEyePointOfGaze(), b.getRightEyePointOfGaze(), steps);
+        PupilDiameter[] pupilDiameters = a.getPupilDiameter().interpolate(a.getPupilDiameter(), b.getPupilDiameter(), steps);
+        Fixation[] fixations = a.getFixation().interpolate(a.getFixation(), b.getFixation(), steps);
+        LeftEyePupil[] leftEyePupils = a.getLeftEyePupil().interpolate(a.getLeftEyePupil(), b.getLeftEyePupil(), steps);
+        RightEyePupil[] rightEyePupils = a.getRightEyePupil().interpolate(a.getRightEyePupil(), b.getRightEyePupil(), steps);
+
+
+        for (int i = 0; i < steps; ++i) {
+            RecXmlObject interpolatedRec = new RecXmlObject();
+            interpolatedRec.setFixation(fixations[i]);
+            interpolatedRec.setBestPointOfGaze(bestPointOfGazes[i]);
+            interpolatedRec.setLeftEyePupil(leftEyePupils[i]);
+            interpolatedRec.setRightEyePupil(rightEyePupils[i]);
+            interpolatedRec.setLeftEyePointOfGaze(leftEyePointOfGazes[i]);
+            interpolatedRec.setRightEyePointOfGaze(rightEyePointOfGazes[i]);
+            interpolatedRec.setPupilDiameter(pupilDiameters[i]);
+            interpolationObjs[i] = interpolatedRec;
+        }
+
+        return interpolationObjs;
+	
+	}
+
 }

@@ -2,6 +2,7 @@ package data_classes;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import interpolation.Interpolation;
 import server.serialization_helpers.IntToBooleanDeserializer;
 
 public class LeftEyePointOfGaze {
@@ -76,5 +77,29 @@ public class LeftEyePointOfGaze {
      */
     public boolean isValid() {
         return isValid;
+    }
+
+    /**
+     *
+     * @param a
+     * @param b
+     * @param steps
+     * @return
+     */
+    public LeftEyePointOfGaze[] interpolate(LeftEyePointOfGaze a, LeftEyePointOfGaze b, int steps) {
+        Interpolation interpolation = new Interpolation();
+        LeftEyePointOfGaze[] leftEyeInterpols = new LeftEyePointOfGaze[steps];
+        double[] aCoords = new double[]{a.getX(), a.getY()};
+        double[] bCoords = new double[]{b.getX(), b.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
+
+        for (int i = 0; i < steps; ++i) {
+            LeftEyePointOfGaze c = new LeftEyePointOfGaze();
+            c.setX(interpolCoords[i][0]);
+            c.setY(interpolCoords[i][1]);
+            c.setValid(true);
+            leftEyeInterpols[i] = c;
+        }
+        return leftEyeInterpols;
     }
 }

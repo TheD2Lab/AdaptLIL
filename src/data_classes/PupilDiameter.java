@@ -1,6 +1,7 @@
 package data_classes;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import interpolation.Interpolation;
 
 public class PupilDiameter {
 
@@ -87,6 +88,28 @@ public class PupilDiameter {
         return isRightEyeValid;
     }
 
+    /**
+     *
+     * @param a
+     * @param b
+     * @param steps
+     * @return
+     */
+    public PupilDiameter[] interpolate(PupilDiameter a, PupilDiameter b, int steps) {
+        PupilDiameter[] pupilDiamsIterpols = new PupilDiameter[steps];
+        Interpolation interpolation = new Interpolation();
+        double[] leftEyeDiams = interpolation.interpolate(a.getDiameterOfLeftEyeInMM(), b.getDiameterOfLeftEyeInMM(), steps);
+        double[] rightEyeDiams = interpolation.interpolate(a.getDiameterOfRightEyeInMM(), b.getDiameterOfRightEyeInMM(), steps);
+        for (int i = 0; i < steps; ++i) {
+            PupilDiameter c = new PupilDiameter();
+            c.setDiameterOfLeftEyeInMM(leftEyeDiams[i]);
+            c.setDiameterOfRightEyeInMM(rightEyeDiams[i]);
+            c.setLeftEyeValid(true);
+            c.setRightEyeValid(true);
+            pupilDiamsIterpols[i] = c;
+        }
 
+        return pupilDiamsIterpols;
+    }
 
 }

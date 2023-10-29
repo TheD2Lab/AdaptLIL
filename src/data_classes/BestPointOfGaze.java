@@ -2,6 +2,7 @@ package data_classes;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import interpolation.Interpolation;
 
 @JsonAutoDetect(fieldVisibility=JsonAutoDetect.Visibility.ANY)
 public class BestPointOfGaze {
@@ -44,5 +45,23 @@ public class BestPointOfGaze {
 
     public void setValid(boolean valid) {
         isValid = valid;
+    }
+
+
+    public BestPointOfGaze[] interpolate(BestPointOfGaze a, BestPointOfGaze b, int steps) {
+        Interpolation interpolation = new Interpolation();
+        BestPointOfGaze[] bPogsInterpols = new BestPointOfGaze[steps];
+        double[] aCoords = new double[]{a.getX(), a.getY()};
+        double[] bCoords = new double[]{b.getX(), b.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
+        for (int i = 0; i < steps; ++i) {
+            BestPointOfGaze c = new BestPointOfGaze();
+            c.setX(interpolCoords[i][0]);
+            c.setY(interpolCoords[i][1]);
+            c.setValid(true);
+            bPogsInterpols[i] = c;
+        }
+
+        return bPogsInterpols;
     }
 }

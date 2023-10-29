@@ -1,6 +1,7 @@
 package data_classes;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import interpolation.Interpolation;
 
 public class RightEyePointOfGaze {
 
@@ -72,5 +73,29 @@ public class RightEyePointOfGaze {
      */
     public boolean isValid() {
         return isValid;
+    }
+
+    /**
+     *
+     * @param a
+     * @param b
+     * @param steps
+     * @return
+     */
+    public RightEyePointOfGaze[] interpolate(RightEyePointOfGaze a, RightEyePointOfGaze b, int steps) {
+        Interpolation interpolation = new Interpolation();
+        RightEyePointOfGaze[] rightEyeInterpols = new RightEyePointOfGaze[steps];
+        double[] aCoords = new double[]{a.getX(), a.getY()};
+        double[] bCoords = new double[]{b.getX(), b.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
+
+        for (int i = 0; i < steps; ++i) {
+            RightEyePointOfGaze c = new RightEyePointOfGaze();
+            c.setX(interpolCoords[i][0]);
+            c.setY(interpolCoords[i][1]);
+            c.setValid(true);
+            rightEyeInterpols[i] = c;
+        }
+        return rightEyeInterpols;
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
 import server.serialization_helpers.IntToBooleanDeserializer;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 public class LeftEyePointOfGaze {
 
@@ -27,6 +28,7 @@ public class LeftEyePointOfGaze {
     private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
     private double y;
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
     private boolean isValid;

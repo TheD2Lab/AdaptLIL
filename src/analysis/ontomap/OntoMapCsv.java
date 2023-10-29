@@ -316,6 +316,8 @@ public class OntoMapCsv {
 
                     //control window size and add to taskwindows once size is too large.
                     if (participantWindow.isFull()) {
+                        //preprocess data before sending it to instances
+                        participantWindow.interpolateMissingValues();
                         //We set all instances to have the classification right/wrong
                         //Any window where the user got it right, is grouped into the good section -> 1
                         //any window where the user got it wrong, is grouped into the bad section -> 0
@@ -505,17 +507,17 @@ public class OntoMapCsv {
 
         //Setting the ID of the fixation to null because we don't want it in our training data.
         //Temp fix, before we introduce annotations to ignore fields in instance construciton
-        recXmlObject.FPOGID = null;
-        recXmlObject.FPOGV=null;
-        recXmlObject.LPCX=null;
-        recXmlObject.LPCY=null;
-        recXmlObject.LPS=null;
-        recXmlObject.LPV=null;
-        recXmlObject.RPCX=null;
-        recXmlObject.RPCY=null;
-        recXmlObject.RPS=null;
-        recXmlObject.RPV=null;
-        recXmlObject.BPOGV=null;
+//        recXmlObject.FPOGID=null;
+//        recXmlObject.FPOGV=null;
+//        recXmlObject.LPCX=null;
+//        recXmlObject.LPCY=null;
+//        recXmlObject.LPS=null;
+//        recXmlObject.LPV=null;
+//        recXmlObject.RPCX=null;
+//        recXmlObject.RPCY=null;
+//        recXmlObject.RPS=null;
+//        recXmlObject.RPV=null;
+//        recXmlObject.BPOGV=null;
         return recXmlObject;
     }
 

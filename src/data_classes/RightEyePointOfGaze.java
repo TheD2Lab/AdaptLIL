@@ -2,6 +2,7 @@ package data_classes;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 public class RightEyePointOfGaze {
 
@@ -24,6 +25,8 @@ public class RightEyePointOfGaze {
     private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGY")
     private double y;
+
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGV")
     private boolean isValid;
 

@@ -7,6 +7,10 @@ import data_classes.*;
 import server.gazepoint.api.XmlObject;
 import server.serialization_helpers.IntToBooleanDeserializer;
 import interpolation.*;
+import wekaext.annotations.IgnoreWekaAttribute;
+
+import java.util.List;
+
 /**
  * Implements GazeAPI for real time processing of gaze data.
  * public class attributes are used to convert this object to a WEKA instance for machine learning.
@@ -40,9 +44,11 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGD")
     public Double FPOGD;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGID")
     public Integer FPOGID;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGV")
     public Boolean FPOGV;
@@ -54,6 +60,7 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGY")
     public Double BPOGY;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGV")
     public Boolean BPOGV;
@@ -66,6 +73,7 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
     public Double LPOGY;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
     public Boolean LPOGV;
@@ -78,32 +86,38 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGY")
     public Double RPOGY;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "RPOGV")
     public Boolean RPOGV;
 
     //------------ENABLE_SEND_PUPIL_LEFT--------------------
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "LPCX")
     public Double LPCX;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "LPCY")
     public Double LPCY;
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPD")
     public Double LPD;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "LPS")
     public Double LPS;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPV")
     public Boolean LPV;
 
     //------------ENABLE_SEND_PUPIL_RIGHT----------------
-
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "RPCX")
     public Double RPCX;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "RPCY")
     public Double RPCY;
 
@@ -113,6 +127,7 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "RPS")
     public Double RPS;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "RPV")
     public Boolean RPV;
@@ -121,10 +136,12 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "LPMM")
     public Double LPMM;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "LPMMV")
     public Boolean LPMMV;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "RPMMV")
     public Boolean RPMMV;
@@ -154,6 +171,7 @@ public class RecXmlObject extends XmlObject {
 
 
     //-----------ENABLE_SEND_COUNTER-----------------
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "CNT")
     public Integer counter;
 
@@ -400,7 +418,7 @@ public class RecXmlObject extends XmlObject {
         this.FPOGD = fixation.getDuration();
         this.FPOGS = fixation.getStartTime();
         this.FPOGID = fixation.getId();
-        this.FPOGV = fixation.getValid();
+        this.FPOGV = fixation.isValid();
 
     }
 
@@ -479,31 +497,114 @@ public class RecXmlObject extends XmlObject {
         this.time = time;
     }
 	
-    public RecXmlObject[] interpolate(RecXmlObject a, RecXmlObject b, int steps){
+    public RecXmlObject[] interpolate(RecXmlObject first, RecXmlObject last, List<RecXmlObject> unmodified, int steps){
         RecXmlObject[] interpolationObjs = new RecXmlObject[steps];
-        BestPointOfGaze[] bestPointOfGazes = a.getBestPointOfGaze().interpolate(a.getBestPointOfGaze(), b.getBestPointOfGaze(), steps);
-        LeftEyePointOfGaze[] leftEyePointOfGazes = a.getLeftEyePointOfGaze().interpolate(a.getLeftEyePointOfGaze(), b.getLeftEyePointOfGaze(), steps);
-        RightEyePointOfGaze[] rightEyePointOfGazes = a.getRightEyePointOfGaze().interpolate(a.getRightEyePointOfGaze(), b.getRightEyePointOfGaze(), steps);
-        PupilDiameter[] pupilDiameters = a.getPupilDiameter().interpolate(a.getPupilDiameter(), b.getPupilDiameter(), steps);
-        Fixation[] fixations = a.getFixation().interpolate(a.getFixation(), b.getFixation(), steps);
-        LeftEyePupil[] leftEyePupils = a.getLeftEyePupil().interpolate(a.getLeftEyePupil(), b.getLeftEyePupil(), steps);
-        RightEyePupil[] rightEyePupils = a.getRightEyePupil().interpolate(a.getRightEyePupil(), b.getRightEyePupil(), steps);
+        BestPointOfGaze[] bestPointOfGazes;
+        if (first.getBestPointOfGaze() != null && last.getBestPointOfGaze() != null)
+            bestPointOfGazes = first.getBestPointOfGaze().interpolate(first.getBestPointOfGaze(), last.getBestPointOfGaze(), steps);
+        else
+            bestPointOfGazes = null;
+
+        LeftEyePointOfGaze[] leftEyePointOfGazes;
+        if (first.getLeftEyePointOfGaze() != null && last.getLeftEyePointOfGaze() != null)
+            leftEyePointOfGazes = first.getLeftEyePointOfGaze().interpolate(first.getLeftEyePointOfGaze(), last.getLeftEyePointOfGaze(), steps);
+        else
+            leftEyePointOfGazes = null;
+
+        RightEyePointOfGaze[] rightEyePointOfGazes;
+
+        if (first.getRightEyePointOfGaze() != null && last.getRightEyePointOfGaze() != null)
+            rightEyePointOfGazes = first.getRightEyePointOfGaze().interpolate(first.getRightEyePointOfGaze(), last.getRightEyePointOfGaze(), steps);
+        else
+            rightEyePointOfGazes = null;
 
 
+        PupilDiameter[] pupilDiameters;
+        if (first.getPupilDiameter() != null && last.getPupilDiameter() != null)
+            pupilDiameters = first.getPupilDiameter().interpolate(first.getPupilDiameter(), last.getPupilDiameter(), steps);
+        else
+            pupilDiameters = null;
+
+        Fixation[] fixations;
+        if (first.getFixation() != null && last.getFixation() != null)
+            fixations = first.getFixation().interpolate(first.getFixation(), last.getFixation(), steps);
+        else
+            fixations = null;
+
+        LeftEyePupil[] leftEyePupils;
+        if (first.getLeftEyePupil() != null && last.getLeftEyePupil() != null)
+            leftEyePupils = first.getLeftEyePupil().interpolate(first.getLeftEyePupil(), last.getLeftEyePupil(), steps);
+        else
+            leftEyePupils = null;
+
+        RightEyePupil[] rightEyePupils;
+        if (first.getRightEyePupil() != null && last.getRightEyePupil() != null)
+            rightEyePupils = first.getRightEyePupil().interpolate(first.getRightEyePupil(), last.getRightEyePupil(), steps);
+        else
+            rightEyePupils = null;
+
+
+        //Only interpolate on data attributes that are not valid
         for (int i = 0; i < steps; ++i) {
-            RecXmlObject interpolatedRec = new RecXmlObject();
-            interpolatedRec.setFixation(fixations[i]);
-            interpolatedRec.setBestPointOfGaze(bestPointOfGazes[i]);
-            interpolatedRec.setLeftEyePupil(leftEyePupils[i]);
-            interpolatedRec.setRightEyePupil(rightEyePupils[i]);
-            interpolatedRec.setLeftEyePointOfGaze(leftEyePointOfGazes[i]);
-            interpolatedRec.setRightEyePointOfGaze(rightEyePointOfGazes[i]);
-            interpolatedRec.setPupilDiameter(pupilDiameters[i]);
+            RecXmlObject interpolatedRec = unmodified.get(i);
+
+            if ((unmodified.get(i).getFixation() == null || !unmodified.get(i).getFixation().isValid()) && fixations != null) {
+                interpolatedRec.setFixation(fixations[i]);
+            }
+
+            if ((unmodified.get(i).getBestPointOfGaze() == null || !unmodified.get(i).getBestPointOfGaze().isValid()) && bestPointOfGazes != null) {
+                interpolatedRec.setBestPointOfGaze(bestPointOfGazes[i]);
+            }
+
+            if ((unmodified.get(i).getLeftEyePupil() == null || !unmodified.get(i).getLeftEyePupil().isValid()) && leftEyePupils != null) {
+                interpolatedRec.setLeftEyePupil(leftEyePupils[i]);
+            }
+
+            if ((unmodified.get(i).getRightEyePupil() == null || !unmodified.get(i).getRightEyePupil().isValid()) && rightEyePupils != null) {
+                interpolatedRec.setRightEyePupil(rightEyePupils[i]);
+            }
+
+            if ((unmodified.get(i).getLeftEyePointOfGaze() == null || !unmodified.get(i).getLeftEyePointOfGaze().isValid() )&& leftEyePointOfGazes != null) {
+                interpolatedRec.setLeftEyePointOfGaze(leftEyePointOfGazes[i]);
+            }
+
+            if ((unmodified.get(i).getRightEyePointOfGaze() == null || !unmodified.get(i).getRightEyePointOfGaze().isValid()) && rightEyePointOfGazes != null) {
+                interpolatedRec.setRightEyePointOfGaze(rightEyePointOfGazes[i]);
+            }
+
+            //This one will lead to reduced accuracy(though we don't use it in the current application)
+            //If someone stumbles upon this code, the ideal solution is to go into th einterpolation and have it only interpolate on left eye/right eye valid.
+            if (pupilDiameters != null  && ( unmodified.get(i).getPupilDiameter()== null || !unmodified.get(i).getPupilDiameter().isLeftEyeValid() || !unmodified.get(i).getPupilDiameter().isRightEyeValid())) {
+                interpolatedRec.setPupilDiameter(pupilDiameters[i]);
+            }
+            
             interpolationObjs[i] = interpolatedRec;
         }
 
         return interpolationObjs;
 	
 	}
+
+    public boolean hasInvalidAttributes() {
+        if (this.getFixation() != null && !this.getFixation().isValid())
+            return true;
+        
+        if (this.getBestPointOfGaze() != null && !this.getBestPointOfGaze().isValid())
+            return true;
+        
+        if (this.getLeftEyePupil() != null && !this.getLeftEyePupil().isValid())
+            return true;
+        
+        if (this.getRightEyePupil() != null && !this.getRightEyePupil().isValid())
+            return true;
+        
+//        if (this.getRightEyePointOfGaze() != null && !this.getRightEyePointOfGaze().isValid())
+//            return true;
+        
+//        if (this.getLeftEyePointOfGaze() != null && !this.getLeftEyePointOfGaze().isValid())
+//            return true;
+        
+        return false;
+    }
 
 }

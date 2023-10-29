@@ -3,6 +3,7 @@ package data_classes;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 public class LeftEyePupil {
     @JacksonXmlProperty(isAttribute = true, localName = "LPCX")
@@ -13,6 +14,8 @@ public class LeftEyePupil {
     private double diameter;
     @JacksonXmlProperty(isAttribute = true, localName = "LPS")
     private double scale;
+
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "LPV")
     private boolean isValid;
 
@@ -137,6 +140,7 @@ public class LeftEyePupil {
             c.setDiameter(diameters[i]);
             c.setScale(scales[i]);
             c.setIsValid(true);
+            leftPupilInterpols[i] = c;
         }
 
         return leftPupilInterpols;

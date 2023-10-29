@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import interpolation.Interpolation;
 import server.serialization_helpers.IntToBooleanDeserializer;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 public class Fixation {
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGX")
@@ -16,9 +17,12 @@ public class Fixation {
     private double startTime;
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGD")
     private double duration;
+
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGID")
     private int id;
 
+    @IgnoreWekaAttribute
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGV")
 
@@ -64,7 +68,7 @@ public class Fixation {
         return id;
     }
 
-    public Boolean getValid() {
+    public boolean isValid() {
         return isValid;
     }
 

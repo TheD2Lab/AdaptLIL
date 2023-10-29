@@ -3,6 +3,7 @@ package data_classes;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 @JsonAutoDetect(fieldVisibility=JsonAutoDetect.Visibility.ANY)
 public class BestPointOfGaze {
@@ -20,6 +21,8 @@ public class BestPointOfGaze {
     private double x;
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGY")
     private double y;
+
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "BPOGV")
     private boolean isValid;
 

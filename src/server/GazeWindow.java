@@ -5,9 +5,11 @@ import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Intended use of this file is to implement a 'window' in which gaze can be analyzed and conclusions/predictions can be drawn.
@@ -118,6 +120,45 @@ public class GazeWindow {
         return this.bufferIndex == this.windowSize;
     }
 
+    public void interpolateMissingValues() {
+        int invalidIndex = -1;
+        int lastValidIndex = 0;
+        List<RecXmlObject> invalidObjects = new ArrayList<RecXmlObject>();
+        for (int i = 0; i < this.gazeBuffer.length; ++i) {
+            boolean isValid = !this.gazeBuffer[i].hasInvalidAttributes();
+
+            //First encounter of an invalid index after encountering good segments
+            if (isValid) {
+
+                //interpolate, a new valid segment has been found after the first.
+                if (invalidIndex > -1) {
+                    RecXmlObject firstValidObj = this.gazeBuffer[lastValidIndex];
+                    RecXmlObject lastValidObj = this.gazeBuffer[i];
+                    int steps = i - lastValidIndex - 1;
+                    RecXmlObject[] interpolatedRecXmlObjects = this.gazeBuffer[i].interpolate(firstValidObj, lastValidObj, invalidObjects, steps);
+
+                    //Reassign interpolated objects
+                    System.arraycopy(interpolatedRecXmlObjects, 0, this.gazeBuffer, invalidIndex, interpolatedRecXmlObjects.length);
+
+                    invalidObjects.clear();
+                }
+
+                lastValidIndex = i;
+
+            } else {
+
+                if (invalidIndex < 0 ) { //Invalid object was not yet encountered, mark current position
+                    invalidIndex = i;
+                }
+
+                //Add to list of invalid objects for interpolation
+                invalidObjects.add(this.gazeBuffer[i]);
+            }
+
+
+        }
+    }
+
     /**
      * https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
      * Converts the window into an instance than can be used for Weka ML
@@ -152,21 +193,18 @@ public class GazeWindow {
             for (int j = 0; j < recXmlObject.getClass().getDeclaredFields().length; ++j) {
                 Field field = recXmlObject.getClass().getDeclaredFields()[j];
                 if (field.canAccess(recXmlObject)) {
-                    try {
-                        if (field.get(recXmlObject) != null && field.getType() != String.class) {
-                            String attributeName = "";
-                            if (reduceAttributeNames)
-                                attributeName = i +"_"+ j;
-                            else
-                                attributeName = field.getName() + "_" + i;
+                    //Skip strings and those with the IgnoreWekaAttribute annotation
+                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+                        String attributeName = "";
+                        if (reduceAttributeNames)
+                            attributeName = i +"_"+ j;
+                        else
+                            attributeName = field.getName() + "_" + i;
 //                                if (i == 299 && field.getName().equals("RPD"))
 //                                    System.out.println(attributeName);
-                            attributeList.add(new Attribute(attributeName));
-                        }
-
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
+                        attributeList.add(new Attribute(attributeName));
                     }
+
                 }
             }
         }
@@ -175,9 +213,7 @@ public class GazeWindow {
 
     public DenseInstance getInstancesFromAttributeList(ArrayList<Attribute> attributeList) {
 
-        //TODO
-        //Revisit data. I understand why it's exponential now
-        //
+
         DenseInstance instance = new DenseInstance(attributeList.size());
         int attrIndex = 0;
 
@@ -188,19 +224,34 @@ public class GazeWindow {
                 Object val = new Object();
 
                 try {
-                    val = field.get(recXmlObject);
 
-                    if (val != null && field.getType() != String.class) {
+                    //Only set values for
+                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+                        val = field.get(recXmlObject);
 
                         //Check types and cast appropriately.
                         //If there is a primitive type
                         //use field.getDouble(recXmlObject)
-                        if (field.getType() == Double.class)
-                            instance.setValue(attrIndex, (Double) val);
-                        else if (field.getType() == Float.class)
-                            instance.setValue(attrIndex, (Float) val);
-                        else if (field.getType() == String.class)
-                            instance.setValue(attrIndex, (String) val);
+                        if (field.getType() == Double.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (Double) val);
+                            else
+                                instance.setValue(attrIndex, 0.0);
+                        }
+                        else if (field.getType() == Float.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (Float) val);
+                            else
+                                instance.setValue(attrIndex, 0.0);
+                        }
+                        else if (field.getType() == String.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (String) val);
+                            else
+                                instance.setValue(attrIndex, "");
+                        }
+
+                        //TODO, not sure how to do nulls for instance so it's left out.
                         ++attrIndex;
 
                     }

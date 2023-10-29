@@ -2,6 +2,7 @@ package data_classes;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 public class PupilDiameter {
 
@@ -17,10 +18,15 @@ public class PupilDiameter {
 
     @JacksonXmlProperty(isAttribute = true, localName = "LPMM")
     private double diameterOfLeftEyeInMM;
+
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "LPMMV")
     private boolean isLeftEyeValid;
+
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "RPMMV")
     private boolean isRightEyeValid;
+
     @JacksonXmlProperty(isAttribute = true, localName = "RPMM")
     private double diameterOfRightEyeInMM;
 

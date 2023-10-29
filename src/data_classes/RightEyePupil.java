@@ -2,6 +2,7 @@ package data_classes;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
+import wekaext.annotations.IgnoreWekaAttribute;
 
 public class RightEyePupil {
 
@@ -13,6 +14,8 @@ public class RightEyePupil {
     private double diameter;
     @JacksonXmlProperty(isAttribute = true, localName = "RPS")
     private double scale;
+
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "RPV")
     private boolean isValid;
 
@@ -131,12 +134,13 @@ public class RightEyePupil {
         double[] diameters = interpolation.interpolate(a.getDiameter(), b.getDiameter(), steps);
         double[] scales = interpolation.interpolate(a.getScale(), b.getScale(), steps);
         for (int i = 0; i < steps; ++i) {
-            LeftEyePupil c = new LeftEyePupil();
+            RightEyePupil c = new RightEyePupil();
             c.setX(interpolCoords[i][0]);
             c.setY(interpolCoords[i][1]);
             c.setDiameter(diameters[i]);
             c.setScale(scales[i]);
             c.setIsValid(true);
+            rightPupilInterpols[i] = c;
         }
 
         return rightPupilInterpols;

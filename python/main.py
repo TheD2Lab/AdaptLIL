@@ -93,8 +93,7 @@ def convertDataToLTSMFormat(data, timeSequences):
     y = np.array(y)
     return [x, y]
 
-def normalizationByPollingSample(data, numAttributes) :
-    attribute_min_max = {}
+def normalizationByPollingSample(data, numAttributes, attribute_min_max={}) :
     for i in data:
         correct = i[-1]
         attrs = i[:-1]
@@ -511,12 +510,10 @@ if __name__ == '__main__':
 
     xAll, yAll = convertDataToLTSMFormat(allTrainData, timeSequences)
     print_both("normalization data attributes (keep handy)")
-    print_both(json.dumps(str(xAttrMinMax)))
-    xAll = normalizeData(xAll, numAttributes, xAttrMinMax)
 
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/indivParts/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/interpolDatav3/"
 
     testData = convertArffToDataFrame(baseDirForTrainData + "/testData_500.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
@@ -535,6 +532,7 @@ if __name__ == '__main__':
     all_models_by_tp_and_tn = {};
     all_models_stats = []
     trainDataParticipants = []
+    attr_min_max = {}
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
         print_both(filename)
@@ -543,15 +541,25 @@ if __name__ == '__main__':
             continue
         trainData = convertArffToDataFrame(f)
 
+        attr_min_max = normalizationByPollingSample(trainData, numAttributes, attr_min_max)
         '''
         Can't use reshape, must do mannualy
         Take the 2D stretched window and make it to a 3D window represented by
         (samples,windowSize,attributes)
         Also pair the correct answers together.
         '''
+
+    for filename in os.listdir(baseDirForTrainData):
+        f = os.path.join(baseDirForTrainData, filename)
+        if "trainData" not in filename:
+            continue
+        trainData = convertArffToDataFrame(f)
+
         x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences)
-        x_part = normalizeData(x_part, numAttributes, xAttrMinMax)
+        x_part = normalizeData(x_part, numAttributes, attr_min_max)
         trainDataParticipants.append({'x': x_part, 'y': y_part})
+
+    print_both(json.dumps(str(attr_min_max)))
 
     for model_name, model_uncloned in models.items():
         model = tf.keras.models.clone_model(model_uncloned)
@@ -586,7 +594,7 @@ if __name__ == '__main__':
                 x_part = trainDataParticipants[i]['x']
                 y_part = trainDataParticipants[i]['y']
                 # Since we are training on 'profiles' of people, we should always shuffle their data for training.
-                x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.,
+                x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
                                                                                   random_state=0, shuffle=True)
                 print_both(x_train.shape)
                 model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis: Task</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    
+    <!-- For Tasks -->
+    <script src="tasks/task_data.js"></script>
+    <script src="scripts/task_form.js"></script>
+
+    <!-- For Visualization -->
+    <!-- Script -->
+    <script src="../scripts/indented_tree.js"></script>
+    <script src="../scripts/script-alignment.js"></script>
+    <script src="../scripts/baselineMap.js"></script>
+    <script> 
+        setVis("baseline");
+    </script>
+
+    <!-- data -->    
+    <script src="../data/dataset1/dataset1_ont1.js"></script>
+    <script src="../data/dataset1/dataset1_ont2.js"></script>
+    <script src="../data/dataset1/dataset1_map_modified.js"></script>
+    <script src="../data/dataset2/dataset2_ont1.js"></script>
+    <script src="../data/dataset2/dataset2_ont2.js"></script>
+    <script src="../data/dataset2/dataset2_map_modified.js"></script>
+    <script>
+        const dataset1 = {
+            domain: 'conference',
+            ont1: edas,
+            ont2: ekaw,
+            maps: mapping_edas_ekaw
+        };
+        const dataset2 = {
+            domain: 'human anatomy',
+            ont1: human,
+            ont2: mouse,
+            maps: mapping_human_mouse
+        };
+    </script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/style.css"> <!-- ontology visualization styles -->
+    <link rel="stylesheet" href="styles/style_task.css"> <!-- task form within userstudy -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+<body class="text-unselectable p-4">
+    <div class="content container-fluid">
+
+        <p class="h5">Use the visualization to answer the question</p>
+        
+        <!-- Task Area -->
+        <form id="taskForm">
+            <div class="mb-4 px-4 py-3" id="taskDiv" onsubmit="return validateForm();">
+                <p class="task-question"></p>
+                <div id="answerDiv"></div>
+            </div>
+        <!-- Finish Button -->
+            <input type="button" id="submit" onclick="return nextTask();" class="btn btn-primary" value="Next Task">
+            <p id="validateMsg"></p></form>
+        </form>
+
+        <!-- Visualization -->
+        <div class="svgdiv" id="baseline-svgdiv">
+            <!-- svg for baseline mapping -->
+            <svg class="mapsvg" id="baseline-svg" width="800" height="500">
+            </svg>
+        </div>
+    </div>
+</body>
+
+</html>

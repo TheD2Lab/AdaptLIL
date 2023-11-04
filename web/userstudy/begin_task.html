@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/style.css"> <!-- ontology visualization styles -->
+    <link rel="stylesheet" href="styles/style_task.css"> <!-- task form within userstudy -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+
+    <script>
+        window.onload = function() {
+            var queryString = window.location.search;
+            var urlParams = new URLSearchParams(queryString);
+            var visualizationPage = urlParams.get('visualization');
+            var domain = urlParams.get('domain');
+            var participantID = urlParams.get('participantID');
+
+            // Visualization
+            document.getElementById("initForm").action = visualizationPage;
+            if (visualizationPage == "list_task.html") 
+            {
+                document.getElementById("vis").value = "Indented List";
+            }
+            else if (visualizationPage == "mat_task.html")
+            {
+                document.getElementById("vis").value= "Matrix";
+            }
+            // Domain
+            if (domain == 0) 
+            {
+                document.getElementById("domain").value = "Conference";
+            } 
+            else if (domain == 1) 
+            {
+                document.getElementById("domain").value = "Anatomy";
+            }
+            // Participant
+            document.getElementById("participantID").value = participantID;
+        };
+    </script>
+
+</head>
+
+<body class="text-unselectable p-4">
+    <div class="content container-fluid text-center">
+        <div class="">
+            <h2 class="my-3">Begin Task</h2>
+            <form id="initForm">
+                <input name="domain" id="domain" class="btn btn-info"></input>
+                <input mame="vis" id="vis" class="btn btn-info"></input>
+                <input name="participantID" id="participantID" class="btn btn-info"></input>
+                <br><br>
+                <p>Click the button below when you are ready to begin your tasks</p>
+                <input type="submit" id="start-button" class="btn btn-primary" value="Start"></input>
+            </form>
+            <p id="msg" class="font_color_primary"></p>
+        </div>
+    </div>
+</body>
+</html>

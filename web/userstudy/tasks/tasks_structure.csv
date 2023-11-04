@@ -1,0 +1,16 @@
+type,question,answertype
+identifying,"How many mappings are shown in the visualization in total?",number
+indentifying,"How many classes is [ClassA] (in the left ontology) mapped to?",number
+identifying,"What is [ClassA] (in the left ontology) mapped to (in the right ontology)?",class
+validation,Is there a mapping between [ClassA] (in the left ontology) and [ClassB] (in the right ontology)?,y/n
+validation,Is [ClassA] (in the left ontology) correctly mapped?,y/n
+identifying,Can [ClassA] (in the left ontology) be mapped to another class (in the right ontology)?,y/n
+creation,Which class could [ClassA] (in the left ontology) be mapped to (in the right ontology)?,class
+identifying,Which class could [ClassA] (in the left ontology) mapped to (in the right ontology)?,class
+validation,[ClassA] (in the left ontology) is mapped to [ClassB] (in the right ontology). Is this correct?,y/n
+validation,[ClassA] (in the left ontology) is mapped to [ClassB] (in the right ontology). Is this correct?,y/n
+identifying,[ClassA] (in the left ontology) is mapped to [ClassB] (in the right ontology). Is this correct?,y/n
+validation,[ClassA] (in the left ontology) is mapped to [ClassB] (in the right ontology). Is this correct?,y/n
+creation,Which class could [ClassA] (in the left ontology) be mapped to (in the right ontology)?,class
+identifying,Can [ClassA] (in the left ontology) be mapped to another class (in the right ontology)?,y/n
+creation,Is there any other mapping(s) that should be created between the ontologies but is currently absent from the visualization? List as many as you can (ex. "a=b,x=y,..." where a is the class from the left ontology and b is the class from the right ontology),pairs

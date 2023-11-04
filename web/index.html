@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    
+    <!-- data -->
+    <script src="data/dataset1/dataset1_ont1.js"></script>
+    <script src="data/dataset1/dataset1_ont2.js"></script>
+    <script src="data/dataset1/dataset1_map_modified.js"></script>
+    <script src="data/dataset2/dataset2_ont1.js"></script>
+    <script src="data/dataset2/dataset2_ont2.js"></script>
+    <script src="data/dataset2/dataset2_map_modified.js"></script>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body class="text-unselectable">
+
+    <div class="content container-fluid text-center">
+    <form id="start-task" action="userstudy/begin_task.html">
+        <h2 class="py-2 mt-4">Ontology Mapping Visualization</h2>
+        <h4 class="py-2 mt-4">Experiment Setup</h4>
+        <div id="domain-options">
+            <input type="radio" name="domain" id="conf-domain" value="0">Conference</input>
+            <input type="radio" name="domain" id="anatomy-domain" value="1">Anatomy</input>
+        </div>
+        <select name="visualization" id="vis-options" required>
+            <option value="" selected disabled>Choose visualization</option>
+            <option value="list_task.html">Indented List</option>
+            <option value="mat_task.html">Matrix</option>
+        </select>
+        <div id="participant_id" class="py-2 mt-4">
+            <input type="text" id="p_id" name="participantID" class="input-text" onkeydown="return (event.keyCode!=13 && event.keyCode!=189);" placeholder="Participant ID" autocomplete="off" required>
+        <!-- <a class="btn btn-primary" href="userstudy/index.html" target="#">Visualization Study</a> -->
+        <h4 class="py-1"></h4>
+        <input type="submit" class="btn btn-primary" id="task-btn" href="" target="#" value="Begin task"></input>
+        </form>
+        <a type="button" class="btn btn-info" id="blank-btn" href="userstudy/blank_form.html">Blank form</a>
+    </div>
+
+    <script>
+        // const dataset1 = {
+        //     domain: 'conference',
+        //     ont1: edas,
+        //     ont2: ekaw,
+        //     maps: mapping_edas_ekaw
+        // };
+        // const dataset2 = {
+        //     domain: 'anatomy',
+        //     ont1: human,
+        //     ont2: mouse,
+        //     maps: mapping_human_mouse
+        // };
+
+        var vis = document.getElementById('vis-options');
+        //var domain = document.querySelector('input[name="first-domain"]:checked');
+        var confDomain = document.getElementById('conf-domain');
+        var anatomyDomain = document.getElementById('anatomy-domain');
+
+        // vis.onchange = function () {
+        //     document.getElementById("start-task").action = this.value
+        // }
+
+        // window.addEventListener('load', function() {
+        //     console.log("window loaded.");
+        //     $('#dataset-description-1').html(describeDataset(dataset1));
+        //     $('#dataset-description-2').html(describeDataset(dataset2));
+        // });
+
+        function describeDataset(dataset)
+        {
+            var desc = 'domain: ' + dataset.domain +'<br>'+
+                `onto1: \"${dataset.ont1.baseNS}\" ${dataset.ont1.classCount} classes` +'<br>'+
+                `onto2: \"${dataset.ont2.baseNS}\" ${dataset.ont2.classCount} classes` +'<br>'+
+                `maps: ${dataset.maps.alignments.length} class alignments`;
+            // console.log(desc);
+            return desc;
+        }
+
+        /**
+        * create message box and return svg:g
+        * @param {string} msg 
+        */
+        const messageBox = function(msg) {
+            const box = d3.create('svg:g').classed('message-box', true);
+            box.append('rect')
+                .attr('width', msg.length * 6.5 + 5)
+                .attr('height', 22);
+            box.append('text')
+                .text(msg)
+                .attr('x', 5).attr('y', 5);
+            return box.node();
+        };
+    </script>
+</body>
+
+</html>

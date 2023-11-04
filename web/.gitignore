@@ -1,0 +1,15 @@
+# Directories
+test
+dataset
+oldversion
+hidden
+
+# Sass
+*.css.map
+
+# MacOS
+.DS_Store
+
+# Code
+.jshintrc
+.vscode/

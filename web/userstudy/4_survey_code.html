@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis: Done</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body class="text-unselectable p-4">
+    <div class="content container-fluid text-center">
+
+        <div class="">
+            <br><br>
+            <h2 class="my-3">Thanks for your participation!</h2>
+            <br><br>
+            <p>Copy the survey code below.<br>Put it into your HIT session in Amazon MTurk.</p>
+            <div class="input-group input-group-lg mb-3" style="width:250px; margin:0 auto;">
+                <input type="text" class="form-control" id="surveyCode" placeholder="SurveyCode" value="E8C97A31" aria-label="Generated survey code" readonly>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" onclick="copySurveyCode()">copy</button>
+                </div>
+            </div>
+            <p id="msg" class="font_color_primary"></p>
+            <script>
+                function copySurveyCode() {
+                    var codeText = document.getElementById('surveyCode');
+                    codeText.select();
+                    codeText.setSelectionRange(0,99);
+                    document.execCommand("copy");
+                    document.getElementById('msg').innerHTML = "The survey code copied.";
+                }
+            </script>
+        </div>
+        
+    </div>
+
+</body>
+
+</html>

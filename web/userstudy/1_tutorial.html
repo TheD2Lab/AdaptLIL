@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis: Tutorial</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body class="text-unselectable p-4">
+    <div class="content container-fluid">
+        <h2 class="mb-4">Tutorial</h2>
+        
+        <div>
+            <h4>Ontology / Class</h4>
+            <p><ul>
+                <li>Here is a structured dataset. Let’s call it <b>ontology</b>.</li>
+                <li>The example is visualizing a conceptual model of pizza, the “ontology” of pizza.</li>
+                <li>In the example, “Pizza” is a type of “Food”.</li>
+                <li>And also, “Food” is a type of “Thing”.</li>
+                <li>Let’s call those concepts <b>classes</b> of the ontology.</li>
+            </ul><p>
+            <div class="img-wrapper">
+                <img src="../docs/assets/tutorials/tutorial_tree.jpg" width=550/>
+            </div>
+            <br>
+            <h4>Mapping</h4>
+            <p><ul>
+                <li>Here are two ontologies visualized side by side.</li>
+                <li>Classes with same meaning between ontologies are connected.</li>
+                <li>Let’s call the connection <b>mapping</b>.</li>
+                <li>“Pizza” on the left ontology is mapped to “pizza” on the right ontology.</li>
+                <li>A <span id="mappingShape">line</span> is showing the mapping between “Pizza” and “pizza”.</li>
+                <li>The lines are showing the mappings.</li>
+            </ul></p>
+            <div class="img-wrapper">
+                <img id="mappingImg" src="../docs/assets/tutorials/tutorial_linked.jpg" width=650/>
+            </div>
+        </div>
+        <br><br>
+        <div>
+            <h4>Ok, now what will I do?</h4>
+            <p><ul>
+                <li>You will see a visualization of mappings between two ontologies about <b>“<span id="dataDomain">conference</span>”</b></li>
+                <li>Complete a task about the mappings using the visualization.</li>
+            </ul></p>
+        
+        </div>
+        
+        <div class="mt-4 text-center">
+            <hr>
+            <a href="2_task_vis.html" class="btn btn-primary">Start Task</a>
+        </div>
+    </div>
+
+</body>
+
+</html>

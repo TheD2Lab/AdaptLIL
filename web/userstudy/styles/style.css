@@ -1,0 +1,115 @@
+.content {
+  width: 800px;
+}
+
+h1, h2, .h2 {
+  color: #0077ff;
+}
+
+.font_color_primary {
+  color: #0077ff;
+}
+
+p b, ul b {
+  color: #0077ff;
+}
+
+.img-wrapper {
+  border: lightgray solid 1px;
+}
+
+#form-head {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+#form-identification {
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  /* Hide identification info */
+  visibility: hidden;
+  opacity: 0.5;
+}
+
+#validateMsg {
+  color: orangered;
+  margin-top: 5px;
+}
+
+.itemdiv {
+  border: #0077ff solid 1px;
+  border-radius: 3px;
+  padding: 10px 20px 10px 20px;
+  margin: 10px 0 15px 0;
+}
+.itemdiv .qtext {
+  margin-bottom: 5px;
+}
+.itemdiv .qtext-sub {
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  line-height: 1.3em;
+  margin-left: 1.3em;
+  color: #333;
+}
+
+.answerdiv {
+  padding-top: 20px;
+  padding-bottom: 10px;
+}
+.answerdiv label {
+  font-size: 0.9em;
+  color: #616161;
+  margin-bottom: 0;
+}
+.answerdiv .radiodiv {
+  padding: 10px;
+}
+.answerdiv .radiodiv label {
+  position: relative;
+  text-anchor: middle;
+  top: -1.4em;
+  left: 0.7em;
+}
+.answerdiv input[type=radio] {
+  cursor: pointer;
+}
+.answerdiv .form-check-inline {
+  margin-left: 0.75em;
+  margin-right: 0.75em;
+}
+
+.chosen-cards-div #chosen-words {
+  color: #0077ff;
+  pointer-events: none;
+  margin-top: 10px;
+  border: none;
+  width: 100%;
+}
+
+.wordcard {
+  margin: 3px;
+  background-color: #ececec;
+  border: none;
+  width: 132px;
+  font-size: 0.9em;
+}
+.wordcard:hover {
+  background-color: #cecece;
+}
+.wordcard.active {
+  background-color: #0077ff;
+  color: white;
+}
+.wordcard .word-checkbox {
+  position: absolute;
+  left: -100vw;
+}
+
+.reason-div {
+  margin-top: 20px;
+}
+
+/*# sourceMappingURL=style.css.map */

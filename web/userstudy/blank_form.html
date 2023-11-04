@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/style.css"> <!-- ontology visualization styles -->
+    <link rel="stylesheet" href="styles/style_task.css"> <!-- task form within userstudy -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <script>
+        const countdown = async () => {
+            const startTime = Date.now();
+            const tenSeconds = 10000;
+            const endTime = startTime + tenSeconds;
+            while (Date.now() < endTime) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            // closing window
+            window.open('', '_self').close();
+        }
+        countdown();
+    </script>
+</head>
+
+<body class="text-unselectable p-4">
+    <div class="content container-fluid">
+        <!-- Task Area -->
+        <form id="taskDiv">
+            <div class="mb-4 px-4 py-3" id="taskDiv">
+                <p class="task-question"></p>
+                <div id="answerDiv"></div>
+            </div>
+        </form>
+
+        <!-- Visualization -->
+        <div class="visArea">
+        </div>
+    </div>
+</body>
+
+
+</html>

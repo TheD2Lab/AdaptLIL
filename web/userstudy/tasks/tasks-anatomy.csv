@@ -1,0 +1,16 @@
+qtype,question,atype,answer
+identifying,How many mappings are shown in the visualization in total?,number,10
+indentifying,How many classes is "Skin" (in the left ontology) mapped to?,number,1
+identifying,What is "Viscera" (in the left ontology) mapped to (in the right ontology)?",class,visceral organ system
+validation,Is there a mapping between "Blood" (in the left ontology) and "blood" (in the right ontology)?,y/n,No
+validation,Is "Cartilage" (in the left ontology) correctly mapped?,y/n,No
+identifying,Can "Joint" (in the left ontology) be mapped to another class (in the right ontology)?,y/n,Yes
+creation,Which class could "Heart" (in the left ontology) be mapped to (in the right ontology)?,class,heart
+identifying,What is "Skull" (in the left ontology) mapped to (in the right ontology)?,class,cranium
+validation,"Urinary_System_Part" (in the left ontology) is mapped to "muscle" (in the right ontology). Is this correct?,y/n,No
+validation,"Cheek" (in the left ontology) is mapped to "cuticle" (in the right ontology). Is this correct?,y/n,No
+identifying,"Mucus" (in the left ontology) is mapped to "nasal mucus" (in the right ontology). Is this correct?,y/n,No
+validation,"IndustryOrganization" (in the left ontology) is mapped to "Organisation" (in the right ontology). Is this correct?,y/n,No
+creation,Which class could "Lip" (in the left ontology) be mapped to (in the right ontology)?,class,lip
+identifying,Can "Arm" (in the left ontology) be mapped to another class (in the right ontology)?,y/n,Yes
+creation,Is there any other mapping(s) that should be created between the ontologies but is currently absent from the visualization? List as many as you can (ex. "a=b,x=y,..." where a is the class from the left ontology and b is the class from the right ontology),pairs

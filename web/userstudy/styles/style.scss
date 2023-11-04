@@ -1,0 +1,138 @@
+$primary-color: #0077ff;
+$muted-color: #616161;
+$card-color: #f9f9f9;
+$wordcard-color: #ececec;
+$wordcard-hover-color: #cecece;
+
+.content {
+    width: 800px;
+}
+h1, h2, .h2 {
+    color: $primary-color;
+}
+.font_color_primary {
+    color: $primary-color;
+}
+p, ul { 
+    b {
+        color: $primary-color;
+    }
+}
+
+////// Tutorial
+.img-wrapper {
+    border: lightgray solid 1px;
+}
+
+
+//////////////////////////////// Form Head and Identification
+#form-head {
+    position: relative;
+    margin-bottom: 30px;
+}
+#form-identification {
+    pointer-events:none;
+    position: absolute;
+    right: 0; 
+    top: 0;
+    /* Hide identification info */
+    visibility: hidden;
+    opacity: 0.5;
+}
+#validateMsg {
+    color: orangered;
+    margin-top: 5px;
+}
+
+//////////////////////////////// Question & Scale point based Forms
+.itemdiv {
+    // background-color: $card-color;
+    border: $primary-color solid 1px;
+    border-radius: 3px;
+
+    padding: 10px 20px 10px 20px;
+    margin: 10px 0 15px 0;
+    
+    .qtext {
+        margin-bottom: 5px;
+    }
+
+    .qtext-sub {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        line-height: 1.3em;
+        margin-left: 1.3em;
+        color: #333;
+    }
+}
+.answerdiv {
+    padding-top: 20px;
+    padding-bottom: 10px;
+
+    label{
+        font-size: 0.9em;
+        color: $muted-color;
+        margin-bottom: 0;
+    }
+
+    .radiodiv {
+        padding: 10px;
+
+        label {
+            position: relative;
+            text-anchor: middle;
+            top: -1.4em;
+            left: 0.7em;
+        }
+    }
+
+    input[type=radio] {
+        cursor: pointer;
+    }
+    .form-check-inline {
+        margin-left: 0.75em;
+        margin-right: 0.75em;
+    }
+}
+
+
+//////////////////////////////// Reaction Cards form
+.chosen-cards-div {
+    // border: red solid 1px;
+    #chosen-words {
+        color: $primary-color;
+        pointer-events:none;
+        margin-top: 10px;
+        // margin-bottom: 5px;
+        border: none;
+        width: 100%;
+    }
+}
+.cards-div {
+    // border: orange solid 1px;
+}
+.wordcard {
+    margin: 3px;
+    background-color: $wordcard-color;
+    border: none;
+    width: 132px;
+    font-size: 0.9em;
+    // min-width: 90px;
+
+    &:hover {
+        background-color: $wordcard-hover-color;
+    }
+    &.active {
+        background-color: $primary-color;
+        color: white;
+    }
+
+    .word-checkbox {
+        // Hide from the screen
+        position: absolute;
+        left: -100vw;
+    }
+}
+.reason-div {
+    margin-top: 20px;
+}

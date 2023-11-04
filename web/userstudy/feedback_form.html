@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis: Feedback</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/style.css">
+    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- script -->
+    <script src="feedback_form.js"></script>
+    <!-- form data -->
+    <script src="feedback_formdata.js"></script>
+</head>
+
+<body class="text-unselectable p-4">
+    <div class="content container-fluid">
+        <form id="feedbackForm" onsubmit="return validateForm();">
+            <div class="h2">Your Feedback</div>
+            <hr class="mb-4">
+            <section id="form-board" class="mx-2">
+                <div id="form-head">
+                    <!-- participant id and formtype -->
+                    <div class="h4" id="form-title"></div>
+                    <div id="form-message"></div>
+                    <div id="form-identification" class="text-right"></div>
+                </div>
+                <!-- form contents. item list -->
+                <div id="form-content" class="mx-4">
+                    <!-- item cards -->
+                </div>
+            </section>
+            <div id="form-submit-section" class="mt-4 text-center">
+                <hr>
+                <input type="button" onclick="saveResponse(); closeWindow();" class="btn btn-primary" value="Finish">
+                <p id="validateMsg"></p>
+            </div>
+        </form>
+
+    </div>
+</body>
+</html>

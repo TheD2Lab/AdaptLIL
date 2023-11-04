@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial - Linked Mapping</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    
+    <!-- Script -->
+    <script src="scripts/indented_tree.js"></script>
+    <script src="scripts/script-alignment.js"></script>
+    <script src="scripts/baselineMap.js"></script>
+    <!-- data -->    
+    <script src="data/tutorial_dataset/pizza.js"></script>
+    <script src="data/tutorial_dataset/food.js"></script>
+    <script src="data/tutorial_dataset/pizza_food_map.js"></script>
+    <script>
+        const dataset1 = {
+            domain: 'food',
+            ont1: pizza,
+            ont2: food,
+            maps: mapping_pizza_food
+        };
+        setDataset(dataset1);
+    </script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/style.css">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+<body class="text-unselectable">
+
+    <div class="content container-fluid py-2">
+        <div class="mb-2">
+            <span class="h3 align-bottom">Tutorial Linked Mapping</span>
+        </div>
+        <div class="svgdiv" id="baseline-svgdiv">
+            <!-- svg for baseline mapping -->
+            <svg class="mapsvg" id="baseline-svg" width="800" height="600">
+            </svg>
+        </div>
+    </div>
+
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-class IndentedTree {
+class LinkIndentedList {
 
     constructor() {
         this.margin = {top: 30, right: 20, bottom: 30, left: 20};
@@ -11,6 +11,8 @@ class IndentedTree {
         this.hierarchies = [];
         this.triangle = this.trianglePoints(this.nodeMarkSize);
         this.nodesByCoordinate = {};
+        this.adaptations = new LinkIndentedListAdaptations();
+
         this.verticalLink = d => `M ${d.source.x},${d.source.y} V ${d.target.y}`;
     }
 
@@ -188,13 +190,7 @@ class IndentedTree {
             .attr("dy", "0.31em")
             .attr("x", alignRight ? -8 : 8)
             .attr("text-anchor", alignRight ? "end" : "start")
-            .text(d => d.data.name.substring(0,2)).style('font-weight', 'bold')
-        text_start.append("tspan")
-
-            // .attr("dy", "0.31em")
-            // .attr("x", alignRight ? -8 : 8)
-            // .attr("text-anchor", alignRight ? "end" : "start")
-            .text(d =>  d.data.name.substring(2,d.data.name.length)).style('font-weight', 'normal');
+            .text(d => d.data.name)
         nodeEnter.append("rect").classed('node-select-helper', true)
             .attr('fill', 'transparent')
             .attr('width', _this.nodeWidth)

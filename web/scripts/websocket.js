@@ -1,7 +1,6 @@
 class Websocket {
     hostName = "localhost";
     port = 8080;
-
     constructor() {
         this.websocket = new WebSocket("ws://"+this.hostName+":"+this.port+"/gaze");
 
@@ -57,6 +56,11 @@ class Websocket {
 
     }
 
+    /**
+     * Protocol description:
+     * response : {type: 'invoke', 'adaptationType' : 'highlighting'|'deemphasis'|'colorScheme'| 'annotations', 'adaptationState': true|false}
+     * @param response
+     */
     handleInvokeRequest(response) {
         const _this = this;
 
@@ -64,6 +68,10 @@ class Websocket {
         d3.selectAll('.mapCell').nodes().forEach(function () {
            mapWorld.visualizationMap.hideTooltip(this, 0, 0);
         });
+
+        if (response.name === 'adaptation') {
+            mapWorld.visualizationMap.adaptations.toggleAdaptation(response.adaptationType, response.adaptationState);
+        }
         if (response.name === "tooltip") {
           
             const elementIds = response.elementIds;

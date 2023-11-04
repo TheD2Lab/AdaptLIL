@@ -75,15 +75,6 @@ class BaselineMap {
 
     }
 
-// const dataset_edas_ekaw = {
-//     domain: 'conference',
-//     ont1: edas,
-//     ont2: ekaw,
-//     maps: mapping_edas_ekaw
-// };
-
-// setDataset(dataset_edas_ekaw);
-    // setDataset(dataset_edas_ekaw);
 
     /**
      * Draws baseline mapping svg
@@ -120,61 +111,12 @@ class BaselineMap {
 
             updateMappingPos(base_alignments);
 
-            const t = gMap.transition().duration(100);
 
             _this.maplines = gMap.selectAll('g')
                 .data(base_alignments, d => d.id);
-            const maplineEnter = _this.maplines.enter()
-                .append('g')
-                .attr('id', d => `a${d.id}`)
-                .classed('mapping', true).classed('mapLine', true);
-            maplineEnter
-                .on('click', almt => {
-                    console.log('mapLine clicked!');
-                    _this.maplineClicked = true;
 
-                    //@NIck 09-25-23 removed highlight from base because it is technically an adapation we can use later.
-                    // highlightAlignment(almt, g, base_alignments);
-                })
-                .on('mouseover', almt => {
-                    //deemphasis test
-                    deemphasize(almt, g, base_alignments);
-                    if (!_this.maplineClicked) {
-                        //@Nick 09-25-23 removed highlight from base because it is technically an adaptation we can use later.
-                        // highlightAlignment(almt, g, base_alignments);
-                    }
-                    _this.resetOpacity = true;
-                })
-                .on('mouseout', almt => {
-                    //@Nick 09-25-23 removed highlight because it is technically an adaptation.
-                    // if (!_this.maplineClicked) unhighlightAll(g);
+            _this.renderMapLines(_this.maplines, g, gMap);
 
-                    if (_this.resetOpacity) {
-                        restoreOpacity(g);
-                        //deemphasis test
-                        _this.resetOpacity = false;
-                    }
-
-                });
-            maplineEnter.append('path')   //foreground path
-                .attr('d', (d, i) => calcMapLinePath(d, i))
-                .attr('fill', 'none')
-                .attr('class', 'mapLine-fg')
-                .clone(true).lower() //background path
-                .attr('class', 'mapLine-bg')
-                .clone(true).lower() //path select helper
-                .attr('class', 'mapLine-select-helper');
-            const maplineUpdate = _this.maplines.merge(maplineEnter)
-                .classed('map-to-hidden', d => d.mapToHidden)
-                .transition(t)
-                .each((d, i, n) => {
-                    d3.select(n[i]).selectAll('path')
-                        .attr('d', () => calcMapLinePath(d, i));
-                });
-            //Always place direct mappings on top.
-            gMap.selectAll('.map-to-hidden').lower();
-
-            const maplineExit = _this.maplines.exit().transition(t).remove();
 
             //Highlights alignments for mouse events on tree nodes
             g.selectAll('.node')
@@ -182,25 +124,38 @@ class BaselineMap {
                 .on('mouseover', d => {
                     const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
 
-                    deemphasize(mappings, g, base_alignments);
-                    if (!_this.maplineClicked) {
-                        if (mappings) {
-                            highlightAlignment(mappings, g, base_alignments);
+                    if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                        deemphasize(mappings, g, base_alignments);
+                        _this.resetOpacity = true;
+                    }
+
+                    if (_this.indentedTree.adaptations.highlightingEnabled) {
+                        if (!_this.maplineClicked) {
+                            if (mappings) {
+                                highlightAlignment(mappings, g, base_alignments);
+                            }
                         }
                     }
-                    _this.resetOpacity = true;
+
                 })
                 .on('mouseout', () => {
-                    if (_this.resetOpacity) {
-                        restoreOpacity(g);
-                        _this.resetOpacity = false;
+
+                    //Deemphasis adaptation
+                    if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                        if (_this.resetOpacity) {
+                            restoreOpacity(g);
+                            _this.resetOpacity = false;
+                        }
                     }
 
-                    if (!_this.maplineClicked)
-                        unhighlightAll(g);
+                    //Highlight Adaptation
+                    if (_this.indentedTree.adaptations.highlightingEnabled) {
+                        if (!_this.maplineClicked)
+                            unhighlightAll(g);
+                    }
+
                 });
 
-            // console.log(base_alignments);
         }
 
         update();
@@ -214,40 +169,127 @@ class BaselineMap {
             .addEventListener('click', (e) => {
                 const isMapLineTargeted = d3.select(e.target.parentNode).classed('mapLine');
                 if (this.maplineClicked && !isMapLineTargeted) {
-                    console.log('baseline svg clicked! Turning off the highlight.');
+                    if (_this.indentedTree.adaptations.highlightingEnabled) {
+                        console.log('baseline svg clicked! Turning off the highlight.');
+                        unhighlightAll(g);
+                    }
                     this.maplineClicked = false;
-                    unhighlightAll(g);
+
                 }
             });
 
-        /**
-         * Calculates the svg:path for a baseline mapping line
-         * @param {Object} almt an alignment mapping
-         * @param {number} i the index of the alignment
-         */
-        function calcMapLinePath(almt, i) {
-            if (!almt) {
-                return ``;
-            }
-            // console.log(`calcMapLinePath() id:${almt.id} e1pos:${almt.e1pos.x},${almt.e1pos.y} e2pos:${almt.e2pos.x},${almt.e2pos.y}`);
 
-            const ontGap = 200;
-            const dn = 6; //distance from the nodemark
-            const x1 = almt.e1pos.x + dn,
-                y1 = almt.e1pos.y,
-                x2 = almt.e2pos.x + ontGap - dn,
-                y2 = almt.e2pos.y;
-            const c = 10,   //curve value
-                gm = 20, //margin from ontGap
-                hgap = ((ontGap - gm * 2) / base_alignments.length).toFixed(0);
-            const hx = hgap * i + gm;
-            const vy = y2 > y1 ? y2 - c : y2 + c;
-            const cy = y2 > y1 ? c : -c;
-            if (y1 == y2) {
-                return `M${x1},${y1} H${x2}`;
-            } //return straight line
-            return `M${x1},${y1} H${hx} s${c},0,${c},${cy} V${vy} s0,${cy},${c},${cy} H${x2}`;
+    }
+
+    /**
+     * Calculates the svg:path for a baseline mapping line
+     * @param {Object} almt an alignment mapping
+     * @param {number} i the index of the alignment
+     */
+    calcMapLinePath(almt, i) {
+        if (!almt) {
+            return '';
         }
+        // console.log(`calcMapLinePath() id:${almt.id} e1pos:${almt.e1pos.x},${almt.e1pos.y} e2pos:${almt.e2pos.x},${almt.e2pos.y}`);
+
+        const ontGap = 200;
+        const dn = 6; //distance from the nodemark
+        const x1 = almt.e1pos.x + dn,
+            y1 = almt.e1pos.y,
+            x2 = almt.e2pos.x + ontGap - dn,
+            y2 = almt.e2pos.y;
+        const c = 10,   //curve value
+            gm = 20, //margin from ontGap
+            hgap = ((ontGap - gm * 2) / base_alignments.length).toFixed(0);
+        const hx = hgap * i + gm;
+        const vy = y2 > y1 ? y2 - c : y2 + c;
+        const cy = y2 > y1 ? c : -c;
+        if (y1 === y2) {
+            return `M${x1},${y1} H${x2}`;
+        } //return straight line
+        return `M${x1},${y1} H${hx} s${c},0,${c},${cy} V${vy} s0,${cy},${c},${cy} H${x2}`;
+    }
+
+    /**
+     * Render logic for the map lines that connect two entities/nodes
+     * @param maplines
+     * @param svg
+     * @param svgMap
+     */
+    renderMapLines(maplines, svg, svgMap) {
+        const _this = this;
+        const t = svgMap.transition().duration(100);
+
+        const maplineEnter = maplines.enter()
+            .append('g')
+            .attr('id', d => `a${d.id}`)
+            .classed('mapping', true).classed('mapLine', true);
+
+        maplineEnter
+            .on('click', almt => {
+                console.log('mapLine clicked!');
+                _this.maplineClicked = true;
+
+                //Highlight Adaptation
+                if (_this.indentedTree.adaptations.highlightingEnabled) {
+                    highlightAlignment(almt, svg, base_alignments);
+                }
+
+            })
+            .on('mouseover', almt => {
+
+                //deemphasis adaptation
+                if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                    deemphasize(almt, svg, base_alignments);
+                    _this.resetOpacity = true;
+                }
+
+                //highlight adaptation
+                if (_this.indentedTree.adaptations.highlightingEnabled) {
+                    if (!_this.maplineClicked) {
+                        highlightAlignment(almt, svg, base_alignments);
+                    }
+                }
+
+            })
+            .on('mouseout', almt => {
+
+                //Deemphasis adaptation
+                if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                    if (_this.resetOpacity) {
+                        restoreOpacity(svg);
+                        _this.resetOpacity = false;
+                    }
+                }
+
+                //Highlight Adaptation
+                if (_this.indentedTree.adaptations.highlightingEnabled) {
+                    if (!_this.maplineClicked)
+                        unhighlightAll(svg);
+                }
+
+            });
+
+        maplineEnter.append('path')   //foreground path
+            .attr('d', (d, i) => _this.calcMapLinePath(d, i))
+            .attr('fill', 'none')
+            .attr('class', 'mapLine-fg')
+            .clone(true).lower() //background path
+            .attr('class', 'mapLine-bg')
+            .clone(true).lower() //path select helper
+            .attr('class', 'mapLine-select-helper');
+        const maplineUpdate = _this.maplines.merge(maplineEnter)
+            .classed('map-to-hidden', d => d.mapToHidden)
+            .transition(t)
+            .each((d, i, n) => {
+                d3.select(n[i]).selectAll('path')
+                    .attr('d', () => _this.calcMapLinePath(d, i));
+            });
+        //Always place direct mappings on top.
+        svgMap.selectAll('.map-to-hidden').lower();
+
+        const maplineExit = _this.maplines.exit().transition(t).remove();
+
     }
 
 }

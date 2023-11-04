@@ -18,7 +18,9 @@
 
     <!-- For Visualization -->
     <!-- Script -->
-    <script src="../scripts/IndentedTree.js"></script>
+    <script src="../scripts/LinkIndentedList.js"></script>
+    <script src="../scripts/LinkIndentedListAdaptations.js"></script>
+
     <script src="../scripts/script-alignment.js"></script>
     <script src="../scripts/BaselineMap.js"></script>
     <script src="../scripts/MapWorld.js"></script>
@@ -45,7 +47,7 @@
             maps: mapping_human_mouse
         };
 
-        const indentedTree = new IndentedTree();
+        const indentedTree = new LinkIndentedList();
         const baselineMap = new BaselineMap(indentedTree);
         const taskForm = new TaskForm(baselineMap);
         taskForm.setVis("baseline");

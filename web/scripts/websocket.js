@@ -70,7 +70,7 @@ class Websocket {
         });
 
         if (response.name === 'adaptation') {
-            mapWorld.visualizationMap.adaptations.toggleAdaptation(response.adaptationType, response.adaptationState);
+            mapWorld.visualizationMap.adaptations.toggleAdaptation(response.adaptationType, response.adaptationState, response.adaptationSettings);
         }
         if (response.name === "tooltip") {
           
@@ -79,6 +79,7 @@ class Websocket {
                 mapWorld.visualizationMap.showTooltip(d3.select('#'+elementId), 0, 0);
             }
         }
+
     }
 
     handleGazeResponse(response) {
@@ -118,6 +119,19 @@ class Websocket {
                 screenWidth: window.outerWidth
             };
             _this.websocket.send(JSON.stringify(json_data));
+        } else if (response.name === 'mapLines') {
+            const json_data = {
+                'type' : 'data',
+                'name' : 'mapLines',
+                'mapLines': mapWorld.visualizationMap.mapLines
+            }
+        } else if (response.name === 'ontologyEntities') {
+
+            const json_data = {
+                'type' : 'data',
+                'name': 'ontologyEntities',
+                'entities': mapWorld.visualizationMap.entities
+            }
         }
     }
 

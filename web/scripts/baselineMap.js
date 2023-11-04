@@ -56,6 +56,8 @@ class BaselineMap {
         base_ont1root = ont1TreeRoot;
         base_ont2root = ont2TreeRoot;
         base_alignments = newAlignments;
+        console.log(base_alignments)
+        debugger;
     }
 
     deEmphasizeAllLinesButOne(mapline) {
@@ -97,6 +99,7 @@ class BaselineMap {
             .attr('id', 'gTree1')
             .classed('right-aligned', true)
             .attr('transform', `translate(${-ontGap / 2},0)`);
+
         const gTree2 = g.append(() => this.indentedTree.treechart(base_ont2root, "left"))
             .attr('id', 'gTree2')
             .attr('transform', `translate(${ontGap / 2},0)`);
@@ -277,7 +280,12 @@ class BaselineMap {
             .clone(true).lower() //background path
             .attr('class', 'mapLine-bg')
             .clone(true).lower() //path select helper
-            .attr('class', 'mapLine-select-helper');
+            .attr('class', 'mapLine-select-helper')
+
+        if (_this.indentedTree.adaptations.colorSchemeEnabled) {
+            maplineEnter.selectAll('.mapLine-fg').style('stroke', d => d.color)
+        }
+
         const maplineUpdate = _this.maplines.merge(maplineEnter)
             .classed('map-to-hidden', d => d.mapToHidden)
             .transition(t)
@@ -287,9 +295,39 @@ class BaselineMap {
             });
         //Always place direct mappings on top.
         svgMap.selectAll('.map-to-hidden').lower();
-
+        _this.getMapLineJson()
         const maplineExit = _this.maplines.exit().transition(t).remove();
 
+    }
+
+
+    getEntityTrees() {
+        const _this = this;
+        const json = {};
+
+    }
+
+    getMapLineJson() {
+        const _this = this;
+        const json = {}
+        _this.maplines.enter().each(function(d) {
+            json[d.id] = {
+                e1: {
+                    pos: d.e1pos,
+                    depth: d.e1.depth,
+                    name: d.e1.data.name,
+                    parent: d.e1.parent.name
+                },
+                e2: {
+                    pos: d.e2pos,
+                    depth : d.e2.depth,
+                    name: d.e2.data.name,
+                    parent: d.e2.parent.name
+                }
+            }
+        });
+        console.log(json)
+        return json;
     }
 
 }

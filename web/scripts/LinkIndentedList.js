@@ -296,4 +296,10 @@ class LinkIndentedList {
         // d3.create('polygon');
         return `-${s - 1},-${s} -${s - 1},${s} ${s - 1},0 -${s - 1},-${s}`;
     }
+
+    /**
+     * Blackbox: find a visually non-complex spot that is near the input and within reach of user's gaze.
+     */
+    findFreeSpace() {
+    }
 }

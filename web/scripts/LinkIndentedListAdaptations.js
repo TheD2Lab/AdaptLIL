@@ -23,14 +23,11 @@ class LinkIndentedListAdaptations {
             _this.deemphasisEnabled = state;
         } else if (adaptationType === 'highlighting') {
             _this.highlightingEnabled = state;
-        } else if (adaptationType === 'colorScheme') {
+        } else if (adaptationType === 'colorScheme') { //I am moving to having a 'automated' selection color scheme. Looking for academic papers.
             _this.colorSchemeEnabled = state;
-        } else if (adaptationType === 'annotations') {
+        } else if (adaptationType === 'annotations') { //https://d3-annotation.susielu.com/
             _this.annotationsEnabled = state;
-        } else if (adaptationType === 'alphabeticalSort') {
-            _this.alphabeticalSortEnabled = state;
         }
-
     }
 
 }

@@ -18,12 +18,11 @@
 
     <!-- For Visualization -->
     <!-- Script -->
-    <script src="../scripts/indented_tree.js"></script>
+    <script src="../scripts/IndentedTree.js"></script>
     <script src="../scripts/script-alignment.js"></script>
-    <script src="../scripts/baselineMap.js"></script>
-    <script> 
-        setVis("baseline");
-    </script>
+    <script src="../scripts/BaselineMap.js"></script>
+    <script src="../scripts/MapWorld.js"></script>
+
 
     <!-- data -->    
     <script src="../data/dataset1/dataset1_ont1.js"></script>
@@ -45,6 +44,19 @@
             ont2: mouse,
             maps: mapping_human_mouse
         };
+
+        const indentedTree = new IndentedTree();
+        const baselineMap = new BaselineMap(indentedTree);
+        const taskForm = new TaskForm(baselineMap);
+        taskForm.setVis("baseline");
+
+        window.addEventListener('load', function (event) {
+            console.log("Task: Ready to generate form!");
+            taskForm.initOnLoad();
+            baselineMap.drawBaselineSvg();
+            const mapWorld = new MapWorld(baselineMap, indentedTree);
+
+        });
     </script>
 
     <!-- CSS -->
@@ -61,12 +73,12 @@
         
         <!-- Task Area -->
         <form id="taskForm">
-            <div class="mb-4 px-4 py-3" id="taskDiv" onsubmit="return validateForm();">
+            <div class="mb-4 px-4 py-3" id="taskDiv" onsubmit="return taskForm.validateForm();">
                 <p class="task-question"></p>
                 <div id="answerDiv"></div>
             </div>
         <!-- Finish Button -->
-            <input type="button" id="submit" onclick="return nextTask();" class="btn btn-primary" value="Next Task">
+            <input type="button" id="submit" onclick="return taskForm.nextTask();" class="btn btn-primary" value="Next Task">
             <p id="validateMsg"></p></form>
         </form>
 

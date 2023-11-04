@@ -13,22 +13,14 @@
     <script src="https://d3js.org/d3.v5.min.js"></script>
     
     <!-- Script -->
-    <script src="scripts/indented_tree.js"></script>
+    <script src="scripts/IndentedTree.js"></script>
     <script src="scripts/script-alignment.js"></script>
-    <script src="scripts/matrixMap.js"></script>
+    <script src="scripts/MatrixMap.js"></script>
     <!-- data -->
     <script src="data/dataset2/dataset2_ont1.js"></script>
     <script src="data/dataset2/dataset2_ont2.js"></script>
     <script src="data/dataset2/dataset2_map_modified.js"></script>
-    <script>
-        const dataset2 = {
-            domain: 'human anatomy',
-            ont1: human,
-            ont2: mouse,
-            maps: mapping_human_mouse
-        };
-        setDataset(dataset2);
-    </script>
+
 
     <!-- CSS -->
     <link rel="stylesheet" href="styles/style.css">
@@ -56,5 +48,20 @@
     </div>
 
 </body>
+<script>
+    const matrixMap = new MatrixMap();
+    const dataset2 = {
+        domain: 'human anatomy',
+        ont1: human,
+        ont2: mouse,
+        maps: mapping_human_mouse
+    };
+    matrixMap.setDataset(dataset2);
+    window.addEventListener('load', function() {
+        console.log("window loaded.");
+        matrixMap.drawMatrixSvg();
+    });
+
+</script>
 
 </html>

@@ -8,15 +8,25 @@ function buildNewAlignments(sourceAlmts, ont1root, ont2root) {
     console.log('buildNewAlignments()');
     let newAlmts = [];
     let id = 0;
+    let e1Index = 0;
+    let e2Index = 0;
+    console.log(sourceAlmts)
     sourceAlmts.forEach(almt => {
-        e1matches = ont1root.descendants().filter(d => d.data.name === almt.entity1);
-        e2matches = ont2root.descendants().filter(d => d.data.name === almt.entity2);
-        namePair = {entity1: almt.entity1, entity2: almt.entity2};
+        e1matches = ont1root.descendants().filter(d => d.data.name === almt.entity1).sort(function(a,b){
+            return d3.ascending(a.height, b.height) || d3.ascending(a.depth, b.depth)});
+        e2matches = ont2root.descendants().filter(d => d.data.name === almt.entity2).sort(function(a,b){
+            return d3.ascending(a.height, b.height) || d3.ascending(a.depth, b.depth)});
+        namePair = {entity1: almt.entity1, entity2: almt.entity2}
+
+            console.log(e1matches);
         for (let e1 of e1matches) {
             for (let e2 of e2matches) {
-                newAlmts.push({id:id++, namePair:namePair, e1:e1, e2:e2});
+
+                newAlmts.push({id: id++, namePair: namePair, e1: e1, e2: e2, e1Index: e1Index, e2Index: e2Index++});
             }
+            e1Index++;
         }
+
     });
     console.log(newAlmts);
     updateMappingPos(newAlmts);
@@ -49,6 +59,9 @@ function getAllDescendantMappings(d) {
  */
 function updateMappingPos(alignments) {
     console.log('updateMappingPos()');
+    let index = 0;
+
+
     alignments.forEach(a => {
         //Updates the positions
         if (a.e1.shown) {
@@ -87,7 +100,6 @@ function highlightAlignment(alignments, g, alignmentSet) {
     //Mutes all mapping and nodes in the group
     g.selectAll('.node').classed('muted', true);
     g.selectAll('.mapping').classed('muted', true);
-
     //Includes any alignment sets mapped to redundant nodes
     alignments = Array.isArray(alignments) ? alignments : [alignments];
     const allAlignments = alignments;
@@ -104,6 +116,7 @@ function highlightAlignment(alignments, g, alignmentSet) {
 
         //alignment
         g.select("#gMap").select('#a'+almt.id)
+            .style('opacity', 1)
             .classed('muted', false)
             .classed('highlight', true).raise();
         //tree nodes
@@ -122,6 +135,24 @@ function highlightAlignment(alignments, g, alignmentSet) {
     });
 }
 
+function deemphasize(alignments, g, alignmentSet) {
+    if (!alignments) { return; }    //for undefined
+
+    alignments = Array.isArray(alignments) ? alignments : [alignments];
+    //Set all maplines to be transparent
+    g.selectAll('.mapping').style('opacity', 0.1)
+
+    //Only show the current map line as opaque
+    for(let almt of alignments) {
+        g.select('#gMap').select('#a'+almt.id)
+            .style('opacity', 1)
+    }
+
+
+}
+function restoreOpacity(g) {
+    g.selectAll('*').style('opacity', 1)
+}
 function unhighlightAll(g) {
     g.selectAll("*")
         .classed('highlight', false)

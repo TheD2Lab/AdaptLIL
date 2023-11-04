@@ -18,12 +18,13 @@
 
     <!-- For Visualization -->
     <!-- Script -->
-    <script src="../scripts/indented_tree.js"></script>
+    <script src="../scripts/IndentedTree.js"></script>
     <script src="../scripts/script-alignment.js"></script>
-    <script src="../scripts/matrixMap.js"></script>
-    <script> 
-        setVis("matrix");
-    </script>
+    <script src="../scripts/MatrixMap.js"></script>
+    <script src="../scripts/MapWorld.js"></script>
+
+    <script src="../scripts/websocket.js"></script>
+
 
     <!-- data -->
     <script src="../data/dataset1/dataset1_ont1.js"></script>
@@ -45,6 +46,23 @@
             ont2: mouse,
             maps: mapping_human_mouse
         };
+        const indentedTree = new IndentedTree();
+        const matrixMap = new MatrixMap(indentedTree);
+        let mapWorld = null;
+        const taskForm = new TaskForm(matrixMap);
+        taskForm.setVis("matrix");
+
+        const websocket = new Websocket();
+        websocket.openConnection();
+        websocket.listenForMessages();
+
+        window.addEventListener('load', function (event) {
+            console.log("Task: Ready to generate form!");
+            taskForm.initOnLoad();
+            matrixMap.drawMatrixSvg();
+            mapWorld = new MapWorld(matrixMap, indentedTree);
+
+        });
     </script>
 
     <!-- CSS -->
@@ -61,12 +79,12 @@
         
         <!-- Task Area -->
         <form id="taskForm">
-            <div class="mb-4 px-4 py-3" id="taskDiv" onsubmit="return validateForm();">
+            <div class="mb-4 px-4 py-3" id="taskDiv" onsubmit="return taskForm.validateForm();">
                 <p class="task-question"></p>
                 <div id="answerDiv"></div>
             </div>
         <!-- Finish Button -->
-            <input type="button" id="submit" onclick="return nextTask();" class="btn btn-primary" value="Next Task">
+            <input type="button" id="submit" onclick="return taskForm.nextTask();" class="btn btn-primary" value="Next Task">
             <p id="validateMsg"></p></form>
         </form>
 

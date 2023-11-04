@@ -13,22 +13,14 @@
     <script src="https://d3js.org/d3.v5.min.js"></script>
     
     <!-- Script -->
-    <script src="scripts/indented_tree.js"></script>
+    <script src="scripts/IndentedTree.js"></script>
     <script src="scripts/script-alignment.js"></script>
-    <script src="scripts/matrixMap.js"></script>
+    <script src="scripts/MatrixMap.js"></script>
     <!-- data -->    
     <script src="data/tutorial_dataset/pizza.js"></script>
     <script src="data/tutorial_dataset/food.js"></script>
     <script src="data/tutorial_dataset/pizza_food_map.js"></script>
-    <script>
-        const dataset1 = {
-            domain: 'food',
-            ont1: pizza,
-            ont2: food,
-            maps: mapping_pizza_food
-        };
-        setDataset(dataset1);
-    </script>
+
 
     <!-- CSS -->
     <link rel="stylesheet" href="styles/style.css">
@@ -56,5 +48,14 @@
     </div>
 
 </body>
-
+<script>
+    const matrixMap = new MatrixMap();
+    const dataset1 = {
+        domain: 'food',
+        ont1: pizza,
+        ont2: food,
+        maps: mapping_pizza_food
+    };
+    matrixMap.setDataset(dataset1);
+</script>
 </html>

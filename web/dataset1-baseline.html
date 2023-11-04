@@ -13,22 +13,13 @@
     <script src="https://d3js.org/d3.v5.min.js"></script>
     
     <!-- Script -->
-    <script src="scripts/indented_tree.js"></script>
+    <script src="scripts/IndentedTree.js"></script>
     <script src="scripts/script-alignment.js"></script>
-    <script src="scripts/baselineMap.js"></script>
+    <script src="scripts/BaselineMap.js"></script>
     <!-- data -->    
     <script src="data/dataset1/dataset1_ont1.js"></script>
     <script src="data/dataset1/dataset1_ont2.js"></script>
     <script src="data/dataset1/dataset1_map_modified.js"></script>
-    <script>
-        const dataset1 = {
-            domain: 'conference',
-            ont1: edas,
-            ont2: ekaw,
-            maps: mapping_edas_ekaw
-        };
-        setDataset(dataset1);
-    </script>
 
     <!-- CSS -->
     <link rel="stylesheet" href="styles/style.css">
@@ -51,4 +42,22 @@
 
 </body>
 
+<script>
+
+</script>
+
+<script>
+    const dataset1 = {
+        domain: 'conference',
+        ont1: edas,
+        ont2: ekaw,
+        maps: mapping_edas_ekaw
+    };
+    const baselineMap = new baselineMap();
+    baselineMap.setDataset(dataset1);
+    window.addEventListener('load', function() {
+        console.log("window loaded, drawing baseline map svg");
+        baselineMap.drawBaselineSvg();
+    });
+</script>
 </html>

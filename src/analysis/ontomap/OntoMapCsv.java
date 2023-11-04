@@ -83,7 +83,7 @@ public class OntoMapCsv {
                             continue;
 
                         //check if it has .LIL.
-                        if (filterForLinkedList && gpFileORDir.getName().contains("LIL") || (!filterForLinkedList && gpFileORDir.getName().contains("Matrix"))) {
+                        if (gpFileORDir.getName().contains("LIL") || gpFileORDir.getName().contains("Matrix")) {
 
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
@@ -111,7 +111,8 @@ public class OntoMapCsv {
                             continue;
 
                         //check if it has .LIL.
-                        if (filterForLinkedList && taskFileOrDir.getName().contains("list") || (!filterForLinkedList && taskFileOrDir.getName().contains("matrix"))) {
+
+                        if (taskFileOrDir.getName().toLowerCase().contains("list") || taskFileOrDir.getName().toLowerCase().contains("matrix")) {
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
@@ -376,22 +377,24 @@ public class OntoMapCsv {
 
                 System.out.println(numWrong == 0 ? " validation passed for numWrong" : "FAILED numWrong");
                 System.out.println(numWrong);
+                if (useParticipantForTrainingData) {
+                    List<Instance> participantTrainInstanceList = participantTrainingInstances.get(p.getId());
+                    ArrayList<Attribute> attributeList = Collections.list(participantTrainInstanceList.get(0).enumerateAttributes());
+                    attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
+                    trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, participantTrainInstanceList.get(0).numAttributes());
+
+                    for (int i = 1; i < participantTrainInstanceList.size(); ++i) {
+                        trainDataInstances.add(participantTrainInstanceList.get(i));
+                    }
+                    trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+                    OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath() + "/trainData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
+                    trainDataInstances.clear();
+                }
                 fixationFileReader.close();
                 fixationCsvReader.close();
             }
             System.out.println("processed: " + p.getId());
-            if (useParticipantForTrainingData) {
-                List<Instance> participantTrainInstanceList = participantTrainingInstances.get(p.getId());
-                ArrayList<Attribute> attributeList = Collections.list(participantTrainInstanceList.get(0).enumerateAttributes());
-                attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
-                trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, participantTrainInstanceList.get(0).numAttributes());
 
-                for (int i = 1; i < participantTrainInstanceList.size(); ++i) {
-                    trainDataInstances.add(participantTrainInstanceList.get(i));
-                }
-                trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
-                OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath() + "/trainData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + ".arff");
-            }
 
         }
 

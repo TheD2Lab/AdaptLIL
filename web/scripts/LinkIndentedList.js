@@ -11,7 +11,7 @@ class LinkIndentedList {
         this.hierarchies = [];
         this.triangle = this.trianglePoints(this.nodeMarkSize);
         this.nodesByCoordinate = {};
-        this.adaptations = new LinkIndentedListAdaptations();
+        this.adaptations = new VisualizationAdaptations(this);
         this.entities = []
         this.mapLines = [];
         this.verticalLink = d => `M ${d.source.x},${d.source.y} V ${d.target.y}`;

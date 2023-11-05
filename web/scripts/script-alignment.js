@@ -124,6 +124,27 @@ function highlightAlignment(alignments, g, alignmentSet) {
         g.select("#gTree2").select('#n'+almt.e2.id)
             .classed('muted', false)
             .classed('highlight', true);
+
+        // g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', 1)
+        // g.select('#gTree2').select('#n'+almt.e2.id).
+        //keep traversing till we find an expanded parent node and highlight it.
+        let leftAlignParent = almt.e1 != null ? almt.e1.parent : null;
+        while (leftAlignParent != null) {
+            const parentNode = g.select('#gTree1').select('#n'+leftAlignParent.id)
+            if (!$(parentNode.node()).hasClass('expanded'))
+                parentNode.classed('highlight', true);
+
+            leftAlignParent = leftAlignParent.parent;
+        }
+
+        //Todo, only show parent if it is not expanded
+        let rightAlignParent = almt.e2 != null ? almt.e2.parent : null;
+        while (rightAlignParent != null) {
+            const parentNode = g.select('#gTree2').select('#n'+rightAlignParent.id)
+            if (!$(parentNode.node()).hasClass('expanded'))
+                parentNode.classed('highlight', true);
+            rightAlignParent = rightAlignParent.parent;
+        }
     }
     //Always place direct mappings on top.
     g.selectAll('.mapping').filter(d => d.overlappedTop).raise();
@@ -137,13 +158,34 @@ function deemphasize(alignments, g, alignmentSet) {
     if (!alignments) { return; }    //for undefined
 
     alignments = Array.isArray(alignments) ? alignments : [alignments];
+    console.log(alignments)
     //Set all maplines to be transparent
     g.selectAll('.mapping').style('opacity', 0.1)
-
+    g.selectAll('.node').style('opacity', 0.1)
     //Only show the current map line as opaque
-    for(let almt of alignments) {
+    for(let almt of alignments.reverse()) {
         g.select('#gMap').select('#a'+almt.id)
             .style('opacity', 1)
+
+        g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', 1)
+        g.select('#gTree2').select('#n'+almt.e2.id).style('opacity', 1)
+        //keep traversing till we find an expanded parent node and highlight it.
+        let leftAlignParent = almt.e1 != null ? almt.e1.parent : null;
+        while (leftAlignParent != null) {
+            const parentNode = g.select('#gTree1').select('#n'+leftAlignParent.id)
+            if (!$(parentNode.node()).hasClass('expanded'))
+                parentNode.style('opacity', 1)
+            leftAlignParent = leftAlignParent.parent;
+        }
+
+        let rightAlignParent = almt.e2 != null ? almt.e2.parent : null;
+        while (rightAlignParent != null) {
+            const parentNode = g.select('#gTree2').select('#n'+rightAlignParent.id)
+            if (!$(parentNode.node()).hasClass('expanded'))
+                parentNode.style('opacity', 1)
+            rightAlignParent = rightAlignParent.parent;
+        }
+
     }
 
 

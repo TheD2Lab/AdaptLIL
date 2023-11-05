@@ -5,11 +5,12 @@
 
 class MapWorld {
 
-    constructor(visualizationMap, indentedTree) {
-        this.indentedTree = indentedTree;
+    constructor(visualizationMap, baselineMap) {
+        this.baselineMap = baselineMap;
         this.visualizationMap = visualizationMap;
         this.svgCoords = this.visualizationMap.svg.node().getBoundingClientRect();
         this.svgSize = {width: this.visualizationMap.svg.node().width, height: this.visualizationMap.svg.node().height };
+        this.adaptations = new VisualizationAdaptations(visualizationMap, baselineMap);
 
     }
     getVisualizationViewportHeight() {

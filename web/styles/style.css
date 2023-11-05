@@ -64,9 +64,6 @@
   stroke-width: 1px;
 }
 
-.node:hover text {
-  font-weight: bold;
-}
 
 /* nodemarks */
 .nodemark {

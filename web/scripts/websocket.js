@@ -70,7 +70,8 @@ class Websocket {
         });
 
         if (response.name === 'adaptation') {
-            mapWorld.visualizationMap.adaptations.toggleAdaptation(response.adaptationType, response.adaptationState, response.adaptationSettings);
+            mapWorld.toggleAdaptation(response.adaptationType, response.adaptationState, response.adaptationSettings);
+
         }
         if (response.name === "tooltip") {
           

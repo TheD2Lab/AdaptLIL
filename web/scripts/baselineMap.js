@@ -7,8 +7,8 @@ let base_alignments;
 
 class BaselineMap {
 
-    constructor(indentedTree) {
-        this.indentedTree = indentedTree;
+    constructor(linkIndentedList) {
+        this.linkIndentedList = linkIndentedList;
         //To make highlight stay on mouse click on mapping line.
         this.maplineClicked = false;
         this.maplines = undefined; // mapline is the line connecting the nodes.
@@ -29,8 +29,8 @@ class BaselineMap {
 
     setDataset(dataset) {
         //Builds proper structures for ontologies and alignments
-        const ont1TreeRoot = this.indentedTree.constructTree(this.indentedTree.createHierarchy(dataset.ont1.root), 'right');
-        const ont2TreeRoot = this.indentedTree.constructTree(this.indentedTree.createHierarchy(dataset.ont2.root), 'left');
+        const ont1TreeRoot = this.linkIndentedList.constructTree(this.linkIndentedList.createHierarchy(dataset.ont1.root), 'right');
+        const ont2TreeRoot = this.linkIndentedList.constructTree(this.linkIndentedList.createHierarchy(dataset.ont2.root), 'left');
         const newAlignments = buildNewAlignments(dataset.maps.alignments, ont1TreeRoot, ont2TreeRoot);
         //Adds a mapping field to a node in tree if there's an alignment for it.
         ont1TreeRoot.each(d => {
@@ -56,26 +56,9 @@ class BaselineMap {
         base_ont1root = ont1TreeRoot;
         base_ont2root = ont2TreeRoot;
         base_alignments = newAlignments;
-        console.log(base_alignments)
-        debugger;
-    }
-
-    deEmphasizeAllLinesButOne(mapline) {
-        const _this = this;
-        mapline.enter()
-        .on('mouseover', almt => {
-            _this.maplines.enter().style('opacity', '0.4');
-            mapline.style('opacity', 1);
-        })
-        .on('mouseout', almt => {
-            _this.maplines.enter().style('opacity', 1);
-        });
 
     }
 
-    reemphasizeAll() {
-
-    }
 
 
     /**
@@ -95,12 +78,12 @@ class BaselineMap {
         // svg.attr('height', newHeight);
         const g = _this.svg.append('g')
             .attr('transform', `translate(${svgWidth / 2},20)`);
-        const gTree1 = g.append(() => this.indentedTree.treechart(base_ont1root, "right"))
+        const gTree1 = g.append(() => this.linkIndentedList.treechart(base_ont1root, "right"))
             .attr('id', 'gTree1')
             .classed('right-aligned', true)
             .attr('transform', `translate(${-ontGap / 2},0)`);
 
-        const gTree2 = g.append(() => this.indentedTree.treechart(base_ont2root, "left"))
+        const gTree2 = g.append(() => this.linkIndentedList.treechart(base_ont2root, "left"))
             .attr('id', 'gTree2')
             .attr('transform', `translate(${ontGap / 2},0)`);
         const gMap = g.append('g')
@@ -127,12 +110,12 @@ class BaselineMap {
                 .on('mouseover', d => {
                     const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
 
-                    if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                    if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                         deemphasize(mappings, g, base_alignments);
                         _this.resetOpacity = true;
                     }
 
-                    if (_this.indentedTree.adaptations.highlightingEnabled) {
+                    if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                         if (!_this.maplineClicked) {
                             if (mappings) {
                                 highlightAlignment(mappings, g, base_alignments);
@@ -144,7 +127,7 @@ class BaselineMap {
                 .on('mouseout', () => {
 
                     //Deemphasis adaptation
-                    if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                    if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                         if (_this.resetOpacity) {
                             restoreOpacity(g);
                             _this.resetOpacity = false;
@@ -152,7 +135,7 @@ class BaselineMap {
                     }
 
                     //Highlight Adaptation
-                    if (_this.indentedTree.adaptations.highlightingEnabled) {
+                    if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                         if (!_this.maplineClicked)
                             unhighlightAll(g);
                     }
@@ -172,7 +155,7 @@ class BaselineMap {
             .addEventListener('click', (e) => {
                 const isMapLineTargeted = d3.select(e.target.parentNode).classed('mapLine');
                 if (this.maplineClicked && !isMapLineTargeted) {
-                    if (_this.indentedTree.adaptations.highlightingEnabled) {
+                    if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                         console.log('baseline svg clicked! Turning off the highlight.');
                         unhighlightAll(g);
                     }
@@ -234,7 +217,7 @@ class BaselineMap {
                 _this.maplineClicked = true;
 
                 //Highlight Adaptation
-                if (_this.indentedTree.adaptations.highlightingEnabled) {
+                if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                     highlightAlignment(almt, svg, base_alignments);
                 }
 
@@ -242,13 +225,13 @@ class BaselineMap {
             .on('mouseover', almt => {
 
                 //deemphasis adaptation
-                if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                     deemphasize(almt, svg, base_alignments);
                     _this.resetOpacity = true;
                 }
 
                 //highlight adaptation
-                if (_this.indentedTree.adaptations.highlightingEnabled) {
+                if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                     if (!_this.maplineClicked) {
                         highlightAlignment(almt, svg, base_alignments);
                     }
@@ -258,7 +241,7 @@ class BaselineMap {
             .on('mouseout', almt => {
 
                 //Deemphasis adaptation
-                if (_this.indentedTree.adaptations.deemphasisEnabled) {
+                if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                     if (_this.resetOpacity) {
                         restoreOpacity(svg);
                         _this.resetOpacity = false;
@@ -266,7 +249,7 @@ class BaselineMap {
                 }
 
                 //Highlight Adaptation
-                if (_this.indentedTree.adaptations.highlightingEnabled) {
+                if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                     if (!_this.maplineClicked)
                         unhighlightAll(svg);
                 }
@@ -282,10 +265,6 @@ class BaselineMap {
             .clone(true).lower() //path select helper
             .attr('class', 'mapLine-select-helper')
 
-        if (_this.indentedTree.adaptations.colorSchemeEnabled) {
-            maplineEnter.selectAll('.mapLine-fg').style('stroke', d => d.color)
-        }
-
         const maplineUpdate = _this.maplines.merge(maplineEnter)
             .classed('map-to-hidden', d => d.mapToHidden)
             .transition(t)
@@ -295,11 +274,22 @@ class BaselineMap {
             });
         //Always place direct mappings on top.
         svgMap.selectAll('.map-to-hidden').lower();
-        _this.getMapLineJson()
+        _this.refreshMapLineColors();
         const maplineExit = _this.maplines.exit().transition(t).remove();
-
     }
 
+
+    /**
+     * If the colorScheme adaptation is toggled on then the mapLine color schemes will be applied.
+     */
+    refreshMapLineColors() {
+        const _this = this;
+        if (_this.linkIndentedList.adaptations.colorSchemeEnabled) {
+            d3.selectAll('.mapLine-fg').style('stroke', d => d.color)
+        } else {
+            d3.selectAll('.mapLine-fg').style('stroke', '#0077ff') //default color
+        }
+    }
 
     getEntityTrees() {
         const _this = this;

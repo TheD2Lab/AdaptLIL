@@ -1,10 +1,12 @@
-class LinkIndentedListAdaptations {
+class VisualizationAdaptations {
 
-    constructor() {
+    constructor(visualization, baselineMap) {
+        this.visualization = visualization;
+        this.baselineMap = baselineMap;
         this.deemphasisAdaptation = new Adaptation('deemphaasis', false, {});
 
-        this.highlightAdaptation = new Adaptation('highlight', false, {});
-        this.colorSchemeAdaptation= new Adaptation('colorScheme', false, {});
+        this.highlightAdaptation = new Adaptation('highlight', true, {});
+        this.colorSchemeAdaptation= new Adaptation('colorScheme', true, {});
         this.annotationAdaptation = new Adaptation('annotation', false, {});
     }
 
@@ -31,10 +33,12 @@ class LinkIndentedListAdaptations {
              * }
              */
             _this.colorSchemeAdaptation.settings = adaptiveSettings;
+            _this.baselineMap.refreshMapLineColors();
         } else if (adaptationType === 'annotations') { //https://d3-annotation.susielu.com/
             _this.annotationAdaptation.state = state;
         }
     }
+
 
 
     get deemphasisEnabled() {

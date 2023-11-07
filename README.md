@@ -1,6 +1,6 @@
 
 # About
-This repository contains both the backend and frontend of an intelligent adaptive ontological visualization. Integrated with Gazepoint Api, the visualization applies adapatations to reduce clutter, improve readability, and improve understanding of the ontology.
+This repository contains both the backend and frontend of an intelligent adaptive ontological visualization. Integrated with Gazepoint Api, the visualization applies deep learning techniques to intelligently adapatat a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve understanding of the ontology.
 
 # Differences in original gazepoint-data-analysis repo.
 This repository implements the Gazepoint API for real-time gaze data analysis. It also builds the foundation for using gaze data to construct adaptive ontology visualizations (see OntoMapVisAdpative: https://github.com/TheD2Lab/OntoMapVisAdaptive). Lastly, there are data classes for gaze data metrics to enhance reusability of D2Lab experiments

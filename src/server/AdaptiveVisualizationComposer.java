@@ -1,4 +1,5 @@
 package server;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -7,6 +8,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import data_classes.DomElement;
 import data_classes.Fixation;
 import geometry.Cartesian2D;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.glassfish.grizzly.websockets.DataFrame;
 import org.glassfish.grizzly.websockets.WebSocket;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
@@ -17,25 +19,26 @@ import server.request.TooltipInvokeRequest;
 import server.response.*;
 
 
-import java.io.IOException;
 import java.util.*;
 
 /**
- * Temporarily test file to connect OntoMapVis with gazepoint analytics
+ * The composer handles analyzing and processing of gaze data and invocating adaptive changes. It keeps track
+ * of current adaptations, classification results, and so on.
  */
-public class AdaptiveOntoMapApp extends WebSocketApplication {
+public class AdaptiveVisualizationComposer extends WebSocketApplication {
 
 
     public List<String> responses = new LinkedList<>();
     private ObjectMapper objectMapper;
     protected boolean hasResponded = false;
     private GP3Socket gp3Socket;
+    private MultiLayerNetwork model;
 
-    public AdaptiveOntoMapApp(GP3Socket gp3Socket) {
+    public AdaptiveVisualizationComposer(GP3Socket gp3Socket, MultiLayerNetwork model) {
         this.gp3Socket = gp3Socket;
+        this.model = model;
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
     }
 
     public void onConnect(WebSocket socket) {
@@ -230,6 +233,14 @@ public class AdaptiveOntoMapApp extends WebSocketApplication {
 //
 //        //Start reading gaze data from buffer and test for intersections.
 //
+    }
+
+    public MultiLayerNetwork getModel() {
+        return model;
+    }
+
+    public void setModel(MultiLayerNetwork model) {
+        this.model = model;
     }
 
     public Set<WebSocket> getWebSockets() {

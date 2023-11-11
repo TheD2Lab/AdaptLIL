@@ -1,19 +1,17 @@
 package server;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import data_classes.DomElement;
-import geometry.Cartesian2D;
+import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.websockets.WebSocket;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 import server.gazepoint.api.XmlObject;
-import data_classes.Fixation;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
-import server.request.TooltipInvokeRequest;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class ServerMain {
 
@@ -68,7 +66,7 @@ public class ServerMain {
             System.out.println("Started gaze data stream.");
 
             server = initWebSocket(gp3Socket);
-
+            AdaptiveVisualizationComposer adaptiveVisualizationComposer = initAdaptiveVisualizationConductor();
             System.out.println("Sever stays alive by waiting for input so type anything to exit");
 
             System.in.read();
@@ -87,8 +85,6 @@ public class ServerMain {
         final HttpServer server = HttpServer.createSimpleServer("/var/www", port);
         final WebSocketAddOn addon = new WebSocketAddOn();
         server.getListener("grizzly").registerAddOn(addon);
-        AdaptiveOntoMapApp adaptiveOntoMapp = new AdaptiveOntoMapApp(gp3Socket);
-        WebSocketEngine.getEngine().register("", "/gaze", adaptiveOntoMapp);
 
         try {
             server.start();
@@ -98,6 +94,29 @@ public class ServerMain {
             throw new RuntimeException(e);
         }
         return server;
+    }
+
+    public static AdaptiveVisualizationComposer initAdaptiveVisualizationConductor(GP3Socket gp3Socket) {
+        //Uses resource directory below. Using hardcoding for now and will revisit when I clean this up.
+        //String simpleMlp = new ClassPathResource("simple_mlp.h5").getFile().getPath();
+        String modelConfigPath = "C:\\Users\\LeaseCalcs\\Desktop\\d2 lab\\gp3 tracking\\models";
+        modelConfigPath += "\\stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
+        MultiLayerNetwork classifier = null;
+        try {
+            classifier = KerasModelImport.importKerasSequentialModelAndWeights(modelConfigPath);
+        } catch (IOException e) {
+            System.err.println("IOException when importing model (likely invalid path)");
+            throw new RuntimeException(e);
+        } catch (InvalidKerasConfigurationException e) {
+            System.err.println("KerasConfigIssue (model related)");
+            throw new RuntimeException(e);
+        } catch (UnsupportedKerasConfigurationException e) {
+            System.err.println("Keras Model not support (model related)");
+            throw new RuntimeException(e);
+        }
+        AdaptiveVisualizationComposer adaptiveOntoMap = new AdaptiveVisualizationComposer(gp3Socket, classifier);
+        WebSocketEngine.getEngine().register("", "/gaze", adaptiveOntoMap);
+        return adaptiveOntoMap;
     }
 
 }

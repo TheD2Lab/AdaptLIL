@@ -5,6 +5,7 @@ import adaptations.ColorAdaptation;
 import adaptations.DeemphasisAdaptation;
 import adaptations.HighlightingAdaptation;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.util.*;
 
@@ -59,12 +60,12 @@ public class AdaptationMediator extends Mediator {
                 //Must be recent and contained within the current window.
                 //Get last time used and current time.
                 Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
-
-                Integer classificationResult = classifierModel.predict()[0]; //TODO
-
+                INDArray gazeWindowInput = gazeWindow.toINDArray();
+                Integer classificationResult = classifierModel.predict(gazeWindowInput)[0]; //TODO
                 Integer participantWrongOrRight = null;
+                Float taskCompletionTime = null; //grab from websocket
                 //Calculate perilScore (risk score)
-                double curRiskScore = this.calculateRiskScore(); //TODO
+                double curRiskScore = this.calculateRiskScore(participantWrongOrRight, classificationResult, taskCompletionTime, cognitiveLoadScore); //TODO
                 double lastRiskScore = this.getLastRiskScore();
                 double riskScoreChange = curRiskScore - lastRiskScore;
                 if (riskScoreChange > this.thresholdForInvokation) {

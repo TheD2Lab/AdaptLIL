@@ -1,5 +1,7 @@
 package server;
 
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import server.gazepoint.api.recv.RecXmlObject;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -184,6 +186,18 @@ public class GazeWindow implements Component {
         //Specify attributes list
         ArrayList<Attribute> attributeList = this.getAttributeList(reduceAttributeNames);
         return getInstancesFromAttributeList(attributeList);
+    }
+
+    public INDArray toINDArray() {
+        List<Attribute> attributeList = this.getAttributeList(false);
+        int numAttributes = attributeList.size();
+        int windowSize = 75;
+        double[][] x = new double[windowSize][numAttributes];
+
+        //TODO
+        //DONT FORGET NORMALIZATION
+        INDArray indArray = Nd4j.create(x);
+        return indArray;
     }
 
     public ArrayList<Attribute> getAttributeList(boolean reduceAttributeNames) {

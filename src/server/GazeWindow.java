@@ -4,7 +4,6 @@ import server.gazepoint.api.recv.RecXmlObject;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
-import weka.core.Instances;
 import wekaext.annotations.IgnoreWekaAttribute;
 
 import java.lang.reflect.Field;
@@ -264,6 +263,16 @@ public class GazeWindow implements Component {
         }
 
         return instance;
+    }
+
+    /**
+     * Calculates the cognitive load from the current gaze window
+     * TODO: Ask Dr. Fu how to generate a 'cognitive load' score.
+     *
+     * @return
+     */
+    public Float getCognitiveLoadScore() {
+        return 1.0;
     }
 
     @Override

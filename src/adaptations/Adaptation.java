@@ -1,11 +1,17 @@
-package server;
+package adaptations;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import geometry.Vector2D;
+import it.unimi.dsi.fastutil.Hash;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
+import javax.persistence.Tuple;
+import java.util.HashMap;
 import java.util.Map;
 
-public class Adaptation {
+public abstract class Adaptation {
 
     private String type;
     private boolean state;
@@ -14,7 +20,10 @@ public class Adaptation {
     private double timeStopped;
     private Map<String, String> styleConfig;
 
+    private boolean isBeingObservedByMediator;
     private double score;
+
+    private MutablePair<String, String> lastStyleChangePair;
 
     public Adaptation(String type, boolean state, double timeStarted, double timeModified, double timeStopped, Map<String, String> styleConfig) {
         this.type = type;
@@ -22,8 +31,16 @@ public class Adaptation {
         this.timeStarted = timeStarted;
         this.timeModified = timeModified;
         this.timeStopped = timeStopped;
-        this.styleConfig = styleConfig;
+        if (styleConfig == null)
+            this.styleConfig = this.getDefaultStyleConfig();
+        else
+            this.styleConfig = styleConfig;
         this.score = 0;
+        this.lastStyleChangePair = new MutablePair<>();
+    }
+
+    public void setBeingObservedByMediator(boolean beingObservedByMediator) {
+        isBeingObservedByMediator = beingObservedByMediator;
     }
 
     public void setType(String type) {
@@ -54,8 +71,23 @@ public class Adaptation {
         this.score = score;
     }
 
+    public void setLastStyleChangePair(MutablePair<String, String> lastStyleChangePair) {
+        this.lastStyleChangePair = lastStyleChangePair;
+    }
+
     public double getScore() {
         return score;
+    }
+
+    public MutablePair<String, String> getLastStyleChange() {
+        return lastStyleChangePair;
+    }
+
+    public abstract Map<String, String> getDefaultStyleConfig();
+
+    @JsonProperty("isBeingObservedByMediator")
+    public boolean isBeingObservedByMediator() {
+        return isBeingObservedByMediator;
     }
 
     @JsonProperty("type")
@@ -88,4 +120,6 @@ public class Adaptation {
     public Map<String, String> getStyleConfig() {
         return styleConfig;
     }
+
+    public abstract void applyStyleChange(int direction, double stepAmount);
 }

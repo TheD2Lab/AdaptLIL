@@ -25,20 +25,21 @@ import java.util.*;
  * The composer handles analyzing and processing of gaze data and invocating adaptive changes. It keeps track
  * of current adaptations, classification results, and so on.
  */
-public class AdaptiveVisualizationComposer extends WebSocketApplication {
+        public class VisualizationWebsocket extends WebSocketApplication implements Component {
 
 
     public List<String> responses = new LinkedList<>();
     private ObjectMapper objectMapper;
     protected boolean hasResponded = false;
     private GP3Socket gp3Socket;
-    private MultiLayerNetwork model;
 
-    public AdaptiveVisualizationComposer(GP3Socket gp3Socket, MultiLayerNetwork model) {
+    private AdaptationMediator mediator;
+
+
+    public VisualizationWebsocket(GP3Socket gp3Socket) {
         this.gp3Socket = gp3Socket;
-        this.model = model;
-        objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     public void onConnect(WebSocket socket) {
@@ -235,14 +236,6 @@ public class AdaptiveVisualizationComposer extends WebSocketApplication {
 //
     }
 
-    public MultiLayerNetwork getModel() {
-        return model;
-    }
-
-    public void setModel(MultiLayerNetwork model) {
-        this.model = model;
-    }
-
     public Set<WebSocket> getWebSockets() {
         return super.getWebSockets();
     }
@@ -253,5 +246,10 @@ public class AdaptiveVisualizationComposer extends WebSocketApplication {
 
     public boolean hasResponded() {
         return hasResponded;
+    }
+
+    @Override
+    public void setMediator(Mediator mediator) {
+        this.mediator = (AdaptationMediator) mediator;
     }
 }

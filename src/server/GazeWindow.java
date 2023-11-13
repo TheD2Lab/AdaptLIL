@@ -16,7 +16,7 @@ import java.util.List;
  * In terms of the real-time visualization prototype, it is used to make invokes adaptations to the charts and analyze if they are working
  * based of the user's gaze data.
  */
-public class GazeWindow {
+public class GazeWindow implements Component {
     private boolean overlapping;
     private float windowSizeInMilliseconds;
     private int windowSize;
@@ -24,6 +24,7 @@ public class GazeWindow {
     private int bufferIndex;
 
     private RecXmlObject[] gazeBuffer;
+    private AdaptationMediator mediator;
 
 //    private ArrayList<RecXmlObject> gazeData;
 
@@ -265,4 +266,8 @@ public class GazeWindow {
         return instance;
     }
 
+    @Override
+    public void setMediator(Mediator mediator) {
+        this.mediator = (AdaptationMediator) mediator;
+    }
 }

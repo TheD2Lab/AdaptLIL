@@ -26,7 +26,7 @@ import java.util.LinkedList;
  * interacting with the tracking data.
  */
 @ServerEndpoint("/gp3connection")
-public class GP3Socket {
+public class GP3Socket implements Component {
 
     private String hostName = "localhost";
     private int port = 4242;
@@ -49,6 +49,7 @@ public class GP3Socket {
     private AckBuffer ackBuffer;
     private final LinkedList<RecXmlObject> gazeDataQueue = new LinkedList<>();
     private FileInputStream testFileReader;
+    private AdaptationMediator mediator;
 
     public GP3Socket() {
         xmlMapper = new XmlMapper();
@@ -158,6 +159,11 @@ public class GP3Socket {
     public void writeSetCommand(SetCommand setCommand) throws JsonProcessingException {
         this.write(xmlMapper.writeValueAsString(setCommand));
 
+    }
+
+    @Override
+    public void setMediator(Mediator mediator) {
+        this.mediator = (AdaptationMediator) mediator;
     }
 
     private class DataStreamRunnable implements Runnable {

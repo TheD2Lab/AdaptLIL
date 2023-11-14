@@ -13,6 +13,7 @@ import org.glassfish.grizzly.websockets.DataFrame;
 import org.glassfish.grizzly.websockets.WebSocket;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 import server.gazepoint.api.recv.RecXmlObject;
+import server.request.AdaptationInvokeRequest;
 import server.request.DataRequest;
 import server.request.InvokeRequest;
 import server.request.TooltipInvokeRequest;
@@ -25,7 +26,7 @@ import java.util.*;
  * The composer handles analyzing and processing of gaze data and invocating adaptive changes. It keeps track
  * of current adaptations, classification results, and so on.
  */
-        public class VisualizationWebsocket extends WebSocketApplication implements Component {
+public class VisualizationWebsocket extends WebSocketApplication implements Component {
 
 
     public List<String> responses = new LinkedList<>();
@@ -40,6 +41,7 @@ import java.util.*;
         this.gp3Socket = gp3Socket;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     }
 
     public void onConnect(WebSocket socket) {
@@ -130,10 +132,13 @@ import java.util.*;
 
     }
 
-    public void invoke(WebSocket socket, InvokeRequest invokeRequest) {
-        if (invokeRequest.name.equals("tooltip")) {
-            invokeTooltip(socket, (TooltipInvokeRequest) invokeRequest);
-        }
+    public void invoke(InvokeRequest invokeRequest) {
+      try {
+          if (invokeRequest.name.equals("adaptation"))
+            this.send(this.objectMapper.writeValueAsString((AdaptationInvokeRequest) invokeRequest));
+      } catch (JsonProcessingException e) {
+          throw new RuntimeException(e);
+      }
     }
 
     public void invokeTooltip(WebSocket socket, TooltipInvokeRequest tooltipInvokeRequest) {
@@ -234,6 +239,16 @@ import java.util.*;
 //
 //        //Start reading gaze data from buffer and test for intersections.
 //
+    }
+
+    /**
+     * Sends a message to all connected websockets.
+     * @param msg
+     */
+    public void send(String msg) {
+        for (WebSocket socket : this.getWebSockets()) {
+            socket.send(msg);
+        }
     }
 
     public Set<WebSocket> getWebSockets() {

@@ -1,5 +1,7 @@
 package server;
 
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import server.gazepoint.api.recv.RecXmlObject;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -186,6 +188,72 @@ public class GazeWindow implements Component {
         return getInstancesFromAttributeList(attributeList);
     }
 
+    public INDArray toINDArray() {
+        List<Attribute> attributeList = this.getAttributeList(false);
+        int numAttributes = attributeList.size();
+
+        double[][] x = new double[this.windowSize][numAttributes];
+
+        for (int i = 0; i < gazeBuffer.length; ++i) {
+            int attrIndex = 0;
+
+            RecXmlObject recXmlObject = gazeBuffer[i];
+            for (Field field : recXmlObject.getClass().getDeclaredFields()) {
+                Object val = new Object();
+
+                try {
+
+                    //Only set values for
+                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+                        val = field.get(recXmlObject);
+
+                        //Check types and cast appropriately.
+                        //If there is a primitive type
+                        //use field.getDouble(recXmlObject)
+                        if (field.getType() == Double.class) {
+                            if (val != null)
+                                x[i][attrIndex] = (Double) val;
+                            else
+                                x[i][attrIndex] = 0;
+                        }
+                        else if (field.getType() == Float.class) {
+                            if (val != null)
+                                x[i][attrIndex] = (Double) val;
+                            else
+                                x[i][attrIndex] = 0;
+                        }
+//                        else if (field.getType() == String.class) {
+//                            if (val != null)
+//                                instance.setValue(attrIndex, (String) val);
+//                            else
+//                                instance.setValue(attrIndex, "");
+//                        }
+
+                        //TODO, not sure how to do nulls for instance so it's left out.
+                        ++attrIndex;
+
+                    }
+                } catch (IllegalAccessException e) { //Field is private, cannot access, ignore in dense instance construciton
+                    continue;
+                }
+
+            }
+        }
+
+        //TODO
+        //DONT FORGET NORMALIZATION
+        this.normalize(x);
+        //apply interpolation, if needed.
+        return Nd4j.create(x);
+    }
+
+    public double[][] normalize(double[][] x) {
+        //TODO get normalization values
+        double[] normalizations = new double[]{};
+
+        return x;
+    }
+
     public ArrayList<Attribute> getAttributeList(boolean reduceAttributeNames) {
         ArrayList<Attribute> attributeList = new ArrayList<>();
         for (int i = 0; i < gazeBuffer.length; ++i) {
@@ -272,7 +340,7 @@ public class GazeWindow implements Component {
      * @return
      */
     public Float getCognitiveLoadScore() {
-        return 1.0;
+        return 1.0F;
     }
 
     @Override

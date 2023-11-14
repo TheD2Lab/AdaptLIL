@@ -2,13 +2,8 @@ package adaptations;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import geometry.Vector2D;
-import it.unimi.dsi.fastutil.Hash;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.MutableTriple;
 
-import javax.persistence.Tuple;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Adaptation {
@@ -23,7 +18,7 @@ public abstract class Adaptation {
     private boolean isBeingObservedByMediator;
     private double score;
 
-    private MutablePair<String, String> lastStyleChangePair;
+    private MutableTriple<String, Integer, Double> lastStyleChangePair;
 
     public Adaptation(String type, boolean state, double timeStarted, double timeModified, double timeStopped, Map<String, String> styleConfig) {
         this.type = type;
@@ -36,7 +31,7 @@ public abstract class Adaptation {
         else
             this.styleConfig = styleConfig;
         this.score = 0;
-        this.lastStyleChangePair = new MutablePair<>();
+        this.lastStyleChangePair = new MutableTriple<>();
     }
 
     public void setBeingObservedByMediator(boolean beingObservedByMediator) {
@@ -71,7 +66,13 @@ public abstract class Adaptation {
         this.score = score;
     }
 
-    public void setLastStyleChangePair(MutablePair<String, String> lastStyleChangePair) {
+    public void setLastStyleChangePair(String styleName, int direction, double stepAmount) {
+        this.lastStyleChangePair = new MutableTriple<String, Integer, Double>(styleName, direction, stepAmount);
+    }
+
+
+
+    public void setLastStyleChangePair(MutableTriple<String, Integer, Double> lastStyleChangePair) {
         this.lastStyleChangePair = lastStyleChangePair;
     }
 
@@ -79,7 +80,12 @@ public abstract class Adaptation {
         return score;
     }
 
-    public MutablePair<String, String> getLastStyleChange() {
+    public MutableTriple<String, Integer, Double> getLastStyleChange() {
+        return lastStyleChangePair;
+    }
+
+
+    public MutableTriple<String, Integer, Double> getLastStyleChangePair() {
         return lastStyleChangePair;
     }
 

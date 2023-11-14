@@ -4,7 +4,11 @@ import adaptations.Adaptation;
 import adaptations.ColorAdaptation;
 import adaptations.DeemphasisAdaptation;
 import adaptations.HighlightingAdaptation;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.MutableTriple;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import server.request.AdaptationInvokeRequest;
 
 import java.util.*;
 
@@ -49,39 +53,58 @@ public class AdaptationMediator extends Mediator {
 
         //Does this also need to run async? I think so.
         //This will work as the synchronization between all objects as well.
-        while (runAdapations) {
 
-            if (gazeWindow.isFull()) { //Likely change to a time series roll
+        if (gazeWindow.isFull()) { //Likely change to a time series roll
 
-                //Get classification
+            //Get classification
 
-                //Request if Participant has finished a question and get their answer
-                //Must be recent and contained within the current window.
-                //Get last time used and current time.
-                Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
-
-                Integer classificationResult = classifierModel.predict()[0]; //TODO
-
-                Integer participantWrongOrRight = null;
-                //Calculate perilScore (risk score)
-                double curRiskScore = this.calculateRiskScore(); //TODO
-                double lastRiskScore = this.getLastRiskScore();
-                double riskScoreChange = curRiskScore - lastRiskScore;
-                if (riskScoreChange > this.thresholdForInvokation) {
-                    this.invokeAdaptation(curRiskScore);
-                }
-
-                this.lastRiskScore = curRiskScore;
-
-            } else { //Do nothing, loopback
-                continue;
+            //Request if Participant has finished a question and get their answer
+            //Must be recent and contained within the current window.
+            //Get last time used and current time.
+            Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
+            INDArray gazeWindowInput = gazeWindow.toINDArray();
+            Integer classificationResult = classifierModel.predict(gazeWindowInput)[0]; //TODO
+            Integer participantWrongOrRight = null;
+            Float taskCompletionTime = null; //grab from websocket
+            //Calculate perilScore (risk score)
+            double curRiskScore = this.calculateRiskScore(participantWrongOrRight, classificationResult, taskCompletionTime, cognitiveLoadScore); //TODO
+            double lastRiskScore = this.getLastRiskScore();
+            double riskScoreChange = curRiskScore - lastRiskScore;
+            if (riskScoreChange > this.thresholdForInvokation) {
+                this.invokeAdaptation(curRiskScore);
             }
-            //TODO, exit condition
 
+            this.lastRiskScore = curRiskScore;
+
+        } else { //Do nothing, loopback
+            return;
         }
+        //TODO, exit condition
+
+    }
+
+    public void invokeNewAdaptation() {
+        this.observedAdaptation.setBeingObservedByMediator(false);
+        this.observedAdaptation = getNewAdaptation();
+        this.observedAdaptation.setBeingObservedByMediator(true);
+        this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
+
+        //TODO
+        //Websocket, invoke new adaptation through message.
+        //TODO, figure out toggle to turn off other adaptations.
+
+        this.websocket.invoke(new AdaptationInvokeRequest(this.observedAdaptation));
+        System.out.println("invoke new adaptation");
+    }
+
+    public void invokeAdaptationChange() {
+        //Websocket
+        //Send over adaptation and the new config style.
+        this.websocket.invoke(new AdaptationInvokeRequest(this.observedAdaptation));
     }
 
     public void invokeAdaptation(double curRiskScore) {
+        double stepAmount = 0.25;
         //if no adaptations, create a new one
         if (this.currentAdaptations.isEmpty()) {
             this.observedAdaptation = getNewAdaptation();
@@ -90,25 +113,36 @@ public class AdaptationMediator extends Mediator {
         } else { //Has adaptations, review the currently observed one.
 
             if (curRiskScore > observedAdaptation.getScore()) { //Adaptation Risk increased.
+                double scoreDifference = curRiskScore - observedAdaptation.getScore();
                 //Select new adaptation
-                boolean selectNewAdaptation = false;
+                boolean selectNewAdaptation = scoreDifference > bigChangeThreshold;
+                boolean changeStyleChangeDirection = scoreDifference < bigChangeThreshold && scoreDifference > smallChangeThreshold;
+
                 if (selectNewAdaptation) {
-                    this.observedAdaptation.setBeingObservedByMediator(false);
-                    this.observedAdaptation = getNewAdaptation();
-                    this.observedAdaptation.setBeingObservedByMediator(true);
-                    this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
+                    this.invokeNewAdaptation();
+                } else if (changeStyleChangeDirection){ //Decrease was less substantial, try a different direction.
+
+                    MutableTriple<String, Integer, Double> lastStyle = this.observedAdaptation.getLastStyleChange();
+                    this.observedAdaptation.applyStyleChange(lastStyle.middle  * -1, stepAmount);
+                    this.invokeAdaptationChange();
                 } else {
 
+                    //Too small of a change, may have leveld out.
                 }
                 //or iterate over current adaptation
             } else {
                 //Adaptation improved
 
                 double scoreDiff = curRiskScore - observedAdaptation.getScore();
-                if (scoreDiff > smallChangeThreshold) {//if slight improvement, make a change
+                if (scoreDiff > smallChangeThreshold && scoreDiff < bigChangeThreshold) {//if slight improvement, make a change, may have leveld out.
+                    //Potentially try a new adaptation?
+
                 } else if (scoreDiff > bigChangeThreshold) { //if major improvement, good job, going in right direction
                     //apply change with similar as last change
-
+                    //The direction of the last change
+                    MutableTriple<String, Integer, Double> lastStyleChange = this.observedAdaptation.getLastStyleChange();
+                    this.observedAdaptation.applyStyleChange(lastStyleChange.middle, stepAmount);
+                    this.invokeAdaptationChange();
 
                 }
 
@@ -181,7 +215,38 @@ public class AdaptationMediator extends Mediator {
 
 
     public double calculateRiskScore(Integer participantAnswer, Integer classificationResult, Float taskCompletionTime, Float cognitiveLoadScore) {
+        //High weights:
+        //participantAnswer, cognitiveLoadScore
+        //Medium weights: classificaitonResult
+        //Low weights: taskCompletionTime
+        int numHighWeights = 2;
+        int numMedWeights = 1;
+        int numLowWeights = 1;
+        double riskScore = 0;
 
-        return 0.0;
+        //Review weighting. A high weight, if all factors are risky, should flag the threshold.
+        double highWeight = 0.50;
+        double medWeight = 0.35;
+        double lowWeight = 0.15;
+        int negatedParticipantAnswer = 0;
+
+        //Classificaiton result, might want to ivnerse or weight it based on whether the user got the question right/wrong and if the prediciton was correct in this regard
+        if (participantAnswer != null && participantAnswer == 0) { //Wrong answer, higher risk score.
+            negatedParticipantAnswer = 1;
+//            riskScore += highWeight * participantAnswer/numHighWeights;
+        }
+
+
+        //FORCE HIGH RISKSCORE
+        negatedParticipantAnswer = 1;
+        cognitiveLoadScore = 1F;
+        classificationResult = 1;
+        taskCompletionTime = 1F;
+
+        riskScore = ( highWeight * ( (negatedParticipantAnswer / numHighWeights) + (cognitiveLoadScore / numHighWeights) ))
+                + (medWeight * ( (classificationResult / numMedWeights)))
+                + (lowWeight * ( (taskCompletionTime / numLowWeights)));
+
+        return riskScore;
     }
 }

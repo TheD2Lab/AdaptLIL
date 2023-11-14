@@ -1,6 +1,7 @@
 package adaptations;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.MutableTriple;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,9 +33,10 @@ public class DeemphasisAdaptation extends Adaptation {
                 currentOpacity = minOpacity;
         }
 
-        this.getDefaultStyleConfig().put("opacity", String.valueOf(currentOpacity));
-        this.setLastStyleChange(new MutablePair<>("opacity", String.valueOf(currentOpacity)));
+        this.getStyleConfig().put("opacity", String.valueOf(currentOpacity));
+        this.setLastStyleChangePair("opacity", direction, currentOpacity);
     }
+
 
 
 }

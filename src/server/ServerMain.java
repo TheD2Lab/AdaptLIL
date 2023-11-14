@@ -1,4 +1,5 @@
 package server;
+import analysis.ScanPath;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
@@ -12,6 +13,7 @@ import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
 
 import java.io.IOException;
+import java.util.Scanner;
 
 public class ServerMain {
 
@@ -19,8 +21,11 @@ public class ServerMain {
     public static final String url = "localhost";
     public static final int port = 8080;
     public static float gazeWindowSizeInMilliseconds = 2000;
-    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
-    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
+//    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
+//    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
+
+    public static String modelConfigPath = "C:\\Users\\D2Lab\\Documents\\Adaptive Visualization\\gazepoint-data-analysis-websocket-master\\models\\";
+    public static String modelName = "\\stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
         String serialString = "<REC CNT=\"34\"/>";
@@ -39,6 +44,8 @@ public class ServerMain {
 
 
     public static void main(String[] args) {
+
+        Scanner scanner = new Scanner(System.in);
 
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         try {
@@ -62,10 +69,11 @@ public class ServerMain {
             AdaptationMediator adaptationMediator = initAdapationMediator(visualizationWebsocket, gp3Socket, model, gazeWindow);
             System.out.println("Constructed AdaptationMediator");
             System.out.println("Main thread access goes to adaptationMediator.");
-            adaptationMediator.start();
             System.out.println("Sever stays alive by waiting for input so type anything to exit");
-
-            System.in.read();
+            boolean runAdaptations = true;
+            while (runAdaptations) {
+                adaptationMediator.start();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

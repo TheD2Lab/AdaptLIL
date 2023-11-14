@@ -1,0 +1,189 @@
+
+model_one_layer_ltsm-Nadam0,002
+[[   7 1113]
+ [   1  226]]
+tn: %: 0.9955947136563876 tp %: 0.00625
+model_bigger_bigger_lstm-Adam0,002
+[[   1 1119]
+ [   1  226]]
+tn: %: 0.9955947136563876 tp %: 0.0008928571428571428
+model_ltsm_straight_to_output-Nadam0,01
+[[   0 1120]
+ [   1  226]]
+tn: %: 0.9955947136563876 tp %: 0.0
+model_bigger_biggest_lstm_v5-Adam0,0018
+[[   0 1120]
+ [   1  226]]
+tn: %: 0.9955947136563876 tp %: 0.0
+model_ltsm_straight_to_output-Adam0,002
+[[  21 1099]
+ [   2  225]]
+tn: %: 0.9911894273127754 tp %: 0.01875
+model_ltsm_straight_to_output-SGD0,012
+[[  11 1109]
+ [   3  224]]
+tn: %: 0.986784140969163 tp %: 0.009821428571428571
+model_bigger_biggest_lstm_v7-Adagrad0,008
+[[196 924]
+ [  6 221]]
+tn: %: 0.973568281938326 tp %: 0.175
+model_ltsm_straight_to_output-Nadam0,0015
+[[  52 1068]
+ [   7  220]]
+tn: %: 0.9691629955947136 tp %: 0.04642857142857143
+model_ltsm_straight_to_output-Nadam0,002
+[[  60 1060]
+ [   8  219]]
+tn: %: 0.9647577092511013 tp %: 0.05357142857142857
+model_ltsm_straight_to_output-Adam0,01
+[[  50 1070]
+ [   9  218]]
+tn: %: 0.960352422907489 tp %: 0.044642857142857144
+model_ltsm_straight_to_output-Nadam0,001
+[[  44 1076]
+ [   9  218]]
+tn: %: 0.960352422907489 tp %: 0.039285714285714285
+model_bigger_lstm_v2-Adagrad0,008
+[[182 938]
+ [ 10 217]]
+tn: %: 0.9559471365638766 tp %: 0.1625
+model_bigger_biggest_lstm_v2_leaky_relu-Adagrad0,008
+[[247 873]
+ [ 22 205]]
+tn: %: 0.9030837004405287 tp %: 0.22053571428571428
+model_ltsm_straight_to_output-Adagrad0,008
+[[371 749]
+ [ 37 190]]
+tn: %: 0.8370044052863436 tp %: 0.33125
+model_bigger_biggest_lstm_v2-Adagrad0,008
+[[375 745]
+ [ 39 188]]
+tn: %: 0.8281938325991189 tp %: 0.33482142857142855
+model_bigger_bigger_lstm-Adam0,0018
+[[791 329]
+ [162  65]]
+tn: %: 0.28634361233480177 tp %: 0.70625
+model_bigger_biggest_lstm_v5-Adagrad0,008
+[[901 219]
+ [182  45]]
+tn: %: 0.19823788546255505 tp %: 0.8044642857142857
+model_bigger_biggest_lstm_v2_leaky_relu-Adam0,0012
+[[918 202]
+ [187  40]]
+tn: %: 0.1762114537444934 tp %: 0.8196428571428571
+model_bigger_bigger_lstm-Adam0,0012
+[[931 189]
+ [188  39]]
+tn: %: 0.17180616740088106 tp %: 0.83125
+model_one_layer_ltsm_v2-Nadam0,001
+[[919 201]
+ [191  36]]
+tn: %: 0.15859030837004406 tp %: 0.8205357142857143
+model_one_layer_ltsm_v2-Nadam0,0015
+[[908 212]
+ [191  36]]
+tn: %: 0.15859030837004406 tp %: 0.8107142857142857
+model_one_layer_ltsm-Adam0,0018
+[[941 179]
+ [194  33]]
+tn: %: 0.14537444933920704 tp %: 0.8401785714285714
+model_one_layer_ltsm-Nadam0,0015
+[[984 136]
+ [202  25]]
+tn: %: 0.11013215859030837 tp %: 0.8785714285714286
+model_bigger_biggest_lstm_v2_leaky_relu-Adam0,001
+[[999 121]
+ [203  24]]
+tn: %: 0.10572687224669604 tp %: 0.8919642857142858
+model_bigger_biggest_lstm-Adagrad0,008
+[[1017  103]
+ [ 204   23]]
+tn: %: 0.1013215859030837 tp %: 0.9080357142857143
+model_bigger_lstm-Adagrad0,008
+[[1004  116]
+ [ 204   23]]
+tn: %: 0.1013215859030837 tp %: 0.8964285714285715
+model_one_layer_ltsm-Adam0,0014
+[[1047   73]
+ [ 213   14]]
+tn: %: 0.06167400881057269 tp %: 0.9348214285714286
+model_one_layer_ltsm-Adagrad0,008
+[[1059   61]
+ [ 214   13]]
+tn: %: 0.05726872246696035 tp %: 0.9455357142857143
+model_one_layer_ltsm_v2-Adam0,0018
+[[1065   55]
+ [ 215   12]]
+tn: %: 0.05286343612334802 tp %: 0.9508928571428571
+model_bigger_biggest_lstm_v5-Adam0,001
+[[1071   49]
+ [ 216   11]]
+tn: %: 0.048458149779735685 tp %: 0.95625
+model_bigger_biggest_lstm_v5-SGD0,015
+[[1067   53]
+ [ 216   11]]
+tn: %: 0.048458149779735685 tp %: 0.9526785714285714
+model_bigger_biggest_lstm_v5-SGD0,012
+[[1067   53]
+ [ 216   11]]
+tn: %: 0.048458149779735685 tp %: 0.9526785714285714
+model_one_layer_ltsm-Adam0,0012
+[[1089   31]
+ [ 218    9]]
+tn: %: 0.039647577092511016 tp %: 0.9723214285714286
+model_bigger_biggest_lstm_v5-SGD0,01
+[[1075   45]
+ [ 218    9]]
+tn: %: 0.039647577092511016 tp %: 0.9598214285714286
+model_bigger_biggest_lstm_v5-Adam0,0014
+[[1095   25]
+ [ 220    7]]
+tn: %: 0.030837004405286344 tp %: 0.9776785714285714
+model_one_layer_ltsm_v2-Adam0,002
+[[1086   34]
+ [ 220    7]]
+tn: %: 0.030837004405286344 tp %: 0.9696428571428571
+model_one_layer_ltsm_v2-Adagrad0,008
+[[1088   32]
+ [ 221    6]]
+tn: %: 0.02643171806167401 tp %: 0.9714285714285714
+model_bigger_biggest_lstm_v4-SGD0,01
+[[1087   33]
+ [ 221    6]]
+tn: %: 0.02643171806167401 tp %: 0.9705357142857143
+model_one_layer_ltsm-Adam0,002
+[[1085   35]
+ [ 221    6]]
+tn: %: 0.02643171806167401 tp %: 0.96875
+model_ltsm_straight_to_output-Adam0,0018
+[[1082   38]
+ [ 221    6]]
+tn: %: 0.02643171806167401 tp %: 0.9660714285714286
+model_ltsm_straight_to_output-SGD0,015
+[[1089   31]
+ [ 222    5]]
+tn: %: 0.022026431718061675 tp %: 0.9723214285714286
+model_ltsm_straight_to_output-Adam0,0014
+[[1086   34]
+ [ 222    5]]
+tn: %: 0.022026431718061675 tp %: 0.9696428571428571
+model_ltsm_straight_to_output-Adam0,001
+[[1097   23]
+ [ 223    4]]
+tn: %: 0.01762114537444934 tp %: 0.9794642857142857
+model_ltsm_straight_to_output-Adam0,0012
+[[1096   24]
+ [ 223    4]]
+tn: %: 0.01762114537444934 tp %: 0.9785714285714285
+model_bigger_biggest_lstm_v5-Adagrad0,002
+[[1103   17]
+ [ 224    3]]
+tn: %: 0.013215859030837005 tp %: 0.9848214285714286
+model_bigger_biggest_lstm_v5-Adagrad0,0015
+[[1110   10]
+ [ 225    2]]
+tn: %: 0.00881057268722467 tp %: 0.9910714285714286
+model_bigger_biggest_lstm_v5-Adam0,0012
+[[1108   12]
+ [ 225    2]]
+tn: %: 0.00881057268722467 tp %: 0.9892857142857143

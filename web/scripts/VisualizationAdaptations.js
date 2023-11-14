@@ -6,7 +6,10 @@ class VisualizationAdaptations {
         this.deemphasisAdaptation = new Adaptation('deemphaasis', false, {});
 
         this.highlightAdaptation = new Adaptation('highlight', true, {});
-        this.colorSchemeAdaptation= new Adaptation('colorScheme', true, {});
+        this.colorSchemeAdaptation= new Adaptation('colorScheme', true, {
+            'map_to_hidden_color': '#FF0000',
+            'map_to_not_hidden_color' : '#00FFFF',
+        });
         this.annotationAdaptation = new Adaptation('annotation', false, {});
     }
 
@@ -20,8 +23,10 @@ class VisualizationAdaptations {
         const _this = this;
         if (adaptationType === 'deemphasis') {
             _this.deemphasisAdaptation.state = state;
+            _this.deemphasisAdaptation.settings = adaptiveSettings;
         } else if (adaptationType === 'highlighting') {
             _this.highlightAdaptation.state = state;
+            _this.highlightAdaptation.settings = adaptiveSettings;
         } else if (adaptationType === 'colorScheme') { //I am moving to having a 'automated' selection color scheme. Looking for academic papers.
             //Could also have depth based colorschemeing
             _this.colorSchemeAdaptation.state = state;

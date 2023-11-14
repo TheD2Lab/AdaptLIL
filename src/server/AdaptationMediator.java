@@ -74,12 +74,12 @@ public class AdaptationMediator extends Mediator {
                 this.invokeAdaptation(curRiskScore);
             }
 
+            this.observedAdaptation.setScore(curRiskScore);
             this.lastRiskScore = curRiskScore;
 
         } else { //Do nothing, loopback
             return;
         }
-        //TODO, exit condition
 
     }
 
@@ -92,7 +92,11 @@ public class AdaptationMediator extends Mediator {
         //TODO
         //Websocket, invoke new adaptation through message.
         //TODO, figure out toggle to turn off other adaptations.
-
+        //Consider the following cases:
+        //multiple adaptations at once
+            //We don't have a situation where this arises yet.
+        //one adaptation running.
+            //toggle off the current observed
         this.websocket.invoke(new AdaptationInvokeRequest(this.observedAdaptation));
         System.out.println("invoke new adaptation");
     }

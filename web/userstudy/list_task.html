@@ -26,6 +26,8 @@
     <script src="../scripts/script-alignment.js"></script>
     <script src="../scripts/BaselineMap.js"></script>
     <script src="../scripts/MapWorld.js"></script>
+    <script src="../scripts/websocket.js"></script>
+
 
 
     <!-- data -->    
@@ -53,6 +55,13 @@
         const baselineMap = new BaselineMap(indentedTree);
         const taskForm = new TaskForm(baselineMap);
         taskForm.setVis("baseline");
+        let websocketConnected = false;
+
+        const websocket = new Websocket();
+        websocket.openConnection();
+        websocketConnected = true;
+        websocket.listenForMessages();
+
 
         window.addEventListener('load', function (event) {
             console.log("Task: Ready to generate form!");

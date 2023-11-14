@@ -285,7 +285,11 @@ class BaselineMap {
     refreshMapLineColors() {
         const _this = this;
         if (_this.linkIndentedList.adaptations.colorSchemeEnabled) {
-            d3.selectAll('.mapLine-fg').style('stroke', d => d.color)
+            d3.selectAll('*:not(.map-to-hidden)>.mapLine-fg').style('stroke',
+                _this.linkIndentedList.adaptations.colorSchemeAdaptation.settings.map_to_not_hidden_color);
+            d3.selectAll('.map-to-hidden>.mapLine-fg').style('stroke',
+                _this.linkIndentedList.adaptations.colorSchemeAdaptation.settings.map_to_hidden_color)
+
         } else {
             d3.selectAll('.mapLine-fg').style('stroke', '#0077ff') //default color
         }

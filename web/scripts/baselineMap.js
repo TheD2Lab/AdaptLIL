@@ -284,6 +284,9 @@ class BaselineMap {
      */
     refreshMapLineColors() {
         const _this = this;
+
+        //TODO
+        //Add multi node levels.
         if (_this.linkIndentedList.adaptations.colorSchemeEnabled) {
             d3.selectAll('*:not(.map-to-hidden)>.mapLine-fg').style('stroke',
                 _this.linkIndentedList.adaptations.colorSchemeAdaptation.settings.map_to_not_hidden_color);

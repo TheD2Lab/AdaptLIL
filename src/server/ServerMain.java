@@ -23,6 +23,8 @@ public class ServerMain {
     public static final String url = "localhost";
     public static final int port = 8080;
     public static float gazeWindowSizeInMilliseconds = 2000;
+    static boolean simulateGazepointServer = true;
+
 //    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
@@ -56,7 +58,7 @@ public class ServerMain {
             HttpServer server = initHttpServerAndWebSocketPort();
             System.out.println("Initialized HTTP Server & WebSocket port");
             System.out.println("Starting gp3 socket");
-            GP3Socket gp3Socket = initGP3Socket();
+            GP3Socket gp3Socket = initGP3Socket(simulateGazepointServer);
             System.out.println("Initializing VisualizationWebsocket");
             VisualizationWebsocket visualizationWebsocket = initVisualizationWebsocket(gp3Socket);
             System.out.println(" initialized VisualizationWebsocket");
@@ -76,7 +78,7 @@ public class ServerMain {
             while (runAdaptations) {
                 adaptationMediator.start();
             }
-        } catch (IOException e) {
+        } catch (IOException | CsvValidationException e) {
             throw new RuntimeException(e);
         }
 
@@ -108,11 +110,10 @@ public class ServerMain {
 
     }
 
-    public static GP3Socket initGP3Socket() throws IOException, CsvValidationException {
+    public static GP3Socket initGP3Socket(boolean simulateGazepointServer) throws IOException, CsvValidationException {
         XmlMapper mapper = new XmlMapper();
         String gp3Hostname = "localhost";
         int gp3Port = 4242;
-        boolean simulateGazepointServer = true;
         File gazeFile = new File("p1.gaze.csv");
         if (simulateGazepointServer) {
             GazepointSimulationServer simulationServer = new GazepointSimulationServer(gp3Hostname, gp3Port, gazeFile, true);

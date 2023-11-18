@@ -51,7 +51,9 @@ public class GP3Socket implements Component {
     private FileInputStream testFileReader;
     private AdaptationMediator mediator;
 
-    public GP3Socket() {
+    public GP3Socket(String hostName, int port) {
+        this.hostName = hostName;
+        this.port = port;
         xmlMapper = new XmlMapper();
         gazeDataBuffer = new GazeBuffer();
         xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

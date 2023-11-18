@@ -1,6 +1,7 @@
 package server;
 import analysis.ScanPath;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.opencsv.exceptions.CsvValidationException;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
@@ -12,6 +13,7 @@ import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -106,10 +108,17 @@ public class ServerMain {
 
     }
 
-    public static GP3Socket initGP3Socket() throws IOException {
+    public static GP3Socket initGP3Socket() throws IOException, CsvValidationException {
         XmlMapper mapper = new XmlMapper();
-
-        GP3Socket gp3Socket = new GP3Socket();
+        String gp3Hostname = "localhost";
+        int gp3Port = 4242;
+        boolean simulateGazepointServer = true;
+        File gazeFile = new File("p1.gaze.csv");
+        if (simulateGazepointServer) {
+            GazepointSimulationServer simulationServer = new GazepointSimulationServer(gp3Hostname, gp3Port, gazeFile, true);
+            simulationServer.run();
+        }
+        GP3Socket gp3Socket = new GP3Socket(gp3Hostname, gp3Port);
         //screenheight && width should be an ack for consistentcy. see gazepoint documentation
         float screenHeight = 1920;
         float screenWidth = 1080;

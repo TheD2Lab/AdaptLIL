@@ -13,4 +13,5 @@ desktop.ini
 */DS_Store
 .idea/*
 .idea/misc.xml
+.idea/modules.xml
 libs/opencsv-5.7.0.jar

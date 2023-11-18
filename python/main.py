@@ -13,7 +13,7 @@ from scipy.io import arff
 from sklearn import model_selection
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
-from tensorflow.keras.layers import Dense, LSTM
+from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout
 #https://github.com/timeseriesAI/tsai
 resultDir = str(datetime.datetime.now()).replace(":", "_").replace(".", ",")
 os.mkdir(resultDir)
@@ -134,8 +134,8 @@ def get_weight_bias(y_data):
     pos = len([i for i in y_data if i == 1])
     # print(pos)
     total = len(y_data)
-    weight_for_0 = (1 / neg) * (total * 12.0)
-    weight_for_1 = (1 / pos) * (total /2.0)  # TODO, pay more attention to this weight distrib.
+    weight_for_0 = (1 / neg) * (total)
+    weight_for_1 = (1 / pos) * (total)  # TODO, pay more attention to this weight distrib.
     return {0: weight_for_0, 1: weight_for_1}
 
 
@@ -187,7 +187,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.49, use_ema=True, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.40, use_ema=True, weight_decay=2e-4),
         #
-        tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=False), #control
+        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=False), #control
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.38, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.39, use_ema=False),
@@ -211,21 +211,51 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.9e-3),
-        tf.keras.optimizers.Adam(learning_rate=1e-1),
+        # tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
-        tf.keras.optimizers.Adam(learning_rate=1e-2),
+        # tf.keras.optimizers.Adam(learning_rate=1e-2),
         tf.keras.optimizers.Nadam(learning_rate=1e-3),
         # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
-        tf.keras.optimizers.Nadam(learning_rate=1e-2),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
 
         # tf.keras.optimizers.RMSprop
     ]
 
+def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
+    #Norm and Attention
+    x = layers.LayerNormalization(epsilon=1e-6)(inputs) #What does passing inputs do to x?
+    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads, dropout=dropout)(x,x) #What does passing x,x do?
+    x = layers.Dropout(dropout)(x)
+    res = x + inputs #res? 
+
+    #feed foward
+    x = layers.LayerNormalization(epsilon=1e-6)(res)
+    x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(x) #Might need to put the activation layer as separate var for d4j
+    x = layers.Dropout(dropout)(x)
+    x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
+    return x + res
+
+def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_transformer_blocks, mlp_units, dropout=0, mlp_dropout=0):
+    inputs = tf.keras.Input(shape=input_shape)
+    x = inputs
+    for _ in range(num_transformer_blocks):
+        x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
+
+    x = layers.GlobalAveragePooling1D(data_format="channels_first")(x) #What does channels_first do?
+    for dim in mlp_units:
+        x = layers.Dense(dim, activation='relu')(x) #What does passing x do here?
+        x = layers.Dropout(mlp_dropout)(x)
+
+    outputs = layers.Dense(2, activation='softmax')(x) #2 here is because we have a binary class.
+    return tf.keras.Model(inputs, outputs)
 
 def getModelConfig(timeSequences, attributes):
+    input_shape=(timeSequences, attributes)
     models = {}
+    transformer_model = build_transformer_model(input_shape, head_size=256, num_heads=4, ff_dim=4, num_transformer_blocks=4, mlp_units=[128], mlp_dropout=0.4, dropout=0.25)
+    models['transformer_model'] = transformer_model
     model_simple_ltsm = Sequential()
     model_simple_ltsm.add(LSTM(4, input_shape=(timeSequences, attributes)))
     model_simple_ltsm.add(Dense(8, activation='relu'))
@@ -273,15 +303,16 @@ def getModelConfig(timeSequences, attributes):
     and therefore can trigger it to forget or keep the memory for each 0,1 class.
     I.e., for each attribute, allocate 1 node per class.
     '''
+    stacked_lstm.add(Dropout(0.2, input_shape=input_shape))
     stacked_lstm.add(LSTM(75, input_shape=(timeSequences, attributes), return_sequences=True))
     # stacked_lstm.add(LSTM(150, input_shape=(timeSequences, attributes), return_sequences=True))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
     stacked_lstm.add(LSTM(16, return_sequences=True))
     stacked_lstm.add(LSTM(16, return_sequences=True))
-
     stacked_lstm.add(LSTM(16))
     # stacked_lstm.add(LSTM(64)))
-    stacked_lstm.add(Dense(16, activation='leaky_relu'))
+    stacked_lstm.add(Dense(16))
+    stacked_lstm.add(LeakyReLU())
     stacked_lstm.add(Dense(1, activation='sigmoid'))
 
     stacked_lstm_v2 = Sequential()
@@ -296,11 +327,12 @@ def getModelConfig(timeSequences, attributes):
     # stacked_lstm.add(LSTM(128, return_sequences=True))
     stacked_lstm_v2.add(LSTM(32, return_sequences=True))
     stacked_lstm_v2.add(LSTM(32, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(32, return_sequences=True))
     stacked_lstm_v2.add(LSTM(32))
     # stacked_lstm.add(LSTM(64)))
-    stacked_lstm_v2.add(Dense(16, activation='relu'))
-    stacked_lstm_v2.add(Dense(16, activation='leaky_relu'))
+    stacked_lstm_v2.add(Dense(16))
+    stacked_lstm_v2.add(LeakyReLU())
+    stacked_lstm_v2.add(Dense(16))
+    stacked_lstm_v2.add(LeakyReLU())
     stacked_lstm_v2.add(Dense(1, activation='sigmoid'))
 
     model_bigger_biggest_lstm_v2_leaky_relu = Sequential()
@@ -447,7 +479,10 @@ def getModelConfig(timeSequences, attributes):
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
 
     models['stacked_lstm'] = stacked_lstm;
+    """
     models['stacked_lstm_v2'] = stacked_lstm_v2;
+
+
 
     models['model_simple_ltsm'] = model_simple_ltsm
     models['model_one_layer_ltsm'] = model_one_layer_ltsm
@@ -476,6 +511,7 @@ def getModelConfig(timeSequences, attributes):
     #
     # '''Unique Architectures'''
     # models['model_stacked_v6'] = model_stacked_v6
+    """
     return models
 
 
@@ -498,16 +534,18 @@ def getMinMax(data):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    timeSequences = 4
+    timeSequences = 10
     numAttributes = 8
     windowSize = 75
     epochs = 100  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     shuffle = False
-    callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=15, start_from_epoch=35, )
+    callback = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=15, start_from_epoch=23, baseline=0.73, mode='max', restore_best_weights=False)
 
     yAll = np.array([])
     print_both('epochs: ' + str(epochs))
     print_both('Shuffle on compile: ' + str(shuffle))
+    # strategy = tf.distribute.MirroredStrategy()
+    # print_both('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
     consoleOut = sys.stdout  # assign console output to a variable
 
@@ -522,7 +560,7 @@ if __name__ == '__main__':
 
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/matAndLilBySet/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/matAndLilV2/"
 
     models = getModelConfig(timeSequences, numAttributes * windowSize)
 
@@ -545,12 +583,13 @@ if __name__ == '__main__':
         (samples,windowSize,attributes)
         Also pair the correct answers together.
         '''
+    participants = []
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
         if "trainData" not in filename:
             continue
         trainData = convertArffToDataFrame(f)
-
+        participants.append(filename)
         x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences)
         yAll = np.concatenate((yAll, y_part), axis=0)
         x_part = normalizeData(x_part, numAttributes, attr_min_max)
@@ -571,122 +610,137 @@ if __name__ == '__main__':
 
     print_both('class 0 weight: ' + str(weights[0]))
     print_both('class 1 weight: ' + str(weights[1]))
+    # with strategy.scope():
     for model_name, model_uncloned in models.items():
-        model = tf.keras.models.clone_model(model_uncloned)
-        optimizers = get_optimizers()
+            model = tf.keras.models.clone_model(model_uncloned)
+            optimizers = get_optimizers()
 
-        print_both("*****************************************")
-        print_both(model_name)
+            print_both("*****************************************")
+            print_both(model_name)
 
-        sys.stdout = outputFile
-        model.summary()
-        sys.stdout = consoleOut  # set stdout back to console output
-        model.summary()
+            sys.stdout = outputFile
+            model.summary()
+            sys.stdout = consoleOut  # set stdout back to console output
+            model.summary()
 
-        print_both("*****************************************")
-        histories = []
-        numPart = 0
-        for optimizer in optimizers:
-            unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
-                tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
-            if hasattr(optimizer, 'beta_1'):
-                unique_model_id += " b1: " + str(optimizer.beta_1)
-            if hasattr(optimizer, 'weight_decay'):
-                unique_model_id += " wdecay: " + str(optimizer.weight_decay)
-            if hasattr(optimizer, 'use_ema'):
-                unique_model_id += " ema:" + str(optimizer.use_ema)
-            print_both("-------------------------------")
-            print_both("unique model id: " + unique_model_id)
-            print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
-            print_both("-------------------------------")
-            for i in range(len(trainDataParticipants)):
+            print_both("*****************************************")
+            histories = []
+            numPart = 0
+            stats_by_participant = {}
+            for optimizer in optimizers:
+                unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
+                    tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
+                if hasattr(optimizer, 'beta_1'):
+                    unique_model_id += " b1: " + str(optimizer.beta_1)
+                if hasattr(optimizer, 'weight_decay'):
+                    unique_model_id += " wdecay: " + str(optimizer.weight_decay)
+                if hasattr(optimizer, 'use_ema'):
+                    unique_model_id += " ema:" + str(optimizer.use_ema)
+                print_both("-------------------------------")
+                print_both("unique model id: " + unique_model_id)
+                print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
+                print_both("-------------------------------")
+                for i in range(len(trainDataParticipants)):
 
-                x_part = trainDataParticipants[i]['x']
-                y_part = trainDataParticipants[i]['y']
-                # Since we are training on 'profiles' of people, we should always shuffle their data for training.
-                x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
-                                                                                  random_state=0, shuffle=True)
-                print_both(x_train.shape)
-                model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
-                              metrics=get_metrics_for_model())
-                # todo, we need to separate each participant
-                # the model should train against only the participants train data to
-                # have a representation of that person
-                # then we retrain on the next person, so on and so forth.
-                hist = model.fit(x_train, y_train,
-                                 validation_data=(x_val, y_val),
-                                 epochs=epochs,
-                                 # class_weight=weights,
-                                 shuffle=shuffle,
-                                 callbacks=[callback]
-                                 )
-                histories.append(hist)
+                    x_part = trainDataParticipants[i]['x']
+                    y_part = trainDataParticipants[i]['y']
+                    # Since we are training on 'profiles' of people, we should always shuffle their data for training.
+                    x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
+                                                                                      random_state=0, shuffle=True)
+                    print_both(x_train.shape)
+                    model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
+                                  metrics=get_metrics_for_model())
+                    # todo, we need to separate each participant
+                    # the model should train against only the participants train data to
+                    # have a representation of that person
+                    # then we retrain on the next person, so on and so forth.
+                    hist = model.fit(x_train, y_train,
+                                     validation_data=(x_val, y_val),
+                                     epochs=epochs,
+                                     class_weight=weights,
+                                     shuffle=shuffle,
+                                     batch_size=64,
+                                     # callbacks=[callback]
+                                     )
+                    histories.append(hist)
+            #hist_avg = np.average(hist.histroy['val_accuracy'])
+            #print_both('avh: ' + str(hist_avg))
+                    if (np.average(hist.history['val_accuracy'][-10:]) > 0.75):
+                        if (participants[i] not in stats_by_participant):
+                            stats_by_participant[participants[i]] = []
 
-            '''
-            Done fitting on multiple participants, time for real world data testing
-            '''
-            y_hat = model.predict(xTest)
-            # results = model.evlauate(xVal, yTest)
-            y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
+                        stats_by_participant[participants[i]].append({'f': participants[i], 'model_id': model_name, 'val_accuracy' : np.average(hist.history['val_accuracy'][-20:])})
+                        print_both("Participant reached > 0.8 val_acc: " +participants[i])
+                '''
+                Done fitting on multiple participants, time for real world data testing
+                '''
+                y_hat = model.predict(xTest)
+                # results = model.evlauate(xVal, yTest)
+                y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
 
-            '''
-            Metrics
-            '''
-            hist_str = ''
-            print_both(str(histories))
-            histories_of_all_cross = []
-            for history in histories:
-                metrics_by_epoch = [];
-                total_histories_of_cross = {}
-                for key in history.history.keys():
-                    epochs = len(history.history[key])
-                    total_histories_of_cross[key] = [0 for i in range(epochs)]
-                    #key: [e1,e2,e3]
-                    for i in range(epochs):
-                        total_histories_of_cross[key][i] += history.history[key][i]
+                '''
+                Metrics
+                '''
 
-                    #now calculate avg
-                    for i in range(epochs):
-                        total_histories_of_cross[key][i] /= epochs
-                #now we have cross -> [key : [e1,e3]/avg,...]
-                histories_of_all_cross.append(total_histories_of_cross)
-            #now we can go by key of total_histories_of_all_cross and calculate metrics
-            # avg_history_by_cross = []
-            # for key in histories[0].history.keys():
-            #     #generate a 0 value for each epoch in the metric
-            #     avg_history_by_epoch[key]=[0 for i in range(len(histories[0].history[key]))]
-            #     #then for each of the cross folds metrics, calculate the averages
-            #     for h in histories:
-            #         #calculate the average metric value per epoch
-            #         for i in range(h.history[key]):
-            #             avg_history_by_epoch['history'][key][i] += h.history[key][i]
-            #
-            #         for i in range(h.history[key]):
-            #             avg_history_by_epoch['history'][key][i] /= len(h.history[key])
-            #
-            hist_str = ''
-            for key in histories_of_all_cross[0].keys():
-                hist_str += str(key) + " : " + str(sum( sum(his[key]) for his in histories_of_all_cross) / len(histories_of_all_cross)) + "\n"
-            #     #finally, we now have the avg history of each metric per each epoch and per each model
+                hist_str = ''
+                print_both(str(histories))
+                histories_of_all_cross = []
+                for history in histories:
+                    metrics_by_epoch = [];
+                    total_histories_of_cross = {}
+                    for key in history.history.keys():
+                        epochs = len(history.history[key])
+                        total_histories_of_cross[key] = [0 for i in range(epochs)]
+                        #key: [e1,e2,e3]
+                        for i in range(epochs):
+                            total_histories_of_cross[key][i] += history.history[key][i]
+
+                        #now calculate avg
+                        for i in range(epochs):
+                            total_histories_of_cross[key][i] /= epochs
+                    #now we have cross -> [key : [e1,e3]/avg,...]
+                    histories_of_all_cross.append(total_histories_of_cross)
+
+                #Don't use
+                #now we can go by key of total_histories_of_all_cross and calculate metrics
+                #avg_history_by_epoch = []
+                #for key in histories[0].history.keys():
+                #     #generate a 0 value for each epoch in the metric
+                #    avg_history_by_epoch[key]=[0 for i in range(len(histories[0].history[key]))]
+                #     #then for each of the cross folds metrics, calculate the averages
+                #    for h in histories:
+                          #calculate the average metric value per epoch
+                #        for i in range(h.history[key]):
+                #            avg_history_by_epoch['history'][key][i] += h.history[key][i]
+                #
+                #        for i in range(h.history[key]):
+                #            avg_history_by_epoch['history'][key][i] /= len(h.history[key])
+                #
+
+                hist_str = ''
+                for key in histories_of_all_cross[0].keys():
+                    hist_str += str(key) + " : " + str(sum( sum(his[key]) for his in histories_of_all_cross) / len(histories_of_all_cross)) + "\n"
+                #     #finally, we now have the avg history of each metric per each epoch and per each model
 
 
-            print_both(hist_str)
-            conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
-            print_both('putting in conf matrix')
-            all_models_by_tp_and_tn[unique_model_id] = conf_matrix
-            print_both(conf_matrix)
-            #
-            all_models_stats.append({
-                'model_name': model_name, 'optimizer': str(type(optimizer).__name__),
-                'lr': str(tf.keras.backend.eval(optimizer.lr)),
-                'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-                'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-                'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
-                'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
-            })
-            # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
-            # Only save when using Linux keras 2.14!!!
-            model.save(resultDir + "/" + unique_model_id)
+                print_both(hist_str)
+
+                conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
+                print_both('putting in conf matrix')
+                all_models_by_tp_and_tn[unique_model_id] = conf_matrix
+                print_both(conf_matrix)
+                #
+                all_models_stats.append({
+                    'model_name': model_name, 'optimizer': str(type(optimizer).__name__),
+                    'lr': str(tf.keras.backend.eval(optimizer.lr)),
+                    'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
+                    'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
+                    'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
+                    'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
+                })
+                # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
+                # Only save when using Linux keras 2.14!!!
+                model.save(resultDir + "/" + unique_model_id, save_format='h5')
 
 
 
@@ -706,7 +760,9 @@ if __name__ == '__main__':
     # plot values
 
     #save python code
-
+    for key in stats_by_participant:
+        print("participant: " + key)
+        print(str(stats_by_participant[key]))
     keys = all_models_stats[0].keys()
     with open(os.path.join(resultDir, 'modelResults.csv'), 'w', encoding='utf8', newline='') as output_file:
         dict_writer = DictWriter(output_file, keys)

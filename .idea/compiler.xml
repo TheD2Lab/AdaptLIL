@@ -6,8 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="gazepoint-data-analysis-master" />
+        <module name="iav-ontology" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="gazepoint-data-analysis-master" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

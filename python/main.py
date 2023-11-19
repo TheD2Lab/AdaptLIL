@@ -158,7 +158,7 @@ def get_metrics_for_model():
 
 def get_optimizers():
     return [
-        # tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
         tf.keras.optimizers.Adam(learning_rate=1e-4),
         tf.keras.optimizers.Adam(learning_rate=1e-3),
         
@@ -212,13 +212,13 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.9e-3),
-        # tf.keras.optimizers.Adam(learning_rate=1e-1),
+        tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1e-2),
         tf.keras.optimizers.Nadam(learning_rate=1e-3),
-        # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
-        # tf.keras.optimizers.Nadam(learning_rate=1e-2),
+        tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
 
         # tf.keras.optimizers.RMSprop
@@ -255,7 +255,8 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
 def getModelConfig(timeSequences, attributes):
     input_shape=(timeSequences, attributes)
     models = {}
-    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=2, ff_dim=2, num_transformer_blocks=4, mlp_units=[16], mlp_dropout=0.1, dropout=0.15)
+    '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
+    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=2, ff_dim=2, num_transformer_blocks=8, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
     models['transformer_model'] = transformer_model
     model_simple_ltsm = Sequential()
     model_simple_ltsm.add(LSTM(4, input_shape=(timeSequences, attributes)))
@@ -538,7 +539,7 @@ if __name__ == '__main__':
     timeSequences = 2
     numAttributes = 8
     windowSize = 75
-    epochs = 20  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    epochs = 50  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     shuffle = False
     callback = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=15, start_from_epoch=23, baseline=0.73, mode='max', restore_best_weights=False)
 
@@ -658,9 +659,9 @@ if __name__ == '__main__':
                     hist = model.fit(x_train, y_train,
                                      validation_data=(x_val, y_val),
                                      epochs=epochs,
-                                     #class_weight=weights,
+                                     class_weight=weights,
                                      shuffle=shuffle,
-                           #          batch_size=64,
+              #                       batch_size=64,
                                      # callbacks=[callback]
                                      )
                     histories.append(hist)

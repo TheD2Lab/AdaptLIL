@@ -159,16 +159,17 @@ def get_metrics_for_model():
 def get_optimizers():
     return [
         # tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        tf.keras.optimizers.Adam(learning_rate=1e-4),
         tf.keras.optimizers.Adam(learning_rate=1e-3),
         
-        tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
+        #tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
         # tf.keras.optimizers.SGD(learning_rate=0.04),
         # tf.keras.optimizers.SGD(learning_rate=0.08),
 
         # tf.keras.optimizers.Adagrad(learning_rate=0.0013, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0014, name='Adagrad'),
-        tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
+        #tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
 
         # tf.keras.optimizers.Adagrad(learning_rate=0.01, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
@@ -248,13 +249,13 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
         x = layers.Dense(dim, activation='relu')(x) #What does passing x do here?
         x = layers.Dropout(mlp_dropout)(x)
 
-    outputs = layers.Dense(2, activation='softmax')(x) #2 here is because we have a binary class.
+    outputs = layers.Dense(1, activation='sigmoid')(x) #2 here is because we have a binary class.
     return tf.keras.Model(inputs, outputs)
 
 def getModelConfig(timeSequences, attributes):
     input_shape=(timeSequences, attributes)
     models = {}
-    transformer_model = build_transformer_model(input_shape, head_size=256, num_heads=4, ff_dim=4, num_transformer_blocks=4, mlp_units=[128], mlp_dropout=0.4, dropout=0.25)
+    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=2, ff_dim=2, num_transformer_blocks=4, mlp_units=[16], mlp_dropout=0.1, dropout=0.15)
     models['transformer_model'] = transformer_model
     model_simple_ltsm = Sequential()
     model_simple_ltsm.add(LSTM(4, input_shape=(timeSequences, attributes)))
@@ -534,10 +535,10 @@ def getMinMax(data):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    timeSequences = 10
+    timeSequences = 2
     numAttributes = 8
     windowSize = 75
-    epochs = 100  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    epochs = 20  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     shuffle = False
     callback = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=15, start_from_epoch=23, baseline=0.73, mode='max', restore_best_weights=False)
 
@@ -657,9 +658,9 @@ if __name__ == '__main__':
                     hist = model.fit(x_train, y_train,
                                      validation_data=(x_val, y_val),
                                      epochs=epochs,
-                                     class_weight=weights,
+                                     #class_weight=weights,
                                      shuffle=shuffle,
-                                     batch_size=64,
+                           #          batch_size=64,
                                      # callbacks=[callback]
                                      )
                     histories.append(hist)

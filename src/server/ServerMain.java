@@ -22,14 +22,14 @@ public class ServerMain {
 //    public static ServerMain serverMain;
     public static final String url = "localhost";
     public static final int port = 8080;
-    public static float gazeWindowSizeInMilliseconds = 2000;
+    public static float gazeWindowSizeInMilliseconds = 1000;
     static boolean simulateGazepointServer = true;
 
 //    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
-    public static String modelConfigPath = "C:\\Users\\D2Lab\\Documents\\Adaptive Visualization\\gazepoint-data-analysis-websocket-master\\models\\";
-    public static String modelName = "\\stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
+    public static String modelConfigPath = "";
+    public static String modelName = "transformer_model.h5";
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
         String serialString = "<REC CNT=\"34\"/>";
@@ -114,10 +114,11 @@ public class ServerMain {
         XmlMapper mapper = new XmlMapper();
         String gp3Hostname = "localhost";
         int gp3Port = 4242;
-        File gazeFile = new File("p1.gaze.csv");
+        File gazeFile = new File("/home/notroot/Desktop/d2lab/gazepoint/p1.LIL.Anatomy_all_gaze.csv");
         if (simulateGazepointServer) {
             GazepointSimulationServer simulationServer = new GazepointSimulationServer(gp3Hostname, gp3Port, gazeFile, true);
-            simulationServer.run();
+            Thread serverSimThread = new Thread(simulationServer);
+            serverSimThread.start();
         }
         GP3Socket gp3Socket = new GP3Socket(gp3Hostname, gp3Port);
         //screenheight && width should be an ack for consistentcy. see gazepoint documentation

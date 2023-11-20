@@ -1,8 +1,8 @@
 class Adaptation {
-    constructor(name, state, settings) {
+    constructor(name, state, styleConfig) {
         this._name = name;
         this._state = state;
-        this._settings = settings;
+        this._styleConfig = styleConfig;
     }
 
     set name(value) {
@@ -14,7 +14,7 @@ class Adaptation {
     }
 
     set settings(value) {
-        this._settings = value;
+        this._styleConfig = value;
     }
 
     get name() {
@@ -25,7 +25,7 @@ class Adaptation {
         return this._state;
     }
 
-    get settings() {
-        return this._settings;
+    get styleConfig() {
+        return this._styleConfig;
     }
 }

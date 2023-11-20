@@ -158,9 +158,9 @@ def get_metrics_for_model():
 
 def get_optimizers():
     return [
-        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
-        tf.keras.optimizers.Adam(learning_rate=1e-4),
-        tf.keras.optimizers.Adam(learning_rate=1e-3),
+    #    tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
+        tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
         
         #tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
@@ -212,13 +212,13 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.9e-3),
-        tf.keras.optimizers.Adam(learning_rate=1e-1),
+        #tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1e-2),
-        tf.keras.optimizers.Nadam(learning_rate=1e-3),
-        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        #tf.keras.optimizers.Nadam(learning_rate=1e-3),
+        #tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
-        tf.keras.optimizers.Nadam(learning_rate=1e-2),
+        #tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
 
         # tf.keras.optimizers.RMSprop
@@ -256,7 +256,7 @@ def getModelConfig(timeSequences, attributes):
     input_shape=(timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=2, ff_dim=2, num_transformer_blocks=8, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
+    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=8, ff_dim=32, num_transformer_blocks=16, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
     models['transformer_model'] = transformer_model
     model_simple_ltsm = Sequential()
     model_simple_ltsm.add(LSTM(4, input_shape=(timeSequences, attributes)))
@@ -480,7 +480,7 @@ def getModelConfig(timeSequences, attributes):
     model_ltsm_straight_to_output.add(LSTM(8, input_shape=(timeSequences, attributes)))
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
 
-    models['stacked_lstm'] = stacked_lstm;
+    #models['stacked_lstm'] = stacked_lstm;
     """
     models['stacked_lstm_v2'] = stacked_lstm_v2;
 

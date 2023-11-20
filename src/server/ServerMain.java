@@ -28,8 +28,8 @@ public class ServerMain {
 //    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
-    public static String modelConfigPath = "";
-    public static String modelName = "transformer_model.h5";
+    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/gazepoint/models/";
+    public static String modelName = "stacked_lstm.h5";
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
         String serialString = "<REC CNT=\"34\"/>";
@@ -153,7 +153,7 @@ public class ServerMain {
         //String simpleMlp = new ClassPathResource("simple_mlp.h5").getFile().getPath();
         MultiLayerNetwork classifier = null;
         try {
-            classifier = KerasModelImport.importKerasSequentialModelAndWeights(modelConfigPath + modelName);
+            classifier = KerasModelImport.importKerasSequentialModelAndWeights(modelConfigPath + modelName, false);
         } catch (IOException e) {
             System.err.println("IOException when importing model (likely invalid path)");
             throw new RuntimeException(e);

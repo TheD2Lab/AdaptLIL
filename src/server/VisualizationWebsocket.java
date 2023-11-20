@@ -46,9 +46,9 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
 
     public void onConnect(WebSocket socket) {
 
-        System.out.println("requesting Map World....");
+        System.out.println("Connected to client websocket");
         //Request map world dimensions
-        this.requestDataResponse(socket, "mapWorld");
+//        this.requestDataResponse(socket, "mapWorld");
 
         //MapWorld most likely intialized due to responded.
 //        while (!this.hasResponded) {} //busy wait

@@ -2,9 +2,8 @@ package server;
 import analysis.ScanPath;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.opencsv.exceptions.CsvValidationException;
-import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
-import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
-import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
+import org.deeplearning4j.nn.modelimport.keras.*;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.*;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
@@ -13,8 +12,7 @@ import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 
 public class ServerMain {
@@ -29,7 +27,7 @@ public class ServerMain {
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
     public static String modelConfigPath = "/home/notroot/Desktop/d2lab/gazepoint/models/";
-    public static String modelName = "stacked_lstm.h5";
+    public static String modelName = "stacked_lstm-.h5";
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
         String serialString = "<REC CNT=\"34\"/>";
@@ -53,7 +51,9 @@ public class ServerMain {
 
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         try {
-
+            System.out.println("Loading Classification Model: " + modelName);
+            MultiLayerNetwork model = loadKerasModel(modelConfigPath, modelName);
+            System.out.println("Loaded keras model : " + modelName);
             System.out.println("Starting grizzly HTTP server");
             HttpServer server = initHttpServerAndWebSocketPort();
             System.out.println("Initialized HTTP Server & WebSocket port");
@@ -62,9 +62,7 @@ public class ServerMain {
             System.out.println("Initializing VisualizationWebsocket");
             VisualizationWebsocket visualizationWebsocket = initVisualizationWebsocket(gp3Socket);
             System.out.println(" initialized VisualizationWebsocket");
-            System.out.println("Loading Classification Model: " + modelName);
-            MultiLayerNetwork model = loadKerasModel(modelConfigPath, modelName);
-            System.out.println("Loaded keras model : " + modelName);
+
 
             System.out.println("Starting gaze window");
             GazeWindow gazeWindow = initGazeWindow(gazeWindowSizeInMilliseconds);
@@ -153,7 +151,8 @@ public class ServerMain {
         //String simpleMlp = new ClassPathResource("simple_mlp.h5").getFile().getPath();
         MultiLayerNetwork classifier = null;
         try {
-            classifier = KerasModelImport.importKerasSequentialModelAndWeights(modelConfigPath + modelName, false);
+            InputStream modelByteStream = new BufferedInputStream(new FileInputStream(modelConfigPath + modelName));
+            classifier = KerasModelImport.importKerasSequentialModelAndWeights(modelByteStream);
         } catch (IOException e) {
             System.err.println("IOException when importing model (likely invalid path)");
             throw new RuntimeException(e);

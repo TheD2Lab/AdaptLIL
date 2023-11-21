@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class GazeBuffer {
+public class GazeBuffer extends AsyncBuffer {
     private final LinkedList<RecXmlObject> gazeDataQueue = new LinkedList<>();
 
     private ReentrantLock reentrantLock;

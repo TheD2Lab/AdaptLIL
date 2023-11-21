@@ -47,4 +47,8 @@ public class AsyncBuffer<T> {
         }
         return dataFromQueue;
     }
+
+    public boolean isEmpty() {
+        return this.dataQueue.isEmpty();
+    }
 }

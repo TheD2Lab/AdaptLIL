@@ -1,5 +1,6 @@
 package server.gazepoint.api.recv;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
@@ -22,13 +23,21 @@ import java.util.List;
 @JacksonXmlRootElement(localName = "REC")
 
 public class RecXmlObject extends XmlObject {
+    @JsonIgnore
     private Fixation fixation;
+    @JsonIgnore
     private Cursor cursor;
+    @JsonIgnore
     private BestPointOfGaze bestPointOfGaze;
+    @JsonIgnore
     private LeftEyePointOfGaze leftEyePointOfGaze;
+    @JsonIgnore
     private RightEyePointOfGaze rightEyePointOfGaze;
+    @JsonIgnore
     private LeftEyePupil leftEyePupil;
+    @JsonIgnore
     private RightEyePupil rightEyePupil;
+    @JsonIgnore
     private PupilDiameter pupilDiameter;
 
     //-----------------ENABLE_SEND_POG_FIX----------------
@@ -197,6 +206,7 @@ public class RecXmlObject extends XmlObject {
      * Returns the data class holder for the Fixation attributes contained in the <REC></REC> packet.
      * @return Fixation
      */
+    @JsonIgnore
     public Fixation getFixation() {
         //if (fixation == null && this.getFPOGV() != null)
         if (fixation == null && this.getFPOGV() != null)
@@ -209,6 +219,7 @@ public class RecXmlObject extends XmlObject {
      * Returns the data class holder for BestPointOfGaze attributes contained in this <REC></REC> data packet.
      * @return BestPointOfGaze
      */
+    @JsonIgnore
     public BestPointOfGaze getBestPointOfGaze() {
 
         if (bestPointOfGaze == null && this.getBPOGV() != null) {
@@ -222,6 +233,7 @@ public class RecXmlObject extends XmlObject {
      * Returns the data class holder for the LeftPointOfGaze attributes contained in this <Rec></Rec>
      * @return LeftEyePointOfGaze
      */
+    @JsonIgnore
     public LeftEyePointOfGaze getLeftEyePointOfGaze() {
         if (leftEyePointOfGaze == null && this.getLPOGV() != null) {
             this.leftEyePointOfGaze = new LeftEyePointOfGaze(this.LPOGX, this.LPOGY, this.LPOGV);
@@ -233,6 +245,7 @@ public class RecXmlObject extends XmlObject {
      * Returns the data class holder for the RightEyePointOfGaze attributes contained in this <Rec></Rec>
      * @return RightEyePointOfGaze
      */
+    @JsonIgnore
     public RightEyePointOfGaze getRightEyePointOfGaze() {
         if (this.rightEyePointOfGaze == null && this.RPOGV != null) {
             this.rightEyePointOfGaze = new RightEyePointOfGaze(this.RPOGX, this.RPOGY, this.RPOGV);
@@ -244,6 +257,7 @@ public class RecXmlObject extends XmlObject {
      * Returns the data class holder for the LeftEyePupil attributes contained <Rec></Rec>
      * @return LeftEyePupil
      */
+    @JsonIgnore
     public LeftEyePupil getLeftEyePupil() {
         if (leftEyePointOfGaze == null && this.LPV != null) {
             this.leftEyePupil = new LeftEyePupil(this.LPCX, this.LPCY, this.LPD, this.LPS, this.LPV);
@@ -256,6 +270,7 @@ public class RecXmlObject extends XmlObject {
      * Returns the RightEyePupil data class for the attributes contained in the <Rec></Rec> (this)
      * @return RightEyePupil
      */
+    @JsonIgnore
     public RightEyePupil getRightEyePupil() {
         if (this.rightEyePupil == null && this.RPV != null) {
             this.rightEyePupil = new RightEyePupil(this.RPCX, this.RPCY, this.RPD, this.RPS, this.RPV);
@@ -268,152 +283,189 @@ public class RecXmlObject extends XmlObject {
      * Data class holder for PupilDiameter attributes of the <REC></REC> (This)
      * @return
      */
+    @JsonIgnore
     public PupilDiameter getPupilDiameter() {
         if (this.pupilDiameter == null && this.RPMMV != null)
             this.pupilDiameter = new PupilDiameter(this.LPMM, this.LPMMV, this.RPMM, this.RPMMV);
 
         return this.pupilDiameter;
     }
-
+    @JsonIgnore
     public Cursor getCursor() {
         return cursor;
     }
 
+    @JsonIgnore
     public Double getFPOGX() {
         return FPOGX;
     }
 
+    @JsonIgnore
     public Double getFPOGY() {
         return FPOGY;
     }
 
+    @JsonIgnore
     public Double getFPOGS() {
         return FPOGS;
     }
 
+    @JsonIgnore
     public Double getFPOGD() {
         return FPOGD;
     }
 
+    @JsonIgnore
     public Integer getFPOGID() {
         return FPOGID;
     }
 
+    @JsonIgnore
     public Boolean getFPOGV() {
         return FPOGV;
     }
 
+    @JsonIgnore
     public Double getCX() {
         return CX;
     }
 
+    @JsonIgnore
     public Double getCY() {
         return CY;
     }
 
+    @JsonIgnore
     public Integer getCS() {
         return CS;
     }
 
+    @JsonIgnore
     public Integer getCounter() {
         return counter;
     }
 
+    @JsonIgnore
     public Double getTime() {
         return time;
     }
 
+    @JsonIgnore
     public Double getBPOGX() {
         return BPOGX;
     }
 
+    @JsonIgnore
     public Double getBPOGY() {
         return BPOGY;
     }
 
+    @JsonIgnore
     public Boolean getBPOGV() {
         return BPOGV;
     }
 
+    @JsonIgnore
     public Double getLPOGX() {
         return LPOGX;
     }
 
+    @JsonIgnore
     public Double getLPOGY() {
         return LPOGY;
     }
 
+    @JsonIgnore
     public Boolean getLPOGV() {
         return LPOGV;
     }
 
+    @JsonIgnore
     public Double getRPOGX() {
         return RPOGX;
     }
 
+    @JsonIgnore
     public Double getRPOGY() {
         return RPOGY;
     }
 
+    @JsonIgnore
     public Boolean getRPOGV() {
         return RPOGV;
     }
 
+    @JsonIgnore
     public Double getLPCX() {
         return LPCX;
     }
 
+    @JsonIgnore
     public Double getLPCY() {
         return LPCY;
     }
 
+    @JsonIgnore
     public Double getLPD() {
         return LPD;
     }
 
+    @JsonIgnore
     public Double getLPS() {
         return LPS;
     }
 
+    @JsonIgnore
     public Boolean getLPV() {
         return LPV;
     }
 
+    @JsonIgnore
     public Double getRPCX() {
         return RPCX;
     }
 
+    @JsonIgnore
     public Double getRPCY() {
         return RPCY;
     }
 
+    @JsonIgnore
     public Double getRPD() {
         return RPD;
     }
 
+    @JsonIgnore
     public Double getRPS() {
         return RPS;
     }
 
+    @JsonIgnore
     public Boolean getRPV() {
         return RPV;
     }
 
+    @JsonIgnore
     public Double getLPMM() {
         return LPMM;
     }
 
+    @JsonIgnore
     public Boolean getLPMMV() {
         return LPMMV;
     }
 
+    @JsonIgnore
     public Boolean getRPMMV() {
         return RPMMV;
     }
 
+    @JsonIgnore
     public Double getRPMM() {
         return RPMM;
     }
+
+    @JsonIgnore
     public Long getTimeTick() {
         return timeTick;
     }

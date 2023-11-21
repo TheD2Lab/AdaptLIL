@@ -4,11 +4,14 @@ import adaptations.Adaptation;
 import adaptations.ColorAdaptation;
 import adaptations.DeemphasisAdaptation;
 import adaptations.HighlightingAdaptation;
+import analysis.ontomap.OntoMapCsv;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import server.gazepoint.api.recv.RecXmlObject;
 import server.request.AdaptationInvokeRequest;
+import weka.core.Instance;
 
 import java.util.*;
 
@@ -54,31 +57,45 @@ public class AdaptationMediator extends Mediator {
         //Does this also need to run async? I think so.
         //This will work as the synchronization between all objects as well.
 
-        if (gazeWindow.isFull()) { //Likely change to a time series roll
+        System.out.println("mediator started");
+        while (runAdapations) {
+            RecXmlObject recXmlObject = this.gp3Socket.readGazeDataFromBuffer();
 
-            //Get classification
+                System.out.println("gaze data queue is not empty");
+                System.out.println("read packet");
+                //Add to windows for task
+                this.gazeWindow.add(recXmlObject);
 
-            //Request if Participant has finished a question and get their answer
-            //Must be recent and contained within the current window.
-            //Get last time used and current time.
-            Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
-            INDArray gazeWindowInput = gazeWindow.toINDArray();
-            Integer classificationResult = classifierModel.predict(gazeWindowInput)[0]; //TODO
-            Integer participantWrongOrRight = null;
-            Float taskCompletionTime = null; //grab from websocket
-            //Calculate perilScore (risk score)
-            double curRiskScore = this.calculateRiskScore(participantWrongOrRight, classificationResult, taskCompletionTime, cognitiveLoadScore); //TODO
-            double lastRiskScore = this.getLastRiskScore();
-            double riskScoreChange = curRiskScore - lastRiskScore;
-            if (riskScoreChange > this.thresholdForInvokation) {
-                this.invokeAdaptation(curRiskScore);
+
+            if (gazeWindow.isFull()) { //Likely change to a time series roll
+                //Verify this operation does not slow the real time significantly
+                gazeWindow.interpolateMissingValues();
+                System.out.println("Gaze window full");
+                //Get classification
+
+                //Request if Participant has finished a question and get their answer
+                //Must be recent and contained within the current window.
+                //Get last time used and current time.
+                Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
+                INDArray gazeWindowInput = gazeWindow.toINDArray();
+                Integer classificationResult = classifierModel.predict(gazeWindowInput)[0]; //TODO
+                Integer participantWrongOrRight = null;
+                Float taskCompletionTime = null; //grab from websocket
+                //Calculate perilScore (risk score)
+                double curRiskScore = this.calculateRiskScore(participantWrongOrRight, classificationResult, taskCompletionTime, cognitiveLoadScore); //TODO
+                double lastRiskScore = this.getLastRiskScore();
+                double riskScoreChange = curRiskScore - lastRiskScore;
+                if (riskScoreChange > this.thresholdForInvokation) {
+                    this.invokeAdaptation(curRiskScore);
+                }
+
+                this.observedAdaptation.setScore(curRiskScore);
+                this.lastRiskScore = curRiskScore;
+
+                gazeWindow.flush();
+            } else { //Do nothing, loopback
+                continue;
             }
-
-            this.observedAdaptation.setScore(curRiskScore);
-            this.lastRiskScore = curRiskScore;
-
-        } else { //Do nothing, loopback
-            return;
         }
 
     }

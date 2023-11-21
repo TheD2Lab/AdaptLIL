@@ -335,7 +335,6 @@ public class GazeWindow implements Component {
 
     /**
      * Calculates the cognitive load from the current gaze window
-     * TODO: Ask Dr. Fu how to generate a 'cognitive load' score.
      *
      * @return
      */

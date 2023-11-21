@@ -83,7 +83,7 @@ public class GazepointSimulationServer implements Runnable {
                     double timeDiff = curTimeMs - System.currentTimeMillis();
                     //if (timeDiff < 7ms (poll rate)
                     if (timeDiff < 7.0) {
-                        wait((long) ((long) 7.0 - timeDiff));
+                        Thread.sleep((long) ((long) 7.0 - timeDiff));
                     }
                     //sleep for 7ms - timediff
                     //else

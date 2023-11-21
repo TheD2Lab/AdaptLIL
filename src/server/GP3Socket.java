@@ -56,6 +56,7 @@ public class GP3Socket implements Component {
         this.port = port;
         xmlMapper = new XmlMapper();
         gazeDataBuffer = new GazeBuffer();
+        ackBuffer = new AckBuffer();
         xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     }
@@ -65,12 +66,12 @@ public class GP3Socket implements Component {
      * @throws IOException
      */
     public void connect() throws IOException {
-        //socket = new Socket(hostName, port);
-        output = new PrintStream(new FileOutputStream("output_stream_test.txt"));
-        testFileReader =  new FileInputStream("rec_command_test_3.txt");
-        input = new BufferedReader(new InputStreamReader(testFileReader));
-        //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        //output = new PrintStream(socket.getOutputStream());
+        socket = new Socket(hostName, port);
+//        output = new PrintStream(new FileOutputStream("output_stream_test.txt"));
+//        testFileReader =  new FileInputStream("rec_command_test_3.txt");
+//        input = new BufferedReader(new InputStreamReader(testFileReader));
+        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        output = new PrintStream(socket.getOutputStream());
 
     }
 
@@ -103,32 +104,33 @@ public class GP3Socket implements Component {
 
         String msg = input.readLine();
         while (msg != null) {
-
             //Offer data to queue, block if queue is being used.
             XmlObject command = GazeApiCommands.mapToXmlObject(msg);
             if (GazeApiCommands.mapToXmlObject(msg) != null) {
                 if (command instanceof AckXmlObject) {
+
                     this.ackBuffer.write((AckXmlObject) command);
                 }
                 else if (command instanceof RecXmlObject) {
+
                     this.gazeDataBuffer.write((RecXmlObject) command);
                 }
-
             } else
                 System.out.println("failed to write to datapacket to buffer");
 
             msg = input.readLine();
 
             //FILE HANDLING ONLY
-            if (msg == null) {
+//            if (msg == null) {
                 //reset file position
-                testFileReader.getChannel().position(0);
-                System.out.println("reseting, input line should point to next now.");
-                input = new BufferedReader(new InputStreamReader(testFileReader));
-                msg = input.readLine();
+//                testFileReader.getChannel().position(0);
+//                System.out.println("reseting, input line should point to next now.");
+//                input = new BufferedReader(new InputStreamReader(testFileReader));
+//                msg = input.readLine();
 
-            }
+//            }
         }
+        System.out.println("msg line was null, finished writing to buffer.");
     }
 
     /**

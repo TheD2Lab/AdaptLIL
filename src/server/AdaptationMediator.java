@@ -9,6 +9,7 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.request.AdaptationInvokeRequest;
 import weka.core.Instance;
@@ -36,7 +37,9 @@ public class AdaptationMediator extends Mediator {
     private double thresholdForInvokation;
     private double smallChangeThreshold = 0.10;
     private double bigChangeThreshold = 0.30;
-    public AdaptationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, MultiLayerNetwork classifierModel, GazeWindow gazeWindow) {
+
+    private int numSequencesForClassification;
+    public AdaptationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, MultiLayerNetwork classifierModel, GazeWindow gazeWindow, int numSequencesForClassification) {
         this.websocket = websocket;
         this.gp3Socket = gp3Socket;
         this.classifierModel = classifierModel;
@@ -45,6 +48,7 @@ public class AdaptationMediator extends Mediator {
         this.currentAdaptations = new HashMap<>();
         this.lastRiskScore = 0.0;
         this.thresholdForInvokation = 0.8;
+        this.numSequencesForClassification = numSequencesForClassification;
     }
 
     public void start() {
@@ -56,7 +60,7 @@ public class AdaptationMediator extends Mediator {
 
         //Does this also need to run async? I think so.
         //This will work as the synchronization between all objects as well.
-
+        List<INDArray> gazeWindowINDArrays = new ArrayList<>(this.numSequencesForClassification);
         System.out.println("mediator started");
         while (runAdapations) {
             RecXmlObject recXmlObject = this.gp3Socket.readGazeDataFromBuffer();
@@ -78,20 +82,24 @@ public class AdaptationMediator extends Mediator {
                 //Get last time used and current time.
                 Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
                 INDArray gazeWindowInput = gazeWindow.toINDArray();
-                Integer classificationResult = classifierModel.predict(gazeWindowInput)[0]; //TODO
-                Integer participantWrongOrRight = null;
-                Float taskCompletionTime = null; //grab from websocket
-                //Calculate perilScore (risk score)
-                double curRiskScore = this.calculateRiskScore(participantWrongOrRight, classificationResult, taskCompletionTime, cognitiveLoadScore); //TODO
-                double lastRiskScore = this.getLastRiskScore();
-                double riskScoreChange = curRiskScore - lastRiskScore;
-                if (riskScoreChange > this.thresholdForInvokation) {
-                    this.invokeAdaptation(curRiskScore);
+                gazeWindowINDArrays.add(gazeWindowInput);
+                if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
+                    INDArray classificationInput = Nd4j.create(gazeWindowINDArrays);
+                    Integer classificationResult = classifierModel.predict(classificationInput)[0]; //TODO
+                    Integer participantWrongOrRight = null;
+                    Float taskCompletionTime = null; //grab from websocket
+                    //Calculate perilScore (risk score)
+                    double curRiskScore = this.calculateRiskScore(participantWrongOrRight, classificationResult, taskCompletionTime, cognitiveLoadScore); //TODO
+                    double lastRiskScore = this.getLastRiskScore();
+                    double riskScoreChange = curRiskScore - lastRiskScore;
+                    if (riskScoreChange > this.thresholdForInvokation) {
+                        this.invokeAdaptation(curRiskScore);
+                    }
+
+                    this.observedAdaptation.setScore(curRiskScore);
+                    this.lastRiskScore = curRiskScore;
+                    gazeWindowINDArrays.clear();
                 }
-
-                this.observedAdaptation.setScore(curRiskScore);
-                this.lastRiskScore = curRiskScore;
-
                 gazeWindow.flush();
             } else { //Do nothing, loopback
                 continue;

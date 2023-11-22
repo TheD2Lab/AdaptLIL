@@ -57,16 +57,22 @@ public class AdaptationMediator extends Mediator {
         //this.classifierModel.setMediator(this);
         this.gazeWindow.setMediator(this);
         boolean runAdapations = true;
+        int numAttributes = 8;
 
         //Does this also need to run async? I think so.
         //This will work as the synchronization between all objects as well.
         List<INDArray> gazeWindowINDArrays = new ArrayList<>(this.numSequencesForClassification);
         System.out.println("mediator started");
         while (runAdapations) {
+
+            //No websockets connected, do not begin reading from gaze buffer. (Note, we may need to flush buffer once we connect for the first time)
+            if (this.websocket.getWebSockets().isEmpty())
+                continue;
+            else
+                System.out.println("websocket connected");
+
             RecXmlObject recXmlObject = this.gp3Socket.readGazeDataFromBuffer();
 
-                System.out.println("gaze data queue is not empty");
-                System.out.println("read packet");
                 //Add to windows for task
                 this.gazeWindow.add(recXmlObject);
 
@@ -84,14 +90,18 @@ public class AdaptationMediator extends Mediator {
                 INDArray gazeWindowInput = gazeWindow.toINDArray();
                 gazeWindowINDArrays.add(gazeWindowInput);
                 if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
-                    INDArray classificationInput = Nd4j.create(gazeWindowINDArrays);
+
+                    //Error (can only insert a scalar in to another scalar
+                    //Find way to join
+                    INDArray classificationInput = Nd4j.create(gazeWindowINDArrays, gazeWindow.getWindowSize(), numAttributes, numSequencesForClassification);
                     Integer classificationResult = classifierModel.predict(classificationInput)[0]; //TODO
                     Integer participantWrongOrRight = null;
                     Float taskCompletionTime = null; //grab from websocket
                     //Calculate perilScore (risk score)
-                    double curRiskScore = this.calculateRiskScore(participantWrongOrRight, classificationResult, taskCompletionTime, cognitiveLoadScore); //TODO
+                    double curRiskScore = this.calculateRiskScore(classificationResult); //TODO
                     double lastRiskScore = this.getLastRiskScore();
                     double riskScoreChange = curRiskScore - lastRiskScore;
+                    System.out.println("risk Score: " + curRiskScore);
                     if (riskScoreChange > this.thresholdForInvokation) {
                         this.invokeAdaptation(curRiskScore);
                     }
@@ -133,6 +143,58 @@ public class AdaptationMediator extends Mediator {
     }
 
     public void invokeAdaptation(double curRiskScore) {
+        double stepAmount = 0.25;
+        if (this.currentAdaptations.isEmpty()) {
+            this.observedAdaptation = getNewAdaptation();
+            this.observedAdaptation.setBeingObservedByMediator(true);
+            this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
+        } else { //Has adaptations, review the currently observed one.
+
+            if (curRiskScore > observedAdaptation.getScore()) { //Adaptation Risk increased.
+                double scoreDifference = curRiskScore - observedAdaptation.getScore();
+                //Select new adaptation
+                boolean selectNewAdaptation = scoreDifference > bigChangeThreshold;
+                boolean changeStyleChangeDirection = scoreDifference < bigChangeThreshold && scoreDifference > smallChangeThreshold;
+
+                if (selectNewAdaptation) {
+                    this.invokeNewAdaptation();
+                } else if (changeStyleChangeDirection){ //Decrease was less substantial, try a different direction.
+
+                    MutableTriple<String, Integer, Double> lastStyle = this.observedAdaptation.getLastStyleChange();
+                    this.observedAdaptation.applyStyleChange(lastStyle.middle  * -1, stepAmount);
+                    this.invokeAdaptationChange();
+                } else {
+
+                    //Too small of a change, may have leveld out.
+                }
+                //or iterate over current adaptation
+            } else {
+                //Adaptation improved
+
+                double scoreDiff = curRiskScore - observedAdaptation.getScore();
+                if (scoreDiff > smallChangeThreshold && scoreDiff < bigChangeThreshold) {//if slight improvement, make a change, may have leveld out.
+                    //Potentially try a new adaptation?
+
+                } else if (scoreDiff > bigChangeThreshold) { //if major improvement, good job, going in right direction
+                    //apply change with similar as last change
+                    //The direction of the last change
+                    MutableTriple<String, Integer, Double> lastStyleChange = this.observedAdaptation.getLastStyleChange();
+                    this.observedAdaptation.applyStyleChange(lastStyleChange.middle, stepAmount);
+                    this.invokeAdaptationChange();
+
+                }
+
+            }
+        }
+
+    }
+
+    /**
+     * @deprecated invoking adaptation like this is overly complex. Listen to classifcation results only as that is suppose to be
+     * an deep learning classification of cognitive load.
+     * @param curRiskScore
+     */
+    public void _invokeAdaptation(double curRiskScore) {
         double stepAmount = 0.25;
         //if no adaptations, create a new one
         if (this.currentAdaptations.isEmpty()) {
@@ -243,38 +305,25 @@ public class AdaptationMediator extends Mediator {
     }
 
 
-    public double calculateRiskScore(Integer participantAnswer, Integer classificationResult, Float taskCompletionTime, Float cognitiveLoadScore) {
+    public double calculateRiskScore(int classificationResult) {
         //High weights:
         //participantAnswer, cognitiveLoadScore
         //Medium weights: classificaitonResult
         //Low weights: taskCompletionTime
-        int numHighWeights = 2;
+        int numHighWeights = 1;
         int numMedWeights = 1;
         int numLowWeights = 1;
         double riskScore = 0;
 
         //Review weighting. A high weight, if all factors are risky, should flag the threshold.
-        double highWeight = 0.50;
+        double highWeight = 0.80;
         double medWeight = 0.35;
         double lowWeight = 0.15;
         int negatedParticipantAnswer = 0;
 
-        //Classificaiton result, might want to ivnerse or weight it based on whether the user got the question right/wrong and if the prediciton was correct in this regard
-        if (participantAnswer != null && participantAnswer == 0) { //Wrong answer, higher risk score.
-            negatedParticipantAnswer = 1;
-//            riskScore += highWeight * participantAnswer/numHighWeights;
-        }
 
 
-        //FORCE HIGH RISKSCORE
-        negatedParticipantAnswer = 1;
-        cognitiveLoadScore = 1F;
-        classificationResult = 1;
-        taskCompletionTime = 1F;
-
-        riskScore = ( highWeight * ( (negatedParticipantAnswer / numHighWeights) + (cognitiveLoadScore / numHighWeights) ))
-                + (medWeight * ( (classificationResult / numMedWeights)))
-                + (lowWeight * ( (taskCompletionTime / numLowWeights)));
+        riskScore = highWeight * (classificationResult == 0 ? 1 : 0);
 
         return riskScore;
     }

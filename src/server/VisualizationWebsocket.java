@@ -46,6 +46,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
 
     public void onConnect(WebSocket socket) {
 
+        super.onConnect(socket);
         System.out.println("Connected to client websocket");
         //Request map world dimensions
 //        this.requestDataResponse(socket, "mapWorld");
@@ -255,7 +256,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
         return super.getWebSockets();
     }
     public void onClose(WebSocket socket, DataFrame frame) {
-
+        super.onClose(socket, frame);
         System.out.println("Closing session...");
     }
 

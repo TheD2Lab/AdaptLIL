@@ -27,7 +27,7 @@ public class ServerMain {
 //    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
-    public static String modelConfigPath = "C:\\Users\\LeaseCalcs\\Desktop\\d2 lab\\gp3 tracking\\models\\";
+    public static String modelConfigPath = "C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\models\\";
     public static String modelName = "stacked_lstm.h5";
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
@@ -111,7 +111,7 @@ public class ServerMain {
         XmlMapper mapper = new XmlMapper();
         String gp3Hostname = "localhost";
         int gp3Port = 4242;
-        File gazeFile = new File("C:\\Users\\LeaseCalcs\\Desktop\\d2 lab\\gp3 tracking\\p1.LIL.Anatomy_all_gaze.csv");
+        File gazeFile = new File("C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\p1.LIL.Anatomy_all_gaze.csv");
         if (simulateGazepointServer) {
             GazepointSimulationServer simulationServer = new GazepointSimulationServer(gp3Hostname, gp3Port, gazeFile, true);
             Thread serverSimThread = new Thread(simulationServer);

@@ -5,8 +5,8 @@ class VisualizationAdaptations {
         this.baselineMap = baselineMap;
         this.deemphasisAdaptation = new Adaptation('deemphaasis', false, {});
 
-        this.highlightAdaptation = new Adaptation('highlight', true, {});
-        this.colorSchemeAdaptation= new Adaptation('colorScheme', true, {
+        this.highlightAdaptation = new Adaptation('highlight', false, {});
+        this.colorSchemeAdaptation= new Adaptation('colorScheme', false, {
             'map_to_hidden_color': '#FF0000',
             'map_to_not_hidden_color' : '#00FFFF',
         });

@@ -56,7 +56,7 @@ public class GazeApiCommands {
      */
     public static XmlObject mapToXmlObject(String xml) {
         RecXmlObject recXmlObject;
-        System.out.println(xml);
+
         for (Class<? extends RecXmlObject> recXmlClass : GazeApiCommands.getRecCommands()) {
             try {
                 recXmlObject = xmlMapper.readValue(xml, recXmlClass);

@@ -62,14 +62,11 @@ public class GP3Socket implements Component {
     }
 
     /**
-     * Opens socket port to the gazepoint tracker
+     * Opens socket port to the gazepoint tracker and sets the input, output streams
      * @throws IOException
      */
     public void connect() throws IOException {
         socket = new Socket(hostName, port);
-//        output = new PrintStream(new FileOutputStream("output_stream_test.txt"));
-//        testFileReader =  new FileInputStream("rec_command_test_3.txt");
-//        input = new BufferedReader(new InputStreamReader(testFileReader));
         input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         output = new PrintStream(socket.getOutputStream());
 
@@ -116,20 +113,12 @@ public class GP3Socket implements Component {
                     this.gazeDataBuffer.write((RecXmlObject) command);
                 }
             } else
-                System.out.println("failed to write to datapacket to buffer");
+                System.err.println("failed to write to datapacket to buffer");
 
             msg = input.readLine();
 
-            //FILE HANDLING ONLY
-//            if (msg == null) {
-                //reset file position
-//                testFileReader.getChannel().position(0);
-//                System.out.println("reseting, input line should point to next now.");
-//                input = new BufferedReader(new InputStreamReader(testFileReader));
-//                msg = input.readLine();
-
-//            }
         }
+
         System.out.println("msg line was null, finished writing to buffer.");
     }
 
@@ -178,7 +167,6 @@ public class GP3Socket implements Component {
         }
         @Override
         public void run() {
-            System.out.println("run method invoked");
             try {
                 this.gp3Socket.writeToGazeBuffer();
             } catch (IOException | InterruptedException e) {

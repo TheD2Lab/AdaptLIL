@@ -55,12 +55,7 @@
         const baselineMap = new BaselineMap(indentedTree);
         const taskForm = new TaskForm(baselineMap);
         taskForm.setVis("baseline");
-        let websocketConnected = false;
 
-        const websocket = new Websocket();
-        websocket.openConnection();
-        websocketConnected = true;
-        websocket.listenForMessages();
 
 
         window.addEventListener('load', function (event) {
@@ -68,6 +63,12 @@
             taskForm.initOnLoad();
             baselineMap.drawBaselineSvg();
             const mapWorld = new MapWorld(baselineMap, indentedTree);
+            let websocketConnected = false;
+
+            const websocket = new Websocket(indentedTree);
+            websocket.openConnection();
+            websocketConnected = true;
+            websocket.listenForMessages();
 
         });
     </script>

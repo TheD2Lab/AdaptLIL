@@ -1,9 +1,9 @@
 class Websocket {
     hostName = "localhost";
     port = 8080;
-    constructor() {
+    constructor(visualizationMap) {
         this.websocket = new WebSocket("ws://"+this.hostName+":"+this.port+"/gaze");
-
+        this.visualizationMap = visualizationMap;
         //TODO, replace map with the matrixmap.
         this.map = {width: 3000,
                     height: 3000,
@@ -64,20 +64,15 @@ class Websocket {
     handleInvokeRequest(response) {
         const _this = this;
 
-        //hide all to demonstrate fixation changes
-        d3.selectAll('.mapCell').nodes().forEach(function () {
-           mapWorld.visualizationMap.hideTooltip(this, 0, 0);
-        });
-
         if (response.name === 'adaptation') {
-            mapWorld.toggleAdaptation(response.adaptationType, response.adaptationState, response.adaptationSettings);
+            this.visualizationMap.adaptations.toggleAdaptation(response.adaptationType, response.adaptationState, response.adaptationSettings);
 
         }
         if (response.name === "tooltip") {
           
             const elementIds = response.elementIds;
             for (let elementId of elementIds) {
-                mapWorld.visualizationMap.showTooltip(d3.select('#'+elementId), 0, 0);
+                this.visualizationMap.showTooltip(d3.select('#'+elementId), 0, 0);
             }
         }
 
@@ -104,7 +99,7 @@ class Websocket {
             const nodes = d3.selectAll('.mapCell').nodes();
             _this.sendElementCoordinates(nodes, '.mapCell');
         } else if (response.name === "mapWorld") {
-            const visMapRect = mapWorld.visualizationMap.svg.node().getBoundingClientRect();
+            const visMapRect = this.visualizationMap.svg.node().getBoundingClientRect();
             const json_data = {
                 'type' : 'data',
                 'name': 'mapWorld',
@@ -124,21 +119,21 @@ class Websocket {
             const json_data = {
                 'type' : 'data',
                 'name' : 'mapLines',
-                'mapLines': mapWorld.visualizationMap.mapLines
+                'mapLines': this.visualizationMap.mapLines
             }
         } else if (response.name === 'ontologyEntities') {
 
             const json_data = {
                 'type' : 'data',
                 'name': 'ontologyEntities',
-                'entities': mapWorld.visualizationMap.entities
+                'entities': this.visualizationMap.entities
             }
         }
     }
 
     sendElementCoordinates(elements, elementType) {
 
-        const elementShapes = mapWorld.getShapes(elements);
+        const elementShapes = this.visualizationMap.getShapes(elements);
         const jsonBody = {
             'type': 'data',
             'name': 'cellCoordinates',

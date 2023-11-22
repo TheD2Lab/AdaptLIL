@@ -28,7 +28,6 @@ public class GazeBuffer extends AsyncBuffer {
         RecXmlObject recXmlObject = null;
         try {
             synchronized (this.gazeDataQueue) {
-                System.out.println("Acquiring lock readGzeDataFromBuffer");
                 this.reentrantLock.lock();
 
                 //queue is empty, release locka dn wait
@@ -39,7 +38,6 @@ public class GazeBuffer extends AsyncBuffer {
                 }
                 recXmlObject = gazeDataQueue.removeFirst();
                 this.reentrantLock.unlock();
-                System.out.println("releasing lock... readGazeDataFromBuffer");
             }
         } catch (InterruptedException e) {
             return null;

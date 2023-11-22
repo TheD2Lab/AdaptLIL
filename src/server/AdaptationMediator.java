@@ -47,7 +47,7 @@ public class AdaptationMediator extends Mediator {
         this.isRunning = false;
         this.currentAdaptations = new HashMap<>();
         this.lastRiskScore = 0.0;
-        this.thresholdForInvokation = 0.8;
+        this.thresholdForInvokation = 0.6;
         this.numSequencesForClassification = numSequencesForClassification;
     }
 
@@ -68,8 +68,6 @@ public class AdaptationMediator extends Mediator {
             //No websockets connected, do not begin reading from gaze buffer. (Note, we may need to flush buffer once we connect for the first time)
             if (this.websocket.getWebSockets().isEmpty())
                 continue;
-            else
-                System.out.println("websocket connected");
 
             RecXmlObject recXmlObject = this.gp3Socket.readGazeDataFromBuffer();
 
@@ -93,7 +91,8 @@ public class AdaptationMediator extends Mediator {
 
                     //Error (can only insert a scalar in to another scalar
                     //Find way to join
-                    INDArray classificationInput = Nd4j.create(gazeWindowINDArrays, gazeWindow.getWindowSize(), numAttributes, numSequencesForClassification);
+                    INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1));
+                    System.out.println("classification shape: " + Arrays.toString(classificationInput.shape()));
                     Integer classificationResult = classifierModel.predict(classificationInput)[0]; //TODO
                     Integer participantWrongOrRight = null;
                     Float taskCompletionTime = null; //grab from websocket
@@ -102,8 +101,9 @@ public class AdaptationMediator extends Mediator {
                     double lastRiskScore = this.getLastRiskScore();
                     double riskScoreChange = curRiskScore - lastRiskScore;
                     System.out.println("risk Score: " + curRiskScore);
-                    if (riskScoreChange > this.thresholdForInvokation) {
-                        this.invokeAdaptation(curRiskScore);
+                    if (riskScoreChange > this.thresholdForInvokation || this.currentAdaptations.isEmpty()) {
+                        System.out.println("invoking adaptation change");
+                        this.invokeAdaptation(riskScoreChange);
                     }
 
                     this.observedAdaptation.setScore(curRiskScore);
@@ -119,7 +119,9 @@ public class AdaptationMediator extends Mediator {
     }
 
     public void invokeNewAdaptation() {
-        this.observedAdaptation.setBeingObservedByMediator(false);
+        if (this.observedAdaptation != null)
+            this.observedAdaptation.setBeingObservedByMediator(false);
+
         this.observedAdaptation = getNewAdaptation();
         this.observedAdaptation.setBeingObservedByMediator(true);
         this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
@@ -144,10 +146,10 @@ public class AdaptationMediator extends Mediator {
 
     public void invokeAdaptation(double curRiskScore) {
         double stepAmount = 0.25;
+        System.out.println(this.currentAdaptations.size());
         if (this.currentAdaptations.isEmpty()) {
-            this.observedAdaptation = getNewAdaptation();
-            this.observedAdaptation.setBeingObservedByMediator(true);
-            this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
+            this.invokeNewAdaptation();
+            System.out.println("Added new adaptation: " + this.observedAdaptation.getType());
         } else { //Has adaptations, review the currently observed one.
 
             if (curRiskScore > observedAdaptation.getScore()) { //Adaptation Risk increased.

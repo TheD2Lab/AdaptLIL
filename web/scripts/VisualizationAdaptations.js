@@ -17,16 +17,16 @@ class VisualizationAdaptations {
      * Sets flags for adaptations. Will likely need to be expanded to allow for more customization as needed.
      * @param adaptationType
      * @param state
-     * @param adaptiveSettings
+     * @param styleConfig
      */
-    toggleAdaptation(adaptationType, state, adaptiveSettings) {
+    toggleAdaptation(adaptationType, state, styleConfig) {
         const _this = this;
         if (adaptationType === 'deemphasis') {
             _this.deemphasisAdaptation.state = state;
-            _this.deemphasisAdaptation.settings = adaptiveSettings;
+            _this.deemphasisAdaptation.styleConfig = styleConfig;
         } else if (adaptationType === 'highlighting') {
             _this.highlightAdaptation.state = state;
-            _this.highlightAdaptation.settings = adaptiveSettings;
+            _this.highlightAdaptation.styleConfig = styleConfig;
         } else if (adaptationType === 'colorScheme') { //I am moving to having a 'automated' selection color scheme. Looking for academic papers.
             //Could also have depth based colorschemeing
             _this.colorSchemeAdaptation.state = state;
@@ -37,7 +37,7 @@ class VisualizationAdaptations {
              *     'entities': {id: {'color',..},... n}
              * }
              */
-            _this.colorSchemeAdaptation.settings = adaptiveSettings;
+            _this.colorSchemeAdaptation.styleConfig = styleConfig;
             _this.baselineMap.refreshMapLineColors();
         } else if (adaptationType === 'annotations') { //https://d3-annotation.susielu.com/
             _this.annotationAdaptation.state = state;

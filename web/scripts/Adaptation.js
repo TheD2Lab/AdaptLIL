@@ -13,7 +13,7 @@ class Adaptation {
         this._state = value;
     }
 
-    set settings(value) {
+    set styleConfig(value) {
         this._styleConfig = value;
     }
 

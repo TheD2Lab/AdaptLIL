@@ -122,7 +122,6 @@ public abstract class Adaptation {
     }
 
     @JsonProperty("styleConfig")
-    @JsonAnyGetter
     public Map<String, String> getStyleConfig() {
         return styleConfig;
     }

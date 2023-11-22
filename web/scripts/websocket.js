@@ -65,7 +65,8 @@ class Websocket {
         const _this = this;
 
         if (response.name === 'adaptation') {
-            this.visualizationMap.adaptations.toggleAdaptation(response.adaptationType, response.adaptationState, response.adaptationSettings);
+            debugger;
+            this.visualizationMap.adaptations.toggleAdaptation(response.adaptation.type, response.adaptation.state, response.adaptation.styleConfig);
 
         }
         if (response.name === "tooltip") {

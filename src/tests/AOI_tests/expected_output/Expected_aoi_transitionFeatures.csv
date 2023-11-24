@@ -1,0 +1,4 @@
+"AOI Pair","Transition Count","Transition Proportion"
+"AOI_2 -> AOI_3","1","0.25"
+"AOI_2 -> AOI_1","1","0.25"
+"AOI_1 -> AOI_2","2","0.5"

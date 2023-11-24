@@ -6,7 +6,7 @@ import java.nio.file.*;
 import java.nio.charset.*;
 
 public class CSVProcessor {
-//	This program will add the Xplane Score to all the participants snapshots 
+//	This program will add the Xplane Score to all the participants windows
 //	using a CSV FIle that maps the participants ID and Score
 
 	public static void main(String[] args) {

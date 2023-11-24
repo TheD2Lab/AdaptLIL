@@ -99,20 +99,20 @@ public class descriptiveStats {
 		if (allDoubles.length%2 == 1){
 			return allDoubles[allDoubles.length/2];
 		}else{
-			return (allDoubles[allDoubles.length/2] + allDoubles[allDoubles.length/2+1])/2;
+			return (allDoubles[allDoubles.length/2-1] + allDoubles[allDoubles.length/2])/2;
 		}
 
 	}
 
 	public static double getStDevOfIntegers(List<Integer> allIntegers){
 		double sum = 0;
-        double mean = getMeanOfIntegers(allIntegers);
+		  double mean = getMeanOfIntegers(allIntegers);
 
-        for (double i : allIntegers){
-            sum += Math.pow((i - mean), 2);
-        }
+		  for (double i : allIntegers){
+				sum += Math.pow((i - mean), 2);
+		  }
 
-        return Math.sqrt( sum / (allIntegers.size()-1) );
+		  return Math.sqrt( sum / (allIntegers.size()-1) );
 	}
 
 	public static double getStDevOfDoubles(List<Double> allDoubles){
@@ -126,13 +126,13 @@ public class descriptiveStats {
 
 	public static double getStDev(Double[] allDoubles){
 		double sum = 0;
-        double mean = getMean(allDoubles);
+		  double mean = getMean(allDoubles);
 
-        for (double i : allDoubles){
-            sum += Math.pow((i - mean), 2);
-        }
+		  for (double i : allDoubles){
+				sum += Math.pow((i - mean), 2);
+		  }
 
-        return Math.sqrt( sum / (allDoubles.length-1) );
+		  return Math.sqrt( sum / (allDoubles.length-1) );
 	}
 
 	public static double getMinOfIntegers(List<Integer> allIntegers){

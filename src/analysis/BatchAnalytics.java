@@ -9,7 +9,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.ScrollPane;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +31,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import com.opencsv.CSVWriter;
 
 public class BatchAnalytics {
 	private static final String GZD_SUFFIX = "all_gaze.csv";
@@ -212,10 +217,12 @@ public class BatchAnalytics {
 	 *	@param	outputLocation	the path where the generated files will reside
 	 *	@param	partInfo		a hashmap with the key being the participants name and value being the parent folder of both the gaze and fixation file
 	 */
-	private static void runAnalysis(String outputLocation, HashMap<String,String>partInfo) throws IOException
-	{
-		for(String name: partInfo.keySet())
-		{
+	private static void runAnalysis(String outputLocation, HashMap<String,String>partInfo) throws IOException {
+		ArrayList<String> expandedSequences = new ArrayList<String>();
+		BufferedReader reader = null;
+		File aoiDescriptions = null;
+		
+		for (String name: partInfo.keySet()) {
 			String currentPartFolderName = outputLocation + "/" + name;
 			String gzdPath = partInfo.get(name) + "/" + name + "_" + GZD_SUFFIX;
 			String fxdPath = partInfo.get(name) + "/" + name + "_" + FXD_SUFFIX;
@@ -223,6 +230,100 @@ public class BatchAnalytics {
 			SingleAnalytics.setpName(name);
 			SingleAnalytics.analyzeData(gzdPath, fxdPath, currentPartFolderName);
 			
+			File sequencesFile = new File(currentPartFolderName + "/sequences.txt");
+			reader = new BufferedReader(new FileReader(sequencesFile));
+			expandedSequences.add(reader.readLine());
+			
+			File newDescriptions = new File(currentPartFolderName + "/aoiDescriptions.txt");
+			aoiDescriptions = aoiDescriptions == null || aoiDescriptions.length() < newDescriptions.length() ? newDescriptions : aoiDescriptions;
 		}
+		
+		ArrayList<String> descriptions = new ArrayList<String>();
+		ArrayList<String> codes = new ArrayList<String>();
+		reader = new BufferedReader(new FileReader(aoiDescriptions));
+		String line = "";
+		while ((line = reader.readLine()) != null) {
+			String[] tokens = line.split(",");
+			codes.add(tokens[0]);
+			descriptions.add(tokens[1]);
+		}
+		
+		ArrayList<String> collapsedSequences = new ArrayList<String>();
+		for (String s : expandedSequences) {
+			collapsedSequences.add(getCollapsedSequence(s));
+		}
+		
+		int minPatternLength = 3; // The minimum length of a pattern
+		int maxPatternLength = 7; // The maxmimum length of a pattern
+		int minFrequency = 2; // The minimum frequency a pattern must occur to be outputted
+		int minSequenceSize = 3; // The minimum amount of sequences a pattern must appear in to be outputted
+		
+		discoverPatterns(expandedSequences, minPatternLength, maxPatternLength, minFrequency, minSequenceSize, outputLocation + "/expandedSequences.csv", descriptions, codes);
+		discoverPatterns(collapsedSequences, minPatternLength, maxPatternLength, minFrequency, minSequenceSize, outputLocation + "/collapsedSequences.csv", descriptions, codes);
 	}
+	
+	private static void discoverPatterns(ArrayList<String> sequences, int minPatternLength, int maxPatternLength, int minFrequency, int minSequenceSize, String outputFile, ArrayList<String> descriptions, ArrayList<String> codes) throws IOException {
+			FileWriter outputFileWriter = new FileWriter(new File (outputFile));
+			CSVWriter outputCSVWriter = new CSVWriter(outputFileWriter);
+			
+			String[] aoiDescriptions = descriptions.toArray(new String[descriptions.size()]);
+			String[] aoiCodes = codes.toArray(new String[codes.size()]);
+			outputCSVWriter.writeNext(aoiDescriptions);
+			outputCSVWriter.writeNext(aoiCodes);
+			outputCSVWriter.writeNext(new String[0]);
+			
+			String[] headers = new String[] {"Pattern String", "Frequency", "Sequence Support", "Average Pattern Frequency", "Proportional Pattern Frequency"};
+		    outputCSVWriter.writeNext(headers);
+		     
+		    int totalPatternCount = 0;
+	        for (int patternLength = minPatternLength; patternLength <= maxPatternLength; patternLength++) {
+	        	HashMap<String, Integer> frequencyMap = new HashMap<String, Integer>();
+		        HashMap<String, ArrayList<String>> sequenceMap = new HashMap<String, ArrayList<String>>();
+		        
+	        	for (String s: sequences) {
+		            for (int i = 0; i < s.length() - patternLength; i++) {
+		                String patternString = s.substring(i, i + patternLength);
+		                totalPatternCount++;
+		
+		                int count = frequencyMap.containsKey(patternString) ? frequencyMap.get(patternString) + 1 : 1;
+		                frequencyMap.put(patternString, count);
+		
+		                if (!sequenceMap.containsKey(patternString)) sequenceMap.put(patternString, new ArrayList<String>());
+		                if (!sequenceMap.get(patternString).contains(s)) sequenceMap.get(patternString).add(s);
+		            }
+		        }
+	        	
+	        	for(String s: frequencyMap.keySet()) {
+		        	int frequency = frequencyMap.get(s);
+		        	double sequenceSupport = (double) sequenceMap.get(s).size()/sequences.size();
+		        	double averagePatternFrequency = (double) frequencyMap.get(s)/sequences.size();
+		        	double proportionalPatternFrequency = (double) frequencyMap.get(s)/totalPatternCount;
+		        	
+		        	if (frequency >= minFrequency && sequenceMap.get(s).size() >= minSequenceSize) {
+		        		ArrayList<String> data = new ArrayList<String>();
+			        	data.add(s);
+			        	data.add(String.valueOf(frequency));
+			        	data.add(String.valueOf(sequenceSupport));
+			        	data.add(String.valueOf(averagePatternFrequency));
+			        	data.add(String.valueOf(proportionalPatternFrequency));
+			        	outputCSVWriter.writeNext(data.toArray(new String[data.size()]));
+		        	}
+		        }
+	        }
+	        
+	        outputCSVWriter.close();	        
+	}
+	
+	public static String getCollapsedSequence(String s) {
+        String collapsedSequence = "";
+        char current = ' ';
+
+        for (int i = 0; i < s.length(); i++) {
+            char next = s.charAt(i);
+            if (current != next) collapsedSequence += next;
+            current = next;
+        }
+
+        return collapsedSequence;
+    };
 }

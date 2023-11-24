@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 
 public class CSVMerger {
-//	This program will compile all the snapshots in Expanding_Windows to 1 CSV File
+//	This program will compile all the windows in Expanding_Windows to 1 CSV File
 //	It will do this for all subdirectories (e.g. Expanding_Windows_by_Xplane_Score_#min)
 	
 	public static void main(String[] args) throws IOException {

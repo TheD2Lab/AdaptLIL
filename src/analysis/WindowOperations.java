@@ -16,29 +16,29 @@ import com.opencsv.exceptions.CsvValidationException;
 public class WindowOperations {
 
 	/**
-	 * Creates CSV files by dividing the data into nonoverlapping, fixed-size windows
+	 * Creates CSV files by dividing the data into nonoverlapping, fixed-size windows called tumbling windows.
 	 *  
 	 * @param inputFile		path of the input file that contains the data 
 	 * @param outputFolder 	path of the output folder where the windowed data will be stored
 	 * @param windowSize 	value that specifies the size of the window to be used in the operation
 	 * @throws CsvValidationException
 	 */
-	public static void continuousWindow(String inputFile, String outputFolder, int windowSize) throws CsvValidationException
+	public static void tumblingWindow(String inputFile, String outputFolder, int windowSize) throws CsvValidationException
 	{
 		int endTime = windowSize;
 		int initialTime = 0;
-		String outputFile = "/continuous_" + endTime + ".csv";
+		String outputFile = "/tumbling_" + endTime + ".csv";
 		try {
-			while(snapshot(inputFile,outputFile, outputFolder, initialTime,endTime))
+			while(windows(inputFile,outputFile, outputFolder, initialTime,endTime))
 			{
 				initialTime += windowSize;
 				endTime += windowSize;
-				outputFile = "/continuous_" + endTime + ".csv";
+				outputFile = "/tumbling_" + endTime + ".csv";
 			}
 		} 
 		catch (IOException e) 
 		{
-			 systemLogger.writeToSystemLog(Level.WARNING, WindowOperations.class.getName(), "Error with continuous window output " + outputFile + "\n" + e.toString());
+			 systemLogger.writeToSystemLog(Level.WARNING, WindowOperations.class.getName(), "Error with tumbling window output " + outputFile + "\n" + e.toString());
 		}
 
 	}
@@ -52,27 +52,27 @@ public class WindowOperations {
 	 * @param windowSize 	value that specifies the size of the window to be used in the operation
 	 * @throws CsvValidationException
 	 */
-	public static void cumulativeWindow(String inputFile, String outputFolder, int windowSize) throws CsvValidationException
+	public static void expandingWindow(String inputFile, String outputFolder, int windowSize) throws CsvValidationException
 	{
 		int endTime = windowSize;
 		int initialTime = 0;
-		String outputFile = "/cumulative_" + endTime + ".csv";
+		String outputFile = "/expanding_" + endTime + ".csv";
 		try 
 		{
-			while(snapshot(inputFile,outputFile,outputFolder,initialTime,endTime))
+			while(windows(inputFile,outputFile,outputFolder,initialTime,endTime))
 			{
 				endTime += windowSize;
-				outputFile = "/cumulative_" + endTime + ".csv";
+				outputFile = "/expanding" + endTime + ".csv";
 			}
 		} 
 		catch (IOException e) 
 		{
-			 systemLogger.writeToSystemLog(Level.WARNING, WindowOperations.class.getName(), "Error with cumulative window output " + outputFile + "\n" + e.toString());
+			 systemLogger.writeToSystemLog(Level.WARNING, WindowOperations.class.getName(), "Error with expanding window output " + outputFile + "\n" + e.toString());
 		}
 	}
 	
 	/**
-	 * Creates CSV files by dividing the data into overlapping, fixed-size windows. 
+	 * Creates CSV files by dividing the data into overlapping, fixed-size windows called hopping windows. 
 	 * The user has the ability to customize the degree of overlap and the size of the windows according to their preferences. 
 	 * 
 	 * @param inputFile		path of the input file that contains the data 
@@ -81,23 +81,23 @@ public class WindowOperations {
 	 * @param overlap		value the specifies the size of the overlap 
 	 * @throws CsvValidationException
 	 */
-	public static void overlappingWindow(String inputFile, String outputFolder, int windowSize, int overlap) throws CsvValidationException
+	public static void hoppingWindow(String inputFile, String outputFolder, int windowSize, int overlap) throws CsvValidationException
 	{
 		int endTime = windowSize;
 		int initialTime = 0;
-		String outputFile = outputFolder + "/overlap_" + endTime + ".csv";
+		String outputFile = "/hopping_" + endTime + ".csv";
 		try {
-			while(snapshot(inputFile,outputFile,outputFolder,initialTime,endTime))
+			while(windows(inputFile,outputFile,outputFolder,initialTime,endTime))
 			{
 				initialTime = endTime - overlap;
 				endTime += windowSize;
-				outputFile = "/overlap_" + endTime + ".csv";
+				outputFile = "/hopping_" + endTime + ".csv";
 				
 			}
 		} 
 		catch (IOException e) 
 		{
-			 systemLogger.writeToSystemLog(Level.WARNING, WindowOperations.class.getName(), "Error with overlapping window output " + outputFile + "\n" + e.toString());
+			 systemLogger.writeToSystemLog(Level.WARNING, WindowOperations.class.getName(), "Error with hopping window output " + outputFile + "\n" + e.toString());
 		}
 	}
 	
@@ -109,7 +109,7 @@ public class WindowOperations {
 	 * @param outputFolderPath		path of the output folder where the windowed data will be stored
 	 * @param baselineFilePath 		path of the baseline file
 	 * @param baselineHeaderIndex	the index of the selected value in the baseline file 
-	 * @param inputHeaderIndex		the index of the selected value in the selected file 
+	 * @param inputHeaderIndex		the index of the selected value in the selected fileÂ 
 	 * @param maxDur				the max duration an event can continue
 	 * @throws IOException
 	 */
@@ -239,7 +239,7 @@ public class WindowOperations {
 	 * @param end			the end time
 	 * @return	boolean		true if the program was able to successfully execute it, false otherwise
 	 */
-	private static boolean snapshot(String inputFile, String fileName, String outputFolder, int start, int end) throws IOException, CsvValidationException
+	private static boolean windows(String inputFile, String fileName, String outputFolder, int start, int end) throws IOException, CsvValidationException
 	{
 		String outputFile = outputFolder + fileName;
 		FileWriter outputFileWriter = new FileWriter(new File (outputFile));
@@ -305,7 +305,5 @@ public class WindowOperations {
         }
         return true;
 	}
-	
-	
 	
 }

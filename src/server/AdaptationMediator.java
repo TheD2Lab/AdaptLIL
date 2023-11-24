@@ -85,7 +85,7 @@ public class AdaptationMediator extends Mediator {
                 //Must be recent and contained within the current window.
                 //Get last time used and current time.
                 Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
-                INDArray gazeWindowInput = gazeWindow.toINDArray();
+                INDArray gazeWindowInput = gazeWindow.toINDArray(true);
                 gazeWindowINDArrays.add(gazeWindowInput);
                 if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
 

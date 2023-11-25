@@ -1,6 +1,8 @@
 package server;
 
 import analysis.GazeMetrics;
+import analysis.descriptiveStats;
+import data_classes.Fixation;
 import data_classes.Saccade;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Intended use of this file is to implement a 'window' in which gaze can be analyzed and conclusions/predictions can be drawn.
@@ -413,6 +416,9 @@ public class GazeWindow implements Component {
         return instance;
     }
 
+    /**
+     * Calculates additional metrics useful for classification and ml training.
+     */
     public void calculateAdditionalGazeMetrics() {
         //Go through gaze window
         //Go through each packet
@@ -422,29 +428,44 @@ public class GazeWindow implements Component {
         int numSaccades = 0;
         Set<Integer> fixationIds = new HashSet<>();
         List<Saccade> saccadeList = new ArrayList<>();
+        List<Fixation> fixations = new ArrayList<>();
+        List<Double> fixationDurations = new ArrayList<>();
+        Fixation lastFixation = null;
         for (int i = 0; i < gazeBuffer.length; ++ i) {
 
             //Process fixation
             if (gazeBuffer[i].getFixation() != null && gazeBuffer[i].getFixation().isValid()) {
 
+                Fixation curFixation = gazeBuffer[i].getFixation();
                 //increase fixation count if it is unique
-                if (!fixationIds.contains(gazeBuffer[i].getFixation().getId())) {
-                    fixationIds.add(gazeBuffer[i].getFixation().getId());
+                if (!fixationIds.contains(curFixation.getId())) {
+                    fixationIds.add(curFixation.getId());
                     ++numFixations;
+                    fixations.add(curFixation);
+                    fixationDurations.add(curFixation.getDuration());
+                    //TODO, how do we get saccades?
+
+
+                    if (lastFixation != null) {
+                        ++numSaccades;
+                        double durationOfSaccade = curFixation.getDuration() - lastFixation.getDuration();
+                        Saccade saccade = new Saccade(lastFixation.getPoint(), curFixation.getPoint(), durationOfSaccade);
+                        saccadeList.add(saccade);
+                    }
+
+                    lastFixation = curFixation;
+
                 }
-            }				Double[] eachSaccadeDetail = new Double[3];
-            eachSaccadeDetail[0] = timestamp;
-            eachSaccadeDetail[1] = eachDuration;
-            eachSaccadeDetail[2] = fixationID;
-
-
-            allFixationDurations.add(eachDuration);
-            allCoordinates.add(eachCoordinate);
-            allPoints.add(eachPoint);
-            saccadeDetails.add(eachSaccadeDetail);
+            }
 
             //Process Saccades
         }
+
+        double meanFixationDuration = descriptiveStats.getMeanOfDoubles(fixationDurations);
+
+
+
+        this.gazeMetrics = new GazeMetrics(numFixations, numSaccades, meanFixationDuration);
     }
 
     /**

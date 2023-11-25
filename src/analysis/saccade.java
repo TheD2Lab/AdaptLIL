@@ -24,8 +24,10 @@ package analysis;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import data_classes.Fixation;
 import data_classes.Saccade;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,7 +55,7 @@ public class saccade {
 	}
 
 	public static Saccade getSaccade(Fixation a, Fixation b) {
-		return new Saccade();
+		return new Saccade(a.getPoint(), b.getPoint(), b.getDuration() - a.getDuration());
 	}
 
 	/**

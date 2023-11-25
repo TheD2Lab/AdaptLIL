@@ -10,9 +10,12 @@ public class GazeMetrics {
     public int fixationCount;
     public int saccadeCount;
 
+    public double meanFixationDuration;
 
-    public GazeMetrics(int fixationCount, int saccadeCount) {
+
+    public GazeMetrics(int fixationCount, int saccadeCount, double meanFixationDuration) {
         this.fixationCount = fixationCount;
         this.saccadeCount = saccadeCount;
+        this.meanFixationDuration = meanFixationDuration;
     }
 }

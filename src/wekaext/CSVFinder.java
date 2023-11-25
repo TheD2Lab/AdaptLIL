@@ -6,10 +6,10 @@ import java.util.Scanner;
 import java.util.regex.*;
 
 public class CSVFinder {
-//	This program will merge all the participants snapshots correlating to the 
+//	This program will merge all the participants windows correlating to the 
 //	window size must create folder where you want data stored before running this
 	
-//	root directory refers to the folder with all participants folders and their snapshots
+//	root directory refers to the folder with all participants folders and their windows
 
 	public static void main(String[] args) {
 		
@@ -52,7 +52,7 @@ public class CSVFinder {
 				return;
 			}
 
-			Pattern pattern = Pattern.compile("p\\d+_cumulative_" + currentInteger + "_combineResults\\.csv");
+			Pattern pattern = Pattern.compile("p\\d+_expanding_" + currentInteger + "_combineResults\\.csv");
 
 			try {
 				Files.walk(root.toPath()).filter(Files::isRegularFile)

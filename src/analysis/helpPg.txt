@@ -7,19 +7,19 @@ How to use the Data Analysis Page
 	2) Once you submit these,  the program will then display a new screen where the user will have the option to select specific windows for the output
 		a) If you do not want to select a window than you can simply choose the exit option and the program will terminate
 		b) There are four different window option you can choose from 
-			a)Continuous Snapshot: This option generates gaze data in a series of fixed, non-overlapping windows
-			b)Cumulative Snapshot: This option generates gaze data in a series of expanding windows that increases with every interval.
-			c)Overlapping Snapshot: This option generates gaze data in a series of fixed and overlapping windows
-			d)Event Analytics: his option generates a baseline file based on the first two minutes of the gaze data, and then compares it to the rest of the file. 
+			a)Tumbling Window: This option generates gaze data in a series of fixed, non-overlapping windows
+			b)Expanding Window: This option generates gaze data in a series of expanding windows that increases with every interval.
+			c)Hopping Window: This option generates gaze data in a series of fixed and overlapping windows
+			d)Event Window: his option generates a baseline file based on the first two minutes of the gaze data, and then compares it to the rest of the file. 
 			  If the data exceeds the baseline value, it will be counted as an event, and the program will continue to search for the next event within a specified 
 			  time period. If no event is found, the program will close at a specific period. If another event is found, the session window will continue searching
 	3) The prompt will then ask you to pick a file to use
 	4) Depending on what you selected, the program will prompt you to provide additional parameters specific to that window.
-		a)Continuous Snapshot and Cumulative Snapshot: The program will ask for a Window size in seconds. This is how the program is going to break up your file
+		a)Tumbling Window and Expanding Window: The program will ask for a Window size in seconds. This is how the program is going to break up your file
 		  into sections. 
-		b)Overlapping Snapshot:The program will ask for a Window size and an overlapping amount in seconds. Not including the first file, the rest of your snapshot
+		b)Hopping Window:The program will ask for a Window size and an overlapping amount in seconds. Not including the first file, the rest of your window
 		  files will have overlapping values according to the overlapping input.
-		c)Event Analytics: The program will ask you to pick two values you would like to compare. One will come from an auto-generated file based on how the 
+		c)Event Window: The program will ask you to pick two values you would like to compare. One will come from an auto-generated file based on how the 
 		  participant performed in the first two minutes. The second will be from the file you picked. Please make sure the inputs correlate with one another,
 		  if not the calculations will be incorrect. You would also asked to define the maximum duration of an event in seconds. If there is no event trigger 
 		  within that amount of time, the event will automatically end.

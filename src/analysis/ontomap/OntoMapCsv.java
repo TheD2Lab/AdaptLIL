@@ -324,9 +324,9 @@ public class OntoMapCsv {
                         //any window where the user got it wrong, is grouped into the bad section -> 0
                         //Hopefully we can then compute a probability that they will get it right
                         //given the current gaze data.
-                        Instance windowInstance = participantWindow.toDenseInstance(false);
+                        Instance windowInstance = participantWindow.toDenseInstance(false, true);
 
-                        Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false), 1);
+                        Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false, true), 1);
                         Attribute correctAttribute = new Attribute("correct", nominalValues);
                         dataset.insertAttributeAt(correctAttribute, dataset.numAttributes());
                         windowInstance.insertAttributeAt(windowInstance.numAttributes()); //Insert a slot for the correct attribute for the window instance

@@ -1,5 +1,9 @@
 package server;
 
+import analysis.GazeMetrics;
+import analysis.descriptiveStats;
+import data_classes.Fixation;
+import data_classes.Saccade;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import server.gazepoint.api.recv.RecXmlObject;
@@ -10,7 +14,10 @@ import wekaext.annotations.IgnoreWekaAttribute;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Intended use of this file is to implement a 'window' in which gaze can be analyzed and conclusions/predictions can be drawn.
@@ -26,6 +33,8 @@ public class GazeWindow implements Component {
 
     private RecXmlObject[] gazeBuffer;
     private AdaptationMediator mediator;
+
+    private GazeMetrics gazeMetrics;
 
 //    private ArrayList<RecXmlObject> gazeData;
 
@@ -168,7 +177,7 @@ public class GazeWindow implements Component {
      * gazeData
      * @return
      */
-    public Instance toDenseInstance(boolean reduceAttributeNames) {
+    public Instance toDenseInstance(boolean reduceAttributeNames, boolean useAdditionalGazeMetrics) {
 
         //Uses Java.Lang
         /**
@@ -184,18 +193,20 @@ public class GazeWindow implements Component {
          * which contains the data.
          */
         //Specify attributes list
-        ArrayList<Attribute> attributeList = this.getAttributeList(reduceAttributeNames);
+        ArrayList<Attribute> attributeList = this.getAttributeList(reduceAttributeNames, useAdditionalGazeMetrics);
         return getInstancesFromAttributeList(attributeList);
     }
 
-    public INDArray toINDArray() {
-        List<Attribute> attributeList = this.getAttributeList(false);
+    public INDArray toINDArray(boolean useAdditionalGazeMetrics) {
+        List<Attribute> attributeList = this.getAttributeList(false, useAdditionalGazeMetrics);
+
+
         int numAttributes = attributeList.size();
 
-        double[][] x = new double[this.windowSize][numAttributes];
+        double[] x = new double[numAttributes];
+        int attrIndex = 0;
 
         for (int i = 0; i < gazeBuffer.length; ++i) {
-            int attrIndex = 0;
 
             RecXmlObject recXmlObject = gazeBuffer[i];
             for (Field field : recXmlObject.getClass().getDeclaredFields()) {
@@ -212,15 +223,15 @@ public class GazeWindow implements Component {
                         //use field.getDouble(recXmlObject)
                         if (field.getType() == Double.class) {
                             if (val != null)
-                                x[i][attrIndex] = (Double) val;
+                                x[attrIndex] = (Double) val;
                             else
-                                x[i][attrIndex] = 0;
+                                x[attrIndex] = 0;
                         }
                         else if (field.getType() == Float.class) {
                             if (val != null)
-                                x[i][attrIndex] = (Double) val;
+                                x[attrIndex] = (Double) val;
                             else
-                                x[i][attrIndex] = 0;
+                                x[attrIndex] = 0;
                         }
 //                        else if (field.getType() == String.class) {
 //                            if (val != null)
@@ -240,6 +251,52 @@ public class GazeWindow implements Component {
             }
         }
 
+
+        //Fill remaining with gaze metrics
+        if (useAdditionalGazeMetrics) {
+            this.calculateAdditionalGazeMetrics();
+            for (int i = attrIndex; i < numAttributes; ++i) {
+
+                for (Field field : gazeMetrics.getClass().getDeclaredFields()) {
+                    Object val = new Object();
+
+                    try {
+
+                        //Only set values for
+                        if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+                            val = field.get(gazeMetrics);
+
+                            //Check types and cast appropriately.
+                            //If there is a primitive type
+                            //use field.getDouble(recXmlObject)
+                            if (field.getType() == Double.class) {
+                                if (val != null)
+                                    x[attrIndex] = (Double) val;
+                                else
+                                    x[attrIndex] = 0;
+                            } else if (field.getType() == Float.class) {
+                                if (val != null)
+                                    x[attrIndex] = (Double) val;
+                                else
+                                    x[attrIndex] = 0;
+                            }
+                            //                        else if (field.getType() == String.class) {
+                            //                            if (val != null)
+                            //                                instance.setValue(attrIndex, (String) val);
+                            //                            else
+                            //                                instance.setValue(attrIndex, "");
+                            //                        }
+
+                        }
+                    } catch (
+                            IllegalAccessException e) { //Field is private, cannot access, ignore in dense instance construciton
+                        continue;
+                    }
+                }
+            }
+        }
+
+
         //TODO
         //DONT FORGET NORMALIZATION
         this.normalize(x);
@@ -247,14 +304,20 @@ public class GazeWindow implements Component {
         return Nd4j.create(x);
     }
 
-    public double[][] normalize(double[][] x) {
+    public double[] normalize(double[] x) {
         //TODO get normalization values
         double[] normalizations = new double[]{};
 
-        return x;
+        return normalizations;
     }
 
-    public ArrayList<Attribute> getAttributeList(boolean reduceAttributeNames) {
+    /**
+     * Gets Attributes used for machine learning classification
+     * @param reduceAttributeNames
+     * @param useAdditionalGazeMetrics
+     * @return
+     */
+    public ArrayList<Attribute> getAttributeList(boolean reduceAttributeNames, boolean useAdditionalGazeMetrics) {
         ArrayList<Attribute> attributeList = new ArrayList<>();
         for (int i = 0; i < gazeBuffer.length; ++i) {
             RecXmlObject recXmlObject = gazeBuffer[i];
@@ -275,6 +338,27 @@ public class GazeWindow implements Component {
                 }
             }
         }
+
+
+        if (useAdditionalGazeMetrics) {
+            for (int i = 0; i < this.gazeMetrics.getClass().getDeclaredFields().length; ++i) {
+                Field field = this.gazeMetrics.getClass().getDeclaredFields()[i];
+                if (field.canAccess(this.gazeMetrics)) {
+                    //Skip strings and those with the IgnoreWekaAttribute annotation
+                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+                        String attributeName = "";
+                        if (reduceAttributeNames)
+                            attributeName = i + "_" + i;
+                        else
+                            attributeName = field.getName() + "_" + i;
+
+                        attributeList.add(new Attribute(attributeName));
+                    }
+
+                }
+            }
+        }
+
         return attributeList;
     }
 
@@ -330,6 +414,58 @@ public class GazeWindow implements Component {
         }
 
         return instance;
+    }
+
+    /**
+     * Calculates additional metrics useful for classification and ml training.
+     */
+    public void calculateAdditionalGazeMetrics() {
+        //Go through gaze window
+        //Go through each packet
+        //calculate stats
+        //Try to keep to O(m*n), m = windowSize, n = number of fields in the packets
+        int numFixations = 0;
+        int numSaccades = 0;
+        Set<Integer> fixationIds = new HashSet<>();
+        List<Saccade> saccadeList = new ArrayList<>();
+        List<Fixation> fixations = new ArrayList<>();
+        List<Double> fixationDurations = new ArrayList<>();
+        Fixation lastFixation = null;
+        for (int i = 0; i < gazeBuffer.length; ++ i) {
+
+            //Process fixation
+            if (gazeBuffer[i].getFixation() != null && gazeBuffer[i].getFixation().isValid()) {
+
+                Fixation curFixation = gazeBuffer[i].getFixation();
+                //increase fixation count if it is unique
+                if (!fixationIds.contains(curFixation.getId())) {
+                    fixationIds.add(curFixation.getId());
+                    ++numFixations;
+                    fixations.add(curFixation);
+                    fixationDurations.add(curFixation.getDuration());
+                    //TODO, how do we get saccades?
+
+
+                    if (lastFixation != null) {
+                        ++numSaccades;
+                        double durationOfSaccade = curFixation.getDuration() - lastFixation.getDuration();
+                        Saccade saccade = new Saccade(lastFixation.getPoint(), curFixation.getPoint(), durationOfSaccade);
+                        saccadeList.add(saccade);
+                    }
+
+                    lastFixation = curFixation;
+
+                }
+            }
+
+            //Process Saccades
+        }
+
+        double meanFixationDuration = descriptiveStats.getMeanOfDoubles(fixationDurations);
+
+
+
+        this.gazeMetrics = new GazeMetrics(numFixations, numSaccades, meanFixationDuration);
     }
 
     /**

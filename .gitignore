@@ -6,6 +6,7 @@
 *.class
 bin/
 target/*
+.vscode
 
 # Mac stuff
 desktop.ini

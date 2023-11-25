@@ -1,12 +1,15 @@
 package data_classes;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import interpolation.Interpolation;
 import server.serialization_helpers.IntToBooleanDeserializer;
 import wekaext.annotations.IgnoreWekaAttribute;
+
+import java.awt.geom.Point2D;
 
 public class Fixation {
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGX")
@@ -27,6 +30,8 @@ public class Fixation {
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGV")
 
     private boolean isValid;
+
+
 
 
     public Fixation() {} //Default constructor for Jackson
@@ -123,5 +128,10 @@ public class Fixation {
             interpolFixations[i] = c;
 	    }
         return interpolFixations;
+    }
+
+    @JsonIgnore
+    public Point2D.Double getPoint() {
+        return new Point2D.Double(this.getX(), this.getY());
     }
 }

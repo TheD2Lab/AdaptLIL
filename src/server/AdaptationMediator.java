@@ -94,6 +94,7 @@ public class AdaptationMediator extends Mediator {
                     INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1));
                     System.out.println("classification shape: " + Arrays.toString(classificationInput.shape()));
                     Integer classificationResult = classifierModel.predict(classificationInput)[0]; //TODO
+                    System.out.println("classified as : " + classificationResult);
                     Integer participantWrongOrRight = null;
                     Float taskCompletionTime = null; //grab from websocket
                     //Calculate perilScore (risk score)

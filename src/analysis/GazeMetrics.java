@@ -14,8 +14,8 @@ public class GazeMetrics {
      * TODO, Readme
      * We will start with three additional metrics. If the learning increases, we will continue adding more.
      */
-    public Integer fixationCount;
-    public Integer saccadeCount;
+    public Integer fixationCount = 0;
+    public Integer saccadeCount = 0;
 
 
     @IgnoreWekaAttribute
@@ -27,6 +27,7 @@ public class GazeMetrics {
     public Double sumOfSaccadeLen = 0.0;
     public Double meanSaccadeLen=0.0;
     public Double medianSaccadeLen=0.0;
+    @IgnoreWekaAttribute
     public Double stdOfSaccadeLen=0.0;
     public Double minSaccadeLen = 5000.0;
     public Double maxSaccadeLen = 0.0;
@@ -34,6 +35,7 @@ public class GazeMetrics {
     public Double sumOfFixationDuration = 0.0;
     public Double meanFixationDuration=0.0;
     public Double medianFixationDuration=0.0;
+    @IgnoreWekaAttribute
     public Double stdOfFixationDuration=0.0;
     public Double minFixationDuration = 5000.0;
     public Double maxFixationDuration = 0.0;
@@ -41,6 +43,7 @@ public class GazeMetrics {
     public Double sumOfSaccadeDurations = 0.0;
     public Double meanSaccadeDuration=0.0;
     public Double medianSaccadeDuration=0.0;
+    @IgnoreWekaAttribute
     public Double stdOfSaccadeDurations=0.0;
     public Double minSaccadeDuration = 5000.0;
     public Double maxSaccadeDuration = 0.0;
@@ -51,6 +54,7 @@ public class GazeMetrics {
     public Double sumOfAbsoluteDegrees = 0.0;
     public Double meanAbsoluteDegree = 0.0;
     public Double medianAbsoluteDegree = 0.0;
+    @IgnoreWekaAttribute
     public Double stdOfAbsoluteDegrees = 0.0;
     public Double minAbsoluteDegree = 5000.0;
     public Double maxAbsoluteDegree = 0.0;
@@ -58,6 +62,7 @@ public class GazeMetrics {
     public Double sumOfRelativeDegrees = 0.0;
     public Double meanRelativeDegree = 0.0;
     public Double medianRelativeDegree = 0.0;
+    @IgnoreWekaAttribute
     public Double stdOfRelativeDegrees = 0.0;
     public Double minRelativeDegree = 5000.0;
     public Double maxRelativeDegree = 0.0;
@@ -96,10 +101,12 @@ public class GazeMetrics {
             if (fixation.getDuration() > this.maxFixationDuration)
                 this.maxFixationDuration = fixation.getDuration();
         }
+        if (this.fixationCount > 0) {
+            this.medianFixationDuration = descriptiveStats.getMedianOfDoubles(durations);
+            this.stdOfFixationDuration = descriptiveStats.getStDevOfDoubles(durations);
 
-        this.medianFixationDuration = descriptiveStats.getMedianOfDoubles(durations);
-        this.stdOfFixationDuration = descriptiveStats.getStDevOfDoubles(durations);
-        this.meanFixationDuration = this.sumOfFixationDuration / this.fixationCount;
+            this.meanFixationDuration = this.sumOfFixationDuration / this.fixationCount;
+        }
 
     }
 
@@ -124,11 +131,11 @@ public class GazeMetrics {
             if (saccade.getDuration() > this.maxSaccadeDuration)
                 this.maxSaccadeDuration = saccade.getDuration();
         }
-
-        this.medianSaccadeDuration = descriptiveStats.getMedianOfDoubles(durations);
-        this.stdOfSaccadeDurations = descriptiveStats.getStDevOfDoubles(durations);
-        this.saccadeCount = saccades.size();
-        this.meanSaccadeDuration = this.sumOfSaccadeDurations / this.saccadeCount;
+        if (this.saccadeCount > 0) {
+            this.medianSaccadeDuration = descriptiveStats.getMedianOfDoubles(durations);
+            this.stdOfSaccadeDurations = descriptiveStats.getStDevOfDoubles(durations);
+            this.meanSaccadeDuration = this.sumOfSaccadeDurations / this.saccadeCount;
+        }
 
     }
 
@@ -146,16 +153,18 @@ public class GazeMetrics {
             if (saccade.getLength() > this.maxSaccadeLen)
                 this.maxSaccadeLen = saccade.getLength();
         }
-
-        this.medianSaccadeLen = descriptiveStats.getMedianOfDoubles(lengths);
-        this.stdOfSaccadeLen = descriptiveStats.getStDevOfDoubles(lengths);
-        this.meanSaccadeLen = this.sumOfSaccadeLen / this.saccadeCount;
+        if (this.saccadeCount > 0) {
+            this.medianSaccadeLen = descriptiveStats.getMedianOfDoubles(lengths);
+            this.stdOfSaccadeLen = descriptiveStats.getStDevOfDoubles(lengths);
+            this.meanSaccadeLen = this.sumOfSaccadeLen / this.saccadeCount;
+        }
 
     }
     
     public void calculateScanpathMetaData() {
         this.scanpathDuration = this.sumOfFixationDuration + this.sumOfSaccadeDurations;
-        this.fixationToSaccadeRatio = this.sumOfFixationDuration / this.sumOfSaccadeDurations;
+        if (this.sumOfFixationDuration > 0 && this.sumOfSaccadeDurations > 0)
+            this.fixationToSaccadeRatio = this.sumOfFixationDuration / this.sumOfSaccadeDurations;
     }
     
     public void calculateRelativeDegreeMetaData() {

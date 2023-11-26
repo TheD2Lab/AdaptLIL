@@ -92,7 +92,7 @@ public class descriptiveStats {
 		}else if (allDoubles.size() > 0){
 			return (allDoubles.get(middle-1) + allDoubles.get(middle))/2.0;
 		} else {
-			return null;
+			return 0.0;
 		}
 	}
 
@@ -103,7 +103,7 @@ public class descriptiveStats {
 		} else if (allDoubles.length > 0){
 			return (allDoubles[allDoubles.length/2-1] + allDoubles[allDoubles.length/2])/2;
 		} else {
-			return null;
+			return 0.0;
 		}
 
 	}

@@ -72,7 +72,7 @@ def normalizeData(data, numPolls, numAttributes, numMetaAttrs, attributesMinMax)
     return data
 
 
-def convertDataToLTSMFormat(data, timeSequences):
+def convertDataToLTSMFormat(data, timeSequences, numMetaAttrs):
     x = []
     y = []
     ts_index = 0
@@ -160,9 +160,9 @@ def get_metrics_for_model():
 
 def get_optimizers():
     return [
-    #    tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+       tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
     #     "adam"
-    #     tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
+        tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
         tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
         
         #tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
@@ -191,7 +191,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.49, use_ema=True, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.40, use_ema=True, weight_decay=2e-4),
         #
-        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=False), #control
+        tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=False), #control
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.38, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.39, use_ema=False),
@@ -219,7 +219,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1e-2),
         #tf.keras.optimizers.Nadam(learning_rate=1e-3),
-        #tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
         #tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
@@ -482,14 +482,15 @@ def getModelConfig(timeSequences, attributes):
     model_ltsm_straight_to_output.add(LSTM(8, input_shape=(timeSequences, attributes)))
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
     models['transformer_model'] = transformer_model
+    #
+    models['stacked_lstm'] = stacked_lstm;
 
-    # models['stacked_lstm'] = stacked_lstm;
-    """
     models['stacked_lstm_v2'] = stacked_lstm_v2;
 
 
 
     models['model_simple_ltsm'] = model_simple_ltsm
+    """
     models['model_one_layer_ltsm'] = model_one_layer_ltsm
     models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
     models['model_bigger_lstm'] = model_bigger_lstm;
@@ -510,13 +511,16 @@ def getModelConfig(timeSequences, attributes):
     # Past here, overfitting occurs
     models['model_double_stm'] = model_double_lstm;
     models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
-    models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
     models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
     models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
     #
     # '''Unique Architectures'''
-    # models['model_stacked_v6'] = model_stacked_v6
+    
     """
+    models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
+    models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
+
+    models['model_stacked_v6'] = model_stacked_v6
     return models
 
 
@@ -540,8 +544,8 @@ def getMinMax(data):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     timeSequences = 2
-    numAttributes = 8
-    numMetaAttrs = 3
+    numAttributes = 29
+    numMetaAttrs = 0
     windowSize = 75
     epochs = 50  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     shuffle = False
@@ -566,10 +570,10 @@ if __name__ == '__main__':
 
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/2023-11-25T18;00;04.453888740/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/2023-11-26T00;35;16.347031963/"
 
-    models = getModelConfig(timeSequences, (numAttributes * windowSize) + 3)
-
+    # models = getModelConfig(timeSequences, (numAttributes * windowSize) + numMetaAttrs)
+    models = getModelConfig(timeSequences, numAttributes)
     all_models_by_tp_and_tn = {};
     all_models_stats = []
     trainDataParticipants = []
@@ -596,11 +600,11 @@ if __name__ == '__main__':
             continue
         trainData = convertArffToDataFrame(f)
         participants.append(filename)
-        x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences)
+        x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences, numMetaAttrs)
 
         print_both('full input shape: ' + str(x_part.shape))
         yAll = np.concatenate((yAll, y_part), axis=0)
-        x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
+        # x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
         trainDataParticipants.append({'x': x_part, 'y': y_part})
 
     print_both("normalization data attributes (keep handy)")
@@ -608,8 +612,8 @@ if __name__ == '__main__':
 
     testData = convertArffToDataFrame(baseDirForTrainData + "/testData_500.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
-    xTest, yTest = convertDataToLTSMFormat(testData, timeSequences)
-    xTest = normalizeData(xTest, windowSize, numAttributes, numMetaAttrs, attr_min_max)
+    xTest, yTest = convertDataToLTSMFormat(testData, timeSequences, numMetaAttrs)
+    # xTest = normalizeData(xTest, windowSize, numAttributes, numMetaAttrs, attr_min_max)
 
     '''
     Weight biasing to help correct some issues with skewed class representation
@@ -678,7 +682,7 @@ if __name__ == '__main__':
                     histories.append(hist)
             #hist_avg = np.average(hist.histroy['val_accuracy'])
             #print_both('avh: ' + str(hist_avg))
-                    if (np.average(hist.history['val_accuracy'][-10:]) > 0.75):
+                    if (np.average(hist.history['val_accuracy'][-10:]) < 0.50):
                         if (participants[i] not in stats_by_participant):
                             stats_by_participant[participants[i]] = []
 

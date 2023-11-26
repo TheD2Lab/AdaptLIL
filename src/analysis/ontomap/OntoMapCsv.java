@@ -128,7 +128,7 @@ public class OntoMapCsv {
     }
     public static void main(String[] args) {
 
-        String baseDir = "/home/notroot/Downloads/datavisstudy-updated/DataVisStudy/Participant Data/";
+        String baseDir = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/DataVisStudy/Participant Data/";
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)

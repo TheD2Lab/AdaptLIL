@@ -39,7 +39,7 @@ def convertArffToDataFrame(fileName):
     return np.array(data_list, dtype=np.float32)
 
 
-def normalizeData(data, numAttributes, attributesMinMax):
+def normalizeData(data, numPolls, numAttributes, numMetaAttrs, attributesMinMax):
     '''
     Given 3D data
     [
@@ -64,6 +64,8 @@ def normalizeData(data, numAttributes, attributesMinMax):
     for i in range(len(data)):
         for j in range(len(data[i])):
             for k in range(len(data[i][j])):
+                if ( k > (numPolls * numAttributes)): #skip the meta attributes
+                    continue;
                 l = k % numAttributes
                 data[i][j][k] = (data[i][j][k] - attributesMinMax[l]['min']) / (
                             attributesMinMax[l]['max'] - attributesMinMax[l]['min'])
@@ -93,10 +95,10 @@ def convertDataToLTSMFormat(data, timeSequences):
     y = np.array(y)
     return [x, y]
 
-def normalizationByPollingSample(data, numAttributes, attribute_min_max={}) :
+def normalizationByPollingSample(data, numAttributes, numMetaAttrs, attribute_min_max={}) :
     for i in data:
         correct = i[-1]
-        attrs = i[:-1]
+        attrs = i[:(-1 * (1 + numMetaAttrs))]
         # print_both("norm by sample, attr shape: ")
         # print_both(np.array(attrs).shape)
 
@@ -159,7 +161,8 @@ def get_metrics_for_model():
 def get_optimizers():
     return [
     #    tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
-        tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
+    #     "adam"
+    #     tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
         tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
         
         #tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
@@ -256,8 +259,7 @@ def getModelConfig(timeSequences, attributes):
     input_shape=(timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=8, ff_dim=32, num_transformer_blocks=16, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
-    models['transformer_model'] = transformer_model
+    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=8, ff_dim=8, num_transformer_blocks=8, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
     model_simple_ltsm = Sequential()
     model_simple_ltsm.add(LSTM(4, input_shape=(timeSequences, attributes)))
     model_simple_ltsm.add(Dense(8, activation='relu'))
@@ -305,7 +307,7 @@ def getModelConfig(timeSequences, attributes):
     and therefore can trigger it to forget or keep the memory for each 0,1 class.
     I.e., for each attribute, allocate 1 node per class.
     '''
-    stacked_lstm.add(Dropout(0.2, input_shape=input_shape))
+    stacked_lstm.add(Dropout(0.1, input_shape=input_shape))
     stacked_lstm.add(LSTM(75, input_shape=(timeSequences, attributes), return_sequences=True))
     # stacked_lstm.add(LSTM(150, input_shape=(timeSequences, attributes), return_sequences=True))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
@@ -479,8 +481,9 @@ def getModelConfig(timeSequences, attributes):
     model_ltsm_straight_to_output = Sequential()
     model_ltsm_straight_to_output.add(LSTM(8, input_shape=(timeSequences, attributes)))
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
+    models['transformer_model'] = transformer_model
 
-    #models['stacked_lstm'] = stacked_lstm;
+    # models['stacked_lstm'] = stacked_lstm;
     """
     models['stacked_lstm_v2'] = stacked_lstm_v2;
 
@@ -538,6 +541,7 @@ def getMinMax(data):
 if __name__ == '__main__':
     timeSequences = 2
     numAttributes = 8
+    numMetaAttrs = 3
     windowSize = 75
     epochs = 50  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     shuffle = False
@@ -556,15 +560,15 @@ if __name__ == '__main__':
     #Todo
     #More advanced normalization
     #figure out min max for one data sample and apply to all via modulation
-   # xAttrMinMax = normalizationByPollingSample(allTrainData, numAttributes)
+    # xAttrMinMax = normalizationByPollingSample(allTrainData, numAttributes)
 
     #xAll, yAll = convertDataToLTSMFormat(allTrainData, timeSequences)
 
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/matAndLilV2/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/2023-11-25T18;00;04.453888740/"
 
-    models = getModelConfig(timeSequences, numAttributes * windowSize)
+    models = getModelConfig(timeSequences, (numAttributes * windowSize) + 3)
 
     all_models_by_tp_and_tn = {};
     all_models_stats = []
@@ -578,7 +582,7 @@ if __name__ == '__main__':
             continue
         trainData = convertArffToDataFrame(f)
 
-        attr_min_max = normalizationByPollingSample(trainData, numAttributes, attr_min_max)
+        attr_min_max = normalizationByPollingSample(trainData, numAttributes, numMetaAttrs, attr_min_max)
         '''
         Can't use reshape, must do mannualy
         Take the 2D stretched window and make it to a 3D window represented by
@@ -593,8 +597,10 @@ if __name__ == '__main__':
         trainData = convertArffToDataFrame(f)
         participants.append(filename)
         x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences)
+
+        print_both('full input shape: ' + str(x_part.shape))
         yAll = np.concatenate((yAll, y_part), axis=0)
-        x_part = normalizeData(x_part, numAttributes, attr_min_max)
+        x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
         trainDataParticipants.append({'x': x_part, 'y': y_part})
 
     print_both("normalization data attributes (keep handy)")
@@ -603,7 +609,7 @@ if __name__ == '__main__':
     testData = convertArffToDataFrame(baseDirForTrainData + "/testData_500.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
     xTest, yTest = convertDataToLTSMFormat(testData, timeSequences)
-    xTest = normalizeData(xTest, numAttributes, attr_min_max)
+    xTest = normalizeData(xTest, windowSize, numAttributes, numMetaAttrs, attr_min_max)
 
     '''
     Weight biasing to help correct some issues with skewed class representation
@@ -630,8 +636,10 @@ if __name__ == '__main__':
             numPart = 0
             stats_by_participant = {}
             for optimizer in optimizers:
-                unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
-                    tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
+                if type(optimizer) != type(""):
+                    unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
+                else:
+                    unique_model_id = model_name + "-"
                 if hasattr(optimizer, 'beta_1'):
                     unique_model_id += " b1: " + str(optimizer.beta_1)
                 if hasattr(optimizer, 'weight_decay'):
@@ -640,7 +648,10 @@ if __name__ == '__main__':
                     unique_model_id += " ema:" + str(optimizer.use_ema)
                 print_both("-------------------------------")
                 print_both("unique model id: " + unique_model_id)
-                print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
+                if (type(optimizer) != type("")):
+                    print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
+                else:
+                    print_both("optimizer: " + optimizer)
                 print_both("-------------------------------")
                 for i in range(len(trainDataParticipants)):
 
@@ -733,8 +744,8 @@ if __name__ == '__main__':
                 print_both(conf_matrix)
                 #
                 all_models_stats.append({
-                    'model_name': model_name, 'optimizer': str(type(optimizer).__name__),
-                    'lr': str(tf.keras.backend.eval(optimizer.lr)),
+                    'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,
+                    'lr': str(tf.keras.backend.eval(optimizer.lr)) if (type(optimizer) != type('')) else '',
                     'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
                     'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
                     'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
@@ -742,7 +753,7 @@ if __name__ == '__main__':
                 })
                 # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
                 # Only save when using Linux keras 2.14!!!
-                model.save(resultDir + "/" + unique_model_id, save_format='h5')
+                model.save(resultDir + "/" + unique_model_id+".h5", save_format='h5')
 
 
 

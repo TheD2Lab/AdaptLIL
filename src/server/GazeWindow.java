@@ -178,7 +178,8 @@ public class GazeWindow implements Component {
      * @return
      */
     public Instance toDenseInstance(boolean reduceAttributeNames, boolean useAdditionalGazeMetrics) {
-
+        if (useAdditionalGazeMetrics)
+            this.calculateAdditionalGazeMetrics();
         //Uses Java.Lang
         /**
          * Uses Java.Lang reflection to access the RecXMLObject fields in the current gazeData queue
@@ -194,12 +195,13 @@ public class GazeWindow implements Component {
          */
         //Specify attributes list
         ArrayList<Attribute> attributeList = this.getAttributeList(reduceAttributeNames, useAdditionalGazeMetrics);
-        return getInstancesFromAttributeList(attributeList);
+        return getInstancesFromAttributeList(attributeList, useAdditionalGazeMetrics);
     }
 
     public INDArray toINDArray(boolean useAdditionalGazeMetrics) {
+        if (useAdditionalGazeMetrics)
+            this.calculateAdditionalGazeMetrics();
         List<Attribute> attributeList = this.getAttributeList(false, useAdditionalGazeMetrics);
-
 
         int numAttributes = attributeList.size();
 
@@ -221,18 +223,13 @@ public class GazeWindow implements Component {
                         //Check types and cast appropriately.
                         //If there is a primitive type
                         //use field.getDouble(recXmlObject)
-                        if (field.getType() == Double.class) {
+                        if (field.getType() == Double.class || field.getType() == Integer.class || field.getType() == Float.class) {
                             if (val != null)
-                                x[attrIndex] = (Double) val;
+                                x[attrIndex] = (double) val;
                             else
                                 x[attrIndex] = 0;
                         }
-                        else if (field.getType() == Float.class) {
-                            if (val != null)
-                                x[attrIndex] = (Double) val;
-                            else
-                                x[attrIndex] = 0;
-                        }
+
 //                        else if (field.getType() == String.class) {
 //                            if (val != null)
 //                                instance.setValue(attrIndex, (String) val);
@@ -254,7 +251,6 @@ public class GazeWindow implements Component {
 
         //Fill remaining with gaze metrics
         if (useAdditionalGazeMetrics) {
-            this.calculateAdditionalGazeMetrics();
             for (int i = attrIndex; i < numAttributes; ++i) {
 
                 for (Field field : gazeMetrics.getClass().getDeclaredFields()) {
@@ -269,14 +265,9 @@ public class GazeWindow implements Component {
                             //Check types and cast appropriately.
                             //If there is a primitive type
                             //use field.getDouble(recXmlObject)
-                            if (field.getType() == Double.class) {
+                            if (field.getType() == Double.class || field.getType() == Integer.class || field.getType() == Float.class) {
                                 if (val != null)
-                                    x[attrIndex] = (Double) val;
-                                else
-                                    x[attrIndex] = 0;
-                            } else if (field.getType() == Float.class) {
-                                if (val != null)
-                                    x[attrIndex] = (Double) val;
+                                    x[attrIndex] = (double) val;
                                 else
                                     x[attrIndex] = 0;
                             }
@@ -308,7 +299,7 @@ public class GazeWindow implements Component {
         //TODO get normalization values
         double[] normalizations = new double[]{};
 
-        return normalizations;
+        return x;
     }
 
     /**
@@ -362,7 +353,7 @@ public class GazeWindow implements Component {
         return attributeList;
     }
 
-    public DenseInstance getInstancesFromAttributeList(ArrayList<Attribute> attributeList) {
+    public DenseInstance getInstancesFromAttributeList(ArrayList<Attribute> attributeList, boolean useAdditionalGazeMetrics) {
 
 
         DenseInstance instance = new DenseInstance(attributeList.size());
@@ -384,6 +375,13 @@ public class GazeWindow implements Component {
                         //If there is a primitive type
                         //use field.getDouble(recXmlObject)
                         if (field.getType() == Double.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (Double) val);
+                            else
+                                instance.setValue(attrIndex, 0.0);
+                        }
+
+                        if (field.getType() == Integer.class) {
                             if (val != null)
                                 instance.setValue(attrIndex, (Double) val);
                             else
@@ -412,6 +410,58 @@ public class GazeWindow implements Component {
 
             }
         }
+
+        if (useAdditionalGazeMetrics) {
+            for (Field field : this.gazeMetrics.getClass().getDeclaredFields()) {
+                Object val = new Object();
+
+                try {
+
+                    //Only set values for
+                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+                        val = field.get(this.gazeMetrics);
+
+                        //Check types and cast appropriately.
+                        //If there is a primitive type
+                        //use field.getDouble(recXmlObject)
+                        if (field.getType() == Double.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (Double) val);
+                            else
+                                instance.setValue(attrIndex, 0.0);
+                        }
+
+                        if (field.getType() == Integer.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (Integer) val);
+                            else
+                                instance.setValue(attrIndex, 0.0);
+                        }
+                        else if (field.getType() == Float.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (Float) val);
+                            else
+                                instance.setValue(attrIndex, 0.0);
+                        }
+                        else if (field.getType() == String.class) {
+                            if (val != null)
+                                instance.setValue(attrIndex, (String) val);
+                            else
+                                instance.setValue(attrIndex, "");
+                        }
+
+                        //TODO, not sure how to do nulls for instance so it's left out.
+                        ++attrIndex;
+
+                    }
+                } catch (IllegalAccessException e) { //Field is private, cannot access, ignore in dense instance construciton
+                    continue;
+                }
+
+            }
+        }
+
+
 
         return instance;
     }
@@ -462,7 +512,6 @@ public class GazeWindow implements Component {
         }
 
         double meanFixationDuration = descriptiveStats.getMeanOfDoubles(fixationDurations);
-
 
 
         this.gazeMetrics = new GazeMetrics(numFixations, numSaccades, meanFixationDuration);

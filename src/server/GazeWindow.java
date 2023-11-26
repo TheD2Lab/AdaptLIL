@@ -511,10 +511,9 @@ public class GazeWindow implements Component {
             //Process Saccades
         }
 
-        double meanFixationDuration = descriptiveStats.getMeanOfDoubles(fixationDurations);
 
 
-        this.gazeMetrics = new GazeMetrics(numFixations, numSaccades, meanFixationDuration);
+        this.gazeMetrics = new GazeMetrics(fixations, saccadeList);
     }
 
     /**

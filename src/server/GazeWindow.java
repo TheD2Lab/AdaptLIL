@@ -208,45 +208,45 @@ public class GazeWindow implements Component {
         double[] x = new double[numAttributes];
         int attrIndex = 0;
 
-        for (int i = 0; i < gazeBuffer.length; ++i) {
-
-            RecXmlObject recXmlObject = gazeBuffer[i];
-            for (Field field : recXmlObject.getClass().getDeclaredFields()) {
-                Object val = new Object();
-
-                try {
-
-                    //Only set values for
-                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
-                        val = field.get(recXmlObject);
-
-                        //Check types and cast appropriately.
-                        //If there is a primitive type
-                        //use field.getDouble(recXmlObject)
-                        if (field.getType() == Double.class || field.getType() == Integer.class || field.getType() == Float.class) {
-                            if (val != null)
-                                x[attrIndex] = (double) val;
-                            else
-                                x[attrIndex] = 0;
-                        }
-
-//                        else if (field.getType() == String.class) {
+//        for (int i = 0; i < gazeBuffer.length; ++i) {
+//
+//            RecXmlObject recXmlObject = gazeBuffer[i];
+//            for (Field field : recXmlObject.getClass().getDeclaredFields()) {
+//                Object val = new Object();
+//
+//                try {
+//
+//                    //Only set values for
+//                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+//                        val = field.get(recXmlObject);
+//
+//                        //Check types and cast appropriately.
+//                        //If there is a primitive type
+//                        //use field.getDouble(recXmlObject)
+//                        if (field.getType() == Double.class || field.getType() == Integer.class || field.getType() == Float.class) {
 //                            if (val != null)
-//                                instance.setValue(attrIndex, (String) val);
+//                                x[attrIndex] = (double) val;
 //                            else
-//                                instance.setValue(attrIndex, "");
+//                                x[attrIndex] = 0;
 //                        }
-
-                        //TODO, not sure how to do nulls for instance so it's left out.
-                        ++attrIndex;
-
-                    }
-                } catch (IllegalAccessException e) { //Field is private, cannot access, ignore in dense instance construciton
-                    continue;
-                }
-
-            }
-        }
+//
+////                        else if (field.getType() == String.class) {
+////                            if (val != null)
+////                                instance.setValue(attrIndex, (String) val);
+////                            else
+////                                instance.setValue(attrIndex, "");
+////                        }
+//
+//                        //TODO, not sure how to do nulls for instance so it's left out.
+//                        ++attrIndex;
+//
+//                    }
+//                } catch (IllegalAccessException e) { //Field is private, cannot access, ignore in dense instance construciton
+//                    continue;
+//                }
+//
+//            }
+//        }
 
 
         //Fill remaining with gaze metrics
@@ -310,25 +310,25 @@ public class GazeWindow implements Component {
      */
     public ArrayList<Attribute> getAttributeList(boolean reduceAttributeNames, boolean useAdditionalGazeMetrics) {
         ArrayList<Attribute> attributeList = new ArrayList<>();
-        for (int i = 0; i < gazeBuffer.length; ++i) {
-            RecXmlObject recXmlObject = gazeBuffer[i];
-            for (int j = 0; j < recXmlObject.getClass().getDeclaredFields().length; ++j) {
-                Field field = recXmlObject.getClass().getDeclaredFields()[j];
-                if (field.canAccess(recXmlObject)) {
-                    //Skip strings and those with the IgnoreWekaAttribute annotation
-                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
-                        String attributeName = "";
-                        if (reduceAttributeNames)
-                            attributeName = i +"_"+ j;
-                        else
-                            attributeName = field.getName() + "_" + i;
-
-                        attributeList.add(new Attribute(attributeName));
-                    }
-
-                }
-            }
-        }
+//        for (int i = 0; i < gazeBuffer.length; ++i) {
+//            RecXmlObject recXmlObject = gazeBuffer[i];
+//            for (int j = 0; j < recXmlObject.getClass().getDeclaredFields().length; ++j) {
+//                Field field = recXmlObject.getClass().getDeclaredFields()[j];
+//                if (field.canAccess(recXmlObject)) {
+//                    //Skip strings and those with the IgnoreWekaAttribute annotation
+//                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+//                        String attributeName = "";
+//                        if (reduceAttributeNames)
+//                            attributeName = i +"_"+ j;
+//                        else
+//                            attributeName = field.getName() + "_" + i;
+//
+//                        attributeList.add(new Attribute(attributeName));
+//                    }
+//
+//                }
+//            }
+//        }
 
 
         if (useAdditionalGazeMetrics) {
@@ -359,57 +359,57 @@ public class GazeWindow implements Component {
         DenseInstance instance = new DenseInstance(attributeList.size());
         int attrIndex = 0;
 
-        for (int i = 0; i < gazeBuffer.length; ++i) {
-
-            RecXmlObject recXmlObject = gazeBuffer[i];
-            for (Field field : recXmlObject.getClass().getDeclaredFields()) {
-                Object val = new Object();
-
-                try {
-
-                    //Only set values for
-                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
-                        val = field.get(recXmlObject);
-
-                        //Check types and cast appropriately.
-                        //If there is a primitive type
-                        //use field.getDouble(recXmlObject)
-                        if (field.getType() == Double.class) {
-                            if (val != null)
-                                instance.setValue(attrIndex, (Double) val);
-                            else
-                                instance.setValue(attrIndex, 0.0);
-                        }
-
-                        if (field.getType() == Integer.class) {
-                            if (val != null)
-                                instance.setValue(attrIndex, (Double) val);
-                            else
-                                instance.setValue(attrIndex, 0.0);
-                        }
-                        else if (field.getType() == Float.class) {
-                            if (val != null)
-                                instance.setValue(attrIndex, (Float) val);
-                            else
-                                instance.setValue(attrIndex, 0.0);
-                        }
-                        else if (field.getType() == String.class) {
-                            if (val != null)
-                                instance.setValue(attrIndex, (String) val);
-                            else
-                                instance.setValue(attrIndex, "");
-                        }
-
-                        //TODO, not sure how to do nulls for instance so it's left out.
-                        ++attrIndex;
-
-                    }
-                } catch (IllegalAccessException e) { //Field is private, cannot access, ignore in dense instance construciton
-                    continue;
-                }
-
-            }
-        }
+//        for (int i = 0; i < gazeBuffer.length; ++i) {
+//
+//            RecXmlObject recXmlObject = gazeBuffer[i];
+//            for (Field field : recXmlObject.getClass().getDeclaredFields()) {
+//                Object val = new Object();
+//
+//                try {
+//
+//                    //Only set values for
+//                    if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
+//                        val = field.get(recXmlObject);
+//
+//                        //Check types and cast appropriately.
+//                        //If there is a primitive type
+//                        //use field.getDouble(recXmlObject)
+//                        if (field.getType() == Double.class) {
+//                            if (val != null)
+//                                instance.setValue(attrIndex, (Double) val);
+//                            else
+//                                instance.setValue(attrIndex, 0.0);
+//                        }
+//
+//                        if (field.getType() == Integer.class) {
+//                            if (val != null)
+//                                instance.setValue(attrIndex, (Double) val);
+//                            else
+//                                instance.setValue(attrIndex, 0.0);
+//                        }
+//                        else if (field.getType() == Float.class) {
+//                            if (val != null)
+//                                instance.setValue(attrIndex, (Float) val);
+//                            else
+//                                instance.setValue(attrIndex, 0.0);
+//                        }
+//                        else if (field.getType() == String.class) {
+//                            if (val != null)
+//                                instance.setValue(attrIndex, (String) val);
+//                            else
+//                                instance.setValue(attrIndex, "");
+//                        }
+//
+//                        //TODO, not sure how to do nulls for instance so it's left out.
+//                        ++attrIndex;
+//
+//                    }
+//                } catch (IllegalAccessException e) { //Field is private, cannot access, ignore in dense instance construciton
+//                    continue;
+//                }
+//
+//            }
+//        }
 
         if (useAdditionalGazeMetrics) {
             for (Field field : this.gazeMetrics.getClass().getDeclaredFields()) {

@@ -84,22 +84,26 @@ public class descriptiveStats {
 		}
 	}
 
-	public static double getMedianOfDoubles(List<Double> allDoubles){
+	public static Double getMedianOfDoubles(List<Double> allDoubles){
 		Collections.sort(allDoubles);
 		int middle = allDoubles.size()/2;
 		if(allDoubles.size()%2 == 1){
 			return allDoubles.get(middle);
-		}else{
+		}else if (allDoubles.size() > 0){
 			return (allDoubles.get(middle-1) + allDoubles.get(middle))/2.0;
+		} else {
+			return null;
 		}
 	}
 
-	public static double getMedian(Double[] allDoubles){
+	public static Double getMedian(Double[] allDoubles){
 		Arrays.sort(allDoubles);
 		if (allDoubles.length%2 == 1){
 			return allDoubles[allDoubles.length/2];
-		}else{
+		} else if (allDoubles.length > 0){
 			return (allDoubles[allDoubles.length/2-1] + allDoubles[allDoubles.length/2])/2;
+		} else {
+			return null;
 		}
 
 	}

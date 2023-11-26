@@ -24,43 +24,43 @@ public class GazeMetrics {
     @IgnoreWekaAttribute
     private List<Saccade> saccades;
 
-    public Double sumOfSaccadeLen;
-    public Double meanSaccadeLen;
-    public Double medianSaccadeLen;
-    public Double stdOfSaccadeLen;
-    public Double minSaccadeLen = Double.MAX_VALUE;
-    public Double maxSaccadeLen = Double.MIN_VALUE;
+    public Double sumOfSaccadeLen = 0.0;
+    public Double meanSaccadeLen=0.0;
+    public Double medianSaccadeLen=0.0;
+    public Double stdOfSaccadeLen=0.0;
+    public Double minSaccadeLen = 5000.0;
+    public Double maxSaccadeLen = 0.0;
 
-    public Double sumOfFixationDuration;
-    public Double meanFixationDuration;
-    public Double medianFixationDuration;
-    public Double stdOfFixationDuration;
-    public Double minFixationDuration = Double.MAX_VALUE;
-    public Double maxFixationDuration = Double.MIN_VALUE;
+    public Double sumOfFixationDuration = 0.0;
+    public Double meanFixationDuration=0.0;
+    public Double medianFixationDuration=0.0;
+    public Double stdOfFixationDuration=0.0;
+    public Double minFixationDuration = 5000.0;
+    public Double maxFixationDuration = 0.0;
 
-    public Double sumOfSaccadeDurations;
-    public Double meanSaccadeDuration;
-    public Double medianSaccadeDuration;
-    public Double stdOfSaccadeDurations;
-    public Double minSaccadeDuration = Double.MAX_VALUE;
-    public Double maxSaccadeDuration = Double.MIN_VALUE;
+    public Double sumOfSaccadeDurations = 0.0;
+    public Double meanSaccadeDuration=0.0;
+    public Double medianSaccadeDuration=0.0;
+    public Double stdOfSaccadeDurations=0.0;
+    public Double minSaccadeDuration = 5000.0;
+    public Double maxSaccadeDuration = 0.0;
 
-    public Double scanpathDuration;
-    public Double fixationToSaccadeRatio;
+    public Double scanpathDuration=0.0;
+    public Double fixationToSaccadeRatio=0.0;
 
-    public Double sumOfAbsoluteDegrees;
-    public Double meanAbsoluteDegree;
-    public Double medianAbsoluteDegree;
-    public Double stdOfAbsoluteDegrees;
-    public Double minAbsoluteDegree = Double.MAX_VALUE;
-    public Double maxAbsoluteDegree = Double.MIN_VALUE;
+    public Double sumOfAbsoluteDegrees = 0.0;
+    public Double meanAbsoluteDegree = 0.0;
+    public Double medianAbsoluteDegree = 0.0;
+    public Double stdOfAbsoluteDegrees = 0.0;
+    public Double minAbsoluteDegree = 5000.0;
+    public Double maxAbsoluteDegree = 0.0;
 
-    public Double sumOfRelativeDegrees;
-    public Double meanRelativeDegree;
-    public Double medianRelativeDegree;
-    public Double stdOfRelativeDegrees;
-    public Double minRelativeDegree = Double.MAX_VALUE;
-    public Double maxRelativeDegree = Double.MIN_VALUE;
+    public Double sumOfRelativeDegrees = 0.0;
+    public Double meanRelativeDegree = 0.0;
+    public Double medianRelativeDegree = 0.0;
+    public Double stdOfRelativeDegrees = 0.0;
+    public Double minRelativeDegree = 5000.0;
+    public Double maxRelativeDegree = 0.0;
 
 
 
@@ -160,6 +160,7 @@ public class GazeMetrics {
     
     public void calculateRelativeDegreeMetaData() {
         List<Double> relativeDegrees = new ArrayList<>();
+
         for (int i = 1; i < this.saccades.size(); ++i) {
             Double relativeDegree = this.saccades.get(i-1).calculateRelativeAngle(this.saccades.get(i).getPointB());
             this.sumOfRelativeDegrees += relativeDegree;
@@ -171,14 +172,17 @@ public class GazeMetrics {
             if (relativeDegree > this.maxRelativeDegree)
                 this.maxRelativeDegree = relativeDegree;
         }
-        
-        this.stdOfRelativeDegrees = descriptiveStats.getStDevOfDoubles(relativeDegrees);
-        this.medianRelativeDegree = descriptiveStats.getMedianOfDoubles(relativeDegrees);
-        this.meanRelativeDegree = this.sumOfRelativeDegrees / relativeDegrees.size();
+
+        if (relativeDegrees.size() > 0) {
+            this.stdOfRelativeDegrees = descriptiveStats.getStDevOfDoubles(relativeDegrees);
+            this.medianRelativeDegree = descriptiveStats.getMedianOfDoubles(relativeDegrees);
+            this.meanRelativeDegree = this.sumOfRelativeDegrees / relativeDegrees.size();
+        }
     }
     
     public void calculateAbsoluteDegreeMetaData() {
         List<Double> absoluteDegrees = new ArrayList<>();
+
         for (int i = 0; i < this.saccades.size(); ++i) {
             Double absoluteDegree = this.saccades.get(i).calculateAbsoluteAngle();
             this.sumOfAbsoluteDegrees += absoluteDegree;
@@ -191,9 +195,11 @@ public class GazeMetrics {
                 this.maxAbsoluteDegree = absoluteDegree;
         }
 
-        this.stdOfAbsoluteDegrees = descriptiveStats.getStDevOfDoubles(absoluteDegrees);
-        this.medianAbsoluteDegree = descriptiveStats.getMedianOfDoubles(absoluteDegrees);
-        this.meanAbsoluteDegree = this.sumOfAbsoluteDegrees / absoluteDegrees.size();
+        if (absoluteDegrees.size() > 0) {
+            this.stdOfAbsoluteDegrees = descriptiveStats.getStDevOfDoubles(absoluteDegrees);
+            this.medianAbsoluteDegree = descriptiveStats.getMedianOfDoubles(absoluteDegrees);
+            this.meanAbsoluteDegree = this.sumOfAbsoluteDegrees / absoluteDegrees.size();
+        }
     }
 
     public Integer getFixationCount() {

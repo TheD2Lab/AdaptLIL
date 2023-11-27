@@ -14,6 +14,7 @@ from sklearn import model_selection
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout
+from sklearn.model_selection import StratifiedKFold
 #https://github.com/timeseriesAI/tsai
 resultDir = str(datetime.datetime.now()).replace(":", "_").replace(".", ",")
 os.mkdir(resultDir)
@@ -136,20 +137,27 @@ def get_weight_bias(y_data):
     pos = len([i for i in y_data if i == 1])
     # print(pos)
     total = len(y_data)
-    weight_for_0 = (1 / neg) * (total)
-    weight_for_1 = (1 / pos) * (total)  # TODO, pay more attention to this weight distrib.
+    if (neg != 0):
+        weight_for_0 = (1 / neg) * (total)
+    else:
+        weight_for_0 = 0
+    if (pos != 0):
+        weight_for_1 = (1 / pos) * (total)  # TODO, pay more attention to this weight distrib.
+    else:
+        weight_for_1 = 0
     return {0: weight_for_0, 1: weight_for_1}
 
 
 def get_metrics_for_model():
     return [
+        tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+
         # tf.keras.metrics.BinaryCrossentropy(name='cross entropy'),  # same as model's loss
         # tf.keras.metrics.MeanSquaredError(name='Brier score'),
         tf.keras.metrics.TruePositives(name='tp'),
         # tf.keras.metrics.FalsePositives(name='fp'),
         tf.keras.metrics.TrueNegatives(name='tn'),
         # tf.keras.metrics.FalseNegatives(name='fn'),
-        tf.keras.metrics.BinaryAccuracy(name='accuracy'),
         tf.keras.metrics.Precision(name='precision'),
         # tf.keras.metrics.Recall(name='recall'),
         # tf.keras.metrics.AUC(name='auc'),
@@ -162,8 +170,8 @@ def get_optimizers():
     return [
        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
     #     "adam"
-        tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
-        tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
+    #     tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
+    #     tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
         
         #tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
@@ -259,7 +267,7 @@ def getModelConfig(timeSequences, attributes):
     input_shape=(timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=128, num_heads=8, ff_dim=8, num_transformer_blocks=8, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
+    transformer_model = build_transformer_model(input_shape, head_size=64, num_heads=8, ff_dim=4, num_transformer_blocks=8, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
     model_simple_ltsm = Sequential()
     model_simple_ltsm.add(LSTM(4, input_shape=(timeSequences, attributes)))
     model_simple_ltsm.add(Dense(8, activation='relu'))
@@ -327,15 +335,16 @@ def getModelConfig(timeSequences, attributes):
     and therefore can trigger it to forget or keep the memory for each 0,1 class.
     I.e., for each attribute, allocate 1 node per class.
     '''
-    stacked_lstm_v2.add(LSTM(150, input_shape=(timeSequences, attributes), return_sequences=True))
+    stacked_lstm_v2.add(LSTM(600, input_shape=(timeSequences, attributes), return_sequences=True))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(32, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(32, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(32))
+    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
+    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
+    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
+    stacked_lstm_v2.add(LSTM(600))
     # stacked_lstm.add(LSTM(64)))
-    stacked_lstm_v2.add(Dense(16))
+    stacked_lstm_v2.add(Dense(1200))
     stacked_lstm_v2.add(LeakyReLU())
-    stacked_lstm_v2.add(Dense(16))
+    stacked_lstm_v2.add(Dense(600))
     stacked_lstm_v2.add(LeakyReLU())
     stacked_lstm_v2.add(Dense(1, activation='sigmoid'))
 
@@ -481,17 +490,17 @@ def getModelConfig(timeSequences, attributes):
     model_ltsm_straight_to_output = Sequential()
     model_ltsm_straight_to_output.add(LSTM(8, input_shape=(timeSequences, attributes)))
     model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
-    models['transformer_model'] = transformer_model
+    # models['transformer_model'] = transformer_model
     #
-    models['stacked_lstm'] = stacked_lstm;
+    #models['stacked_lstm'] = stacked_lstm;
 
     models['stacked_lstm_v2'] = stacked_lstm_v2;
 
 
+    models['model_one_layer_ltsm'] = model_one_layer_ltsm
 
     models['model_simple_ltsm'] = model_simple_ltsm
     """
-    models['model_one_layer_ltsm'] = model_one_layer_ltsm
     models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
     models['model_bigger_lstm'] = model_bigger_lstm;
     models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
@@ -517,7 +526,7 @@ def getModelConfig(timeSequences, attributes):
     # '''Unique Architectures'''
     
     """
-    models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
+    # models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
     models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
 
     models['model_stacked_v6'] = model_stacked_v6
@@ -544,12 +553,13 @@ def getMinMax(data):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     timeSequences = 2
-    numAttributes = 29
+    numAttributes = 600
     numMetaAttrs = 0
     windowSize = 75
-    epochs = 50  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    epochs = 100  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    numFolds = 10;
     shuffle = False
-    callback = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=15, start_from_epoch=23, baseline=0.73, mode='max', restore_best_weights=False)
+    callback = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=20, start_from_epoch=50, baseline=0.73, mode='max', restore_best_weights=False)
 
     yAll = np.array([])
     print_both('epochs: ' + str(epochs))
@@ -570,7 +580,7 @@ if __name__ == '__main__':
 
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/2023-11-26T00;35;16.347031963/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/matAndLilBySet/"
 
     # models = getModelConfig(timeSequences, (numAttributes * windowSize) + numMetaAttrs)
     models = getModelConfig(timeSequences, numAttributes)
@@ -605,7 +615,7 @@ if __name__ == '__main__':
         print_both('full input shape: ' + str(x_part.shape))
         yAll = np.concatenate((yAll, y_part), axis=0)
         # x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
-        trainDataParticipants.append({'x': x_part, 'y': y_part})
+        trainDataParticipants.append({'x': x_part, 'y': y_part, 'fileName' : filename})
 
     print_both("normalization data attributes (keep handy)")
     print_both(json.dumps(str(attr_min_max)))
@@ -658,36 +668,50 @@ if __name__ == '__main__':
                     print_both("optimizer: " + optimizer)
                 print_both("-------------------------------")
                 for i in range(len(trainDataParticipants)):
-
+                    print_both("trainig on file: " + str(trainDataParticipants[i]['fileName']))
                     x_part = trainDataParticipants[i]['x']
                     y_part = trainDataParticipants[i]['y']
+                    # Define per-fold score containers <-- these are new
+                    acc_per_fold = []
+                    loss_per_fold = []
                     # Since we are training on 'profiles' of people, we should always shuffle their data for training.
-                    x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
-                                                                                      random_state=0, shuffle=True)
-                    print_both(x_train.shape)
-                    model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
-                                  metrics=get_metrics_for_model())
-                    # todo, we need to separate each participant
-                    # the model should train against only the participants train data to
-                    # have a representation of that person
-                    # then we retrain on the next person, so on and so forth.
-                    hist = model.fit(x_train, y_train,
-                                     validation_data=(x_val, y_val),
-                                     epochs=epochs,
-                                     class_weight=weights,
-                                     shuffle=shuffle,
-              #                       batch_size=64,
-                                     # callbacks=[callback]
-                                     )
-                    histories.append(hist)
-            #hist_avg = np.average(hist.histroy['val_accuracy'])
-            #print_both('avh: ' + str(hist_avg))
-                    if (np.average(hist.history['val_accuracy'][-10:]) < 0.50):
-                        if (participants[i] not in stats_by_participant):
-                            stats_by_participant[participants[i]] = []
+                    kfold = StratifiedKFold(n_splits=numFolds,shuffle=True)
+                    # x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
+                    #                                                                   random_state=0, shuffle=True)
+                    fold_no = 0
+                    for train, test in kfold.split(x_part, y_part):
+                        print_both(x_part.shape)
+                        model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
+                                      metrics=get_metrics_for_model())
+                        # todo, we need to separate each participant
+                        # the model should train against only the participants train data to
+                        # have a representation of that person
+                        # then we retrain on the next person, so on and so forth.
 
-                        stats_by_participant[participants[i]].append({'f': participants[i], 'model_id': model_name, 'val_accuracy' : np.average(hist.history['val_accuracy'][-20:])})
-                        print_both("Participant reached > 0.8 val_acc: " +participants[i])
+                        weights = get_weight_bias(y_part[train])
+
+                        print_both('class 0 weight: ' + str(weights[0]))
+                        print_both('class 1 weight: ' + str(weights[1]))
+                        hist = model.fit(x_part[train], y_part[train],
+                                         # validation_data=(x_val, y_val),
+                                         epochs=epochs,
+                                         class_weight=weights,
+                                         shuffle=shuffle,
+                  #                       batch_size=64,
+                                         callbacks=[callback]
+                                         )
+                        scores = model.evaluate(x_part[test], y_part[test], verbose=0)
+                        print_both(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1] * 100}%')
+                        fold_no += 1
+                        histories.append(hist)
+                #hist_avg = np.average(hist.histroy['val_accuracy'])
+                #print_both('avh: ' + str(hist_avg))
+                        if (np.average(hist.history['accuracy'][-20:]) < 0.50):
+                            if (participants[i] not in stats_by_participant):
+                                stats_by_participant[participants[i]] = []
+
+                            stats_by_participant[participants[i]].append({'f': participants[i], 'model_id': model_name, 'accuracy' : np.average(hist.history['accuracy'][-20:])})
+                            print_both("Participant reached > 0.8 val_acc: " +participants[i])
                 '''
                 Done fitting on multiple participants, time for real world data testing
                 '''

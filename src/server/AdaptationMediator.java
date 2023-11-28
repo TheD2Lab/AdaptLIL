@@ -85,13 +85,17 @@ public class AdaptationMediator extends Mediator {
                 //Must be recent and contained within the current window.
                 //Get last time used and current time.
                 Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
-                INDArray gazeWindowInput = gazeWindow.toINDArray(true);
+                INDArray gazeWindowInput = gazeWindow.toINDArray(false);
                 gazeWindowINDArrays.add(gazeWindowInput);
                 if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
 
                     //Error (can only insert a scalar in to another scalar
                     //Find way to join
-                    INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1));
+                    INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1)).reshape(
+                            new int[]{1, //Only feed 1 block of sequences at a time.
+                                    this.numSequencesForClassification, // Num sequences to feed
+                                    (int) gazeWindowINDArrays.get(0).shape()[0] //Num attributes per sequence
+                            });
                     System.out.println("classification shape: " + Arrays.toString(classificationInput.shape()));
                     Integer classificationResult = classifierModel.predict(classificationInput)[0]; //TODO
                     System.out.println("classified as : " + classificationResult);

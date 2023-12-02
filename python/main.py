@@ -11,10 +11,11 @@ from csv import DictWriter
 from keras.callbacks import CSVLogger
 from scipy.io import arff
 from sklearn import model_selection
+from sklearn.model_selection import StratifiedKFold, LeaveOneOut
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
-from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout
-from sklearn.model_selection import StratifiedKFold
+from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout, MaxPooling1D, Conv1D
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 #https://github.com/timeseriesAI/tsai
 resultDir = str(datetime.datetime.now()).replace(":", "_").replace(".", ",")
 os.mkdir(resultDir)
@@ -168,7 +169,7 @@ def get_metrics_for_model():
 
 def get_optimizers():
     return [
-       tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+       # tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
     #     "adam"
     #     tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
     #     tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
@@ -263,7 +264,7 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
     outputs = layers.Dense(1, activation='sigmoid')(x) #2 here is because we have a binary class.
     return tf.keras.Model(inputs, outputs)
 
-def getModelConfig(timeSequences, attributes):
+def getModelConfig(timeSequences, attributes, windowSize):
     input_shape=(timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
@@ -327,6 +328,41 @@ def getModelConfig(timeSequences, attributes):
     stacked_lstm.add(LeakyReLU())
     stacked_lstm.add(Dense(1, activation='sigmoid'))
 
+    conv_stacked_lstm = Sequential()
+    '''
+    10-27-2023 I am noticing a bigger first lstm layer followed by two subsequent smaller lstm layers (size 16 each) and a dense layer of size 16
+    works better when the first layer is larger than the other layers
+    It's possible that 148 was a good sweet spot because there are 75 attributes, this leads one lstm node per attribute
+    and therefore can trigger it to forget or keep the memory for each 0,1 class.
+    I.e., for each attribute, allocate 1 node per class.
+    '''
+    '''
+    Using pure point of gaze, applying convolution to a dense layer, some dropout and max pooling, and then the lstm followed by another dense layer and the prediction
+    Based on paper "Toward a deep convolutional LSTM for eye gaze spatiotemporal data sequence classification
+    '''
+    kernelSize = 2 #filters is the num windows, and 2 b/c (x,y)
+    filterSize = windowSize
+    
+    conv_stacked_lstm.add(
+        Conv1D(25, kernelSize, input_shape=(timeSequences, attributes))
+    ) #filter size of 3 to split the window into three frames.
+
+#    conv_stacked_lstm.add(
+ #       MaxPooling1D(pool_size=1)
+#    )
+    conv_stacked_lstm.add(Dropout(0.10))
+    conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), return_sequences=True, dropout=0.2))
+    conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), dropout=0.2))
+    # stacked_lstm.add(LSTM(128, return_sequences=True))
+#    conv_stacked_lstm.add(LSTM(1200, return_sequences=True, go_backwards=True, dropout=0.15, recurrent_dropout=0.2))
+    # stacked_lstm_v2.add(LSTM(600, return_sequences=True,dropout=0.15))
+#    conv_stacked_lstm.add(LSTM(1200, dropout=0.15, go_backwards=True))
+    # stacked_lstm.add(LSTM(64)))
+    #conv_stacked_lstm.add(Dropout(0.10))
+#    conv_stacked_lstm.add(Dense(int(attributes/kernelSize)))
+    conv_stacked_lstm.add(LeakyReLU())
+    conv_stacked_lstm.add(Dense(1, activation='sigmoid'))
+
     stacked_lstm_v2 = Sequential()
     '''
     10-27-2023 I am noticing a bigger first lstm layer followed by two subsequent smaller lstm layers (size 16 each) and a dense layer of size 16
@@ -335,16 +371,14 @@ def getModelConfig(timeSequences, attributes):
     and therefore can trigger it to forget or keep the memory for each 0,1 class.
     I.e., for each attribute, allocate 1 node per class.
     '''
-    stacked_lstm_v2.add(LSTM(600, input_shape=(timeSequences, attributes), return_sequences=True))
+    stacked_lstm_v2.add(LSTM(1200, input_shape=(timeSequences, attributes), return_sequences=True, go_backwards=True, dropout=0.4, recurrent_dropout=0.2))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600))
+    stacked_lstm_v2.add(LSTM(1200, return_sequences=True, go_backwards=True, dropout=0.15, recurrent_dropout=0.2))
+    #stacked_lstm_v2.add(LSTM(600, return_sequences=True,dropout=0.15))
+    stacked_lstm_v2.add(LSTM(1200,dropout=0.15, go_backwards=True))
     # stacked_lstm.add(LSTM(64)))
+    stacked_lstm_v2.add(Dropout(0.10))
     stacked_lstm_v2.add(Dense(1200))
-    stacked_lstm_v2.add(LeakyReLU())
-    stacked_lstm_v2.add(Dense(600))
     stacked_lstm_v2.add(LeakyReLU())
     stacked_lstm_v2.add(Dense(1, activation='sigmoid'))
 
@@ -494,6 +528,7 @@ def getModelConfig(timeSequences, attributes):
     #
     #models['stacked_lstm'] = stacked_lstm;
 
+    models['conv_stacked_lstm'] = conv_stacked_lstm
     models['stacked_lstm_v2'] = stacked_lstm_v2;
 
 
@@ -553,13 +588,14 @@ def getMinMax(data):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     timeSequences = 2
-    numAttributes = 600
+    numAttributes = 150
     numMetaAttrs = 0
     windowSize = 75
-    epochs = 100  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    #TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
+    epochs = 8  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     numFolds = 10;
     shuffle = False
-    callback = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=20, start_from_epoch=50, baseline=0.73, mode='max', restore_best_weights=False)
+    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10, start_from_epoch=15, baseline=0.75, mode='min', restore_best_weights=True)
 
     yAll = np.array([])
     print_both('epochs: ' + str(epochs))
@@ -580,20 +616,24 @@ if __name__ == '__main__':
 
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/matAndLilBySet/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/bpog only/"
 
     # models = getModelConfig(timeSequences, (numAttributes * windowSize) + numMetaAttrs)
-    models = getModelConfig(timeSequences, numAttributes)
+    models = getModelConfig(timeSequences, numAttributes, windowSize)
     all_models_by_tp_and_tn = {};
     all_models_stats = []
     trainDataParticipants = []
     attr_min_max = {}
+    bc = 0
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
         print_both(filename)
         # Skip non trainData files.
         if "trainData" not in filename:
             continue
+        #if bc > 0:
+        #    continue
+        bc += 1
         trainData = convertArffToDataFrame(f)
 
         attr_min_max = normalizationByPollingSample(trainData, numAttributes, numMetaAttrs, attr_min_max)
@@ -603,11 +643,15 @@ if __name__ == '__main__':
         (samples,windowSize,attributes)
         Also pair the correct answers together.
         '''
+    cc = 0
     participants = []
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
         if "trainData" not in filename:
             continue
+        #if cc > 0:
+        #    continue
+        cc += 1 
         trainData = convertArffToDataFrame(f)
         participants.append(filename)
         x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences, numMetaAttrs)
@@ -620,7 +664,7 @@ if __name__ == '__main__':
     print_both("normalization data attributes (keep handy)")
     print_both(json.dumps(str(attr_min_max)))
 
-    testData = convertArffToDataFrame(baseDirForTrainData + "/testData_500.0msec_window_1.arff")
+    testData = convertArffToDataFrame("/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/bpog only/" + "/testData_500.0msec_window_1.arff")
     # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
     xTest, yTest = convertDataToLTSMFormat(testData, timeSequences, numMetaAttrs)
     # xTest = normalizeData(xTest, windowSize, numAttributes, numMetaAttrs, attr_min_max)
@@ -695,10 +739,10 @@ if __name__ == '__main__':
                         hist = model.fit(x_part[train], y_part[train],
                                          # validation_data=(x_val, y_val),
                                          epochs=epochs,
-                                         class_weight=weights,
+                                         # class_weight=weights,
                                          shuffle=shuffle,
                   #                       batch_size=64,
-                                         callbacks=[callback]
+                  #                         callbacks=[callback]
                                          )
                         scores = model.evaluate(x_part[test], y_part[test], verbose=0)
                         print_both(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1] * 100}%')
@@ -770,6 +814,10 @@ if __name__ == '__main__':
                 print_both('putting in conf matrix')
                 all_models_by_tp_and_tn[unique_model_id] = conf_matrix
                 print_both(conf_matrix)
+
+                # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
+                # Only save when using Linux keras 2.14!!!
+                model.save(resultDir + "/" + unique_model_id+".h5", save_format='h5')
                 #
                 all_models_stats.append({
                     'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,
@@ -779,9 +827,6 @@ if __name__ == '__main__':
                     'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
                     'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
                 })
-                # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
-                # Only save when using Linux keras 2.14!!!
-                model.save(resultDir + "/" + unique_model_id+".h5", save_format='h5')
 
 
 

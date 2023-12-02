@@ -61,7 +61,7 @@ public class OntoMapCsv {
      * @param filterForLinkedList
      * @return
      */
-    private static Map<String, List<File>> mapParticipantsToStudyData(String dir, boolean isGazePointFolder, boolean filterForLinkedList) {
+    private static Map<String, List<File>> mapParticipantsToStudyData(String dir, boolean isGazePointFolder, String filter) {
         Map<String, List<File>> filteredFiles = new HashMap<>();
         File directoryFile = new File(dir);
         Pattern participantNamePattern = Pattern.compile("P\\d+");
@@ -84,7 +84,8 @@ public class OntoMapCsv {
 
                         //check if it has .LIL.
                         if (gpFileORDir.getName().contains("LIL") || gpFileORDir.getName().contains("Matrix")) {
-
+                            if (filter.equals("matrix") && gpFileORDir.getName().contains("Matrix"))
+                                continue;
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
@@ -104,8 +105,8 @@ public class OntoMapCsv {
                         continue;
 
                     //look through files of raw data
-                    FilenameFilter filter = (dir1, name) -> !name.equals("Raw Data");
-                    File[] answerFiles = fileOrDir.listFiles(filter);
+                    FilenameFilter rawDataFilter = (dir1, name) -> !name.equals("Raw Data");
+                    File[] answerFiles = fileOrDir.listFiles(rawDataFilter);
                     for (File taskFileOrDir : answerFiles) {
                         if (taskFileOrDir.getName().contains("xlsx") || taskFileOrDir.isDirectory()) //ignore, cant read this in opencsv
                             continue;
@@ -113,6 +114,8 @@ public class OntoMapCsv {
                         //check if it has .LIL.
 
                         if (taskFileOrDir.getName().toLowerCase().contains("list") || taskFileOrDir.getName().toLowerCase().contains("matrix")) {
+                            if (filter.equals("matrix") && taskFileOrDir.getName().contains("matrix"))
+                                continue;
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
@@ -132,8 +135,8 @@ public class OntoMapCsv {
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
-        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Gazepoint", true, true);
-        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Task Data", false, true);
+        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Gazepoint", true, "matrix");
+        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Task Data", false, "matrix");
         Map<String, Participant> participantsById = new HashMap<>();
 
 
@@ -245,9 +248,11 @@ public class OntoMapCsv {
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
 
 
-            File[] answersFiles = new File[]{p.getAnatomyAnswersFile()
-//            };
-                    , p.getConfAnswersFile()};
+            File[] answersFiles = new File[]{
+                    p.getAnatomyAnswersFile()
+            };
+//                    ,
+//                    p.getConfAnswersFile()};
 
             for (File answerFile : answersFiles){
                 List<String> timeCutoffs = new ArrayList<>();
@@ -324,9 +329,9 @@ public class OntoMapCsv {
                         //any window where the user got it wrong, is grouped into the bad section -> 0
                         //Hopefully we can then compute a probability that they will get it right
                         //given the current gaze data.
-                        Instance windowInstance = participantWindow.toDenseInstance(false, true);
+                        Instance windowInstance = participantWindow.toDenseInstance(false, false);
 
-                        Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false, true), 1);
+                        Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false, false), 1);
                         Attribute correctAttribute = new Attribute("correct", nominalValues);
                         dataset.insertAttributeAt(correctAttribute, dataset.numAttributes());
                         windowInstance.insertAttributeAt(windowInstance.numAttributes()); //Insert a slot for the correct attribute for the window instance

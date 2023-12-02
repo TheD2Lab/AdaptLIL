@@ -15,6 +15,7 @@ from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout
+import matplotlib.pyplot as plt
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def convertArffToDataFrame(fileName):
@@ -60,12 +61,12 @@ if __name__ == '__main__':
     timeSequences = 2
     numAttributes = 600
     numMetaAttrs = 0
-
-    testDataDir = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/bpog only/"
-    testData = convertArffToDataFrame(testDataDir + "/trainData_500.0mssec_P43 p43.conf.list.csv.arff")
+    testPID = 5
+    testDataDir = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/bpog only anat/"
+    testData = convertArffToDataFrame(testDataDir + "/trainData_500.0mssec_P"+str(testPID)+" p"+str(testPID)+".anatomy.list.csv.arff")
     models = []
     # models.append(tf.keras.models.load_model("/home/notroot/Desktop/d2lab/gazepoint/python/2023-12-01 09_16_12,973606/stacked_lstm_v2-Adagrad0,008 wdecay: None ema:False.h5"));
-    models.append(tf.keras.models.load_model("/home/notroot/Desktop/d2lab/gazepoint/python/2023-12-01 15_00_56,728099/stacked_lstm_v2-Adam0,0014 b1: 0.9 wdecay: None ema:False.h5"));
+    models.append(tf.keras.models.load_model("/home/notroot/Desktop/d2lab/gazepoint/python/2023-12-02 11_46_02,445150/conv_stacked_lstm-Adam0,0014 b1: 0.9 wdecay: None ema:False.h5"));
     xTest, yTest = convertDataToLTSMFormat(testData, timeSequences, numMetaAttrs)
     # xTest = normalizeData(xTest, windowSize, numAttributes, numMetaAttrs, attr_min_max)
 
@@ -83,6 +84,9 @@ if __name__ == '__main__':
     summed_y_hats = np.sum(y_hats, axis=0)
     summed_y_hats = np.mean(y_hats, axis=0)
     outcomes = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in summed_y_hats]
+    print(str(outcomes))
+    plt.plot(np.array(range(0,len(outcomes))), np.array(outcomes))
+    plt.show()
 
     conf_matrix = sklearn.metrics.confusion_matrix(yTest, outcomes, labels=[1.0, 0.0])
     print(conf_matrix)

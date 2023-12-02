@@ -37,7 +37,10 @@ public class OntoMapCsv {
                 "P41",
                 "P44",
                 "P57",
-                "P75"
+                "P75",
+                "P43", //4 min on conf, 8 on anat
+                "P51", //Spent 10 min in total
+                "P63", //very poor eval score.
         });
     }
 
@@ -200,19 +203,20 @@ public class OntoMapCsv {
 
     }
 
-    private static List<String> getRandomTestParticipantsIds(int numTestParticipants) {
-        String[] testParticipants = new String[numTestParticipants];
+    private static List<String> getRandomTestParticipantsIds(int numTestParticipants, HashMap<String, Participant> mapParticipants) {
+        List<String> testParticipants = new ArrayList<>();
         List<String> excludedParticipants = OntoMapCsv.discardedParticipantIds();
         Random random = new Random();
         for (int i = 0; i < numTestParticipants; ++i) {
             int randomId = random.nextInt(1,81);
             String randParticipantId = "P" + randomId;
-            while (excludedParticipants.contains(randParticipantId)) {
+            while (excludedParticipants.contains(randParticipantId) || testParticipants.contains(randParticipantId)
+            || !mapParticipants.containsKey(randParticipantId)) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
                 randParticipantId = "P" + random.nextInt(1, 81);
             }
-            testParticipants[i] = randParticipantId;
+            testParticipants.add(randParticipantId);
         }
-        return List.of(testParticipants);
+        return testParticipants;
     }
 
     private static void logTestParticipants(File outputDir, List<String> testParticipantIds) throws IOException {
@@ -222,6 +226,12 @@ public class OntoMapCsv {
             testParticipantsFile.write(participantId+"\n");
         }
         testParticipantsFile.close();
+    }
+    public static HashMap<String, Participant> mapParticipantsToId(Participant[] participants) {
+        HashMap<String, Participant> map = new HashMap<>();
+        for (int i = 0; i <participants.length; ++i)
+            map.put(participants[i].getId(), participants[i]);
+        return map;
     }
     public static void testParticipantInstances(Participant[] participants) throws Exception {
         //Use DenseInstance to create on the fly instances.
@@ -236,8 +246,8 @@ public class OntoMapCsv {
         Instances trainDataInstances = null;
         Instances testDataInstances = null;
         List<String> nominalValues = new ArrayList<>(Arrays.asList("1", "0"));
-
-        List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData);
+        HashMap<String, Participant> participantById = OntoMapCsv.mapParticipantsToId(participants);
+        List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData, participantById);
 
         File outputDir = new File("/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/" + LocalDateTime.now().toString().replace(':', ';'));
         outputDir.mkdirs();
@@ -249,10 +259,10 @@ public class OntoMapCsv {
 
 
             File[] answersFiles = new File[]{
-                    p.getAnatomyAnswersFile()
-            };
+//                    p.getAnatomyAnswersFile()
+//            };
 //                    ,
-//                    p.getConfAnswersFile()};
+                    p.getConfAnswersFile()};
 
             for (File answerFile : answersFiles){
                 List<String> timeCutoffs = new ArrayList<>();
@@ -269,9 +279,9 @@ public class OntoMapCsv {
                 answersCsvReader.readNext(); //Skip first line.
                 int timeStampIndex = 8;
                 int correctIndex = 6;
-                while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() < 14) {
+                while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() < 15) {
                     String timeCutoff = cells[timeStampIndex];
-                    Boolean rightOrWrong = cells[correctIndex].trim().contains("1");
+                    Boolean rightOrWrong = cells[correctIndex] != null && cells[correctIndex].trim().contains("1");
 
                     if (rightOrWrong)
                         numCorrect++;
@@ -349,9 +359,11 @@ public class OntoMapCsv {
                                 participantTrainingInstances.put(p.getId(), new ArrayList<Instance>());
 
                             participantTrainingInstances.get(p.getId()).add(windowInstance);
-//                            trainInstanceList.add(windowInstance);
                         } else {
-                            testInstanceList.add(windowInstance);
+                            if (!participantTestInstances.containsKey(p.getId()))
+                                participantTestInstances.put(p.getId(), new ArrayList<Instance>());
+
+                            participantTestInstances.get(p.getId()).add(windowInstance);
                         }
                         //Clear window data by repointing to new instantiation
                         participantWindow.flush();
@@ -394,79 +406,26 @@ public class OntoMapCsv {
                     trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
                     OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath() + "/trainData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
                     trainDataInstances.clear();
+                } else {
+                    List<Instance> participantTestInstanceList = participantTestInstances.get(p.getId());
+                    ArrayList<Attribute> attributeList = Collections.list(participantTestInstanceList.get(0).enumerateAttributes());
+                    attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
+                    testDataInstances = new Instances("OntoMapTestGaze", attributeList, participantTestInstanceList.get(0).numAttributes());
+
+                    for (int i = 1; i < participantTestInstanceList.size(); ++i) {
+                        testDataInstances.add(participantTestInstanceList.get(i));
+                    }
+                    testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
+                    OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath() + "/testData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
+                    testDataInstances.clear();
                 }
                 fixationFileReader.close();
                 fixationCsvReader.close();
             }
             System.out.println("processed: " + p.getId());
 
-
         }
 
-//        Classifier[] classifiers = WekaExperiment.getClassificationClassifiers();
-//        HashMap<String, HashMap<String, Double>> totalResultsOfClassifiers = new HashMap<>();
-//        for (Classifier c : classifiers) {
-//            totalResultsOfClassifiers.put(c.getClass().getName(), new HashMap<>());
-//        }
-        int totalNumInstance = 0;
-
-        ArrayList<Attribute> attributeList = Collections.list(testInstanceList.get(0).enumerateAttributes());
-        attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
-        //Merging all instances together again.
-//        trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
-        testDataInstances = new Instances("OntoMapTestGaze", attributeList, testInstanceList.get(0).numAttributes());
-
-        //Set Class index for last attribute (correct attr).
-//        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
-        testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
-
-//        for (int i = 1; i < trainInstanceList.size(); ++i) {
-//            trainDataInstances.add(trainInstanceList.get(i));
-//        }
-        for (int i = 1; i < testInstanceList.size(); ++i) {
-            testDataInstances.add(testInstanceList.get(i));
-        }
-
-//        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
-        testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
-
-
-//        OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
-        OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath()+"/testData_"+windowSizeInMilliseconds+"msec_window_1.arff");
-        /**
-        Instances trainDataInstance = allInstances.trainCV(2, 0);
-        Instances testDataInstance = trainDataInstance.testCV(2, 0);
-        testDataInstance.setClassIndex(testDataInstance.numAttributes() - 1);
-
-        HashMap<String, HashMap<String, Double>> resultsOfClassifiers = MachineLearningExperiments.evaluateAllClassifiers(classifiers, trainDataInstance, testDataInstance);
-        for (String classifierName : resultsOfClassifiers.keySet()) {
-            for (String resultKey : resultsOfClassifiers.get(classifierName).keySet()) {
-                if (totalResultsOfClassifiers.get(classifierName).containsKey(resultKey)) {
-                    double newAvg = totalResultsOfClassifiers.get(classifierName).get(resultKey) +
-                            resultsOfClassifiers.get(classifierName).get(resultKey);
-
-                    totalResultsOfClassifiers.get(classifierName).put(resultKey, newAvg);
-                } else {
-                    totalResultsOfClassifiers.get(classifierName).put(resultKey, resultsOfClassifiers.get(classifierName).get(resultKey));
-                }
-            }
-        }
-         **/
-        //
-        //System.out.println("-----------------------------------");
-        //System.out.println("--------------Averages-------------");
-        //System.out.println("-----------------------------------");
-        //
-        //for (String classifierName : totalResultsOfClassifiers.keySet()) {
-        //    System.out.println("--------classifier: " + classifierName + " -------------");
-        //    for (String resultKey : totalResultsOfClassifiers.get(classifierName).keySet()) {
-        //        double avgVal = totalResultsOfClassifiers.get(classifierName).get(resultKey) / testDataFiles.size();
-        //        System.out.println("key: " + resultKey + " Avg Val: " + avgVal);
-        //    }
-        //}
-        //
-        //System.out.printf("%d/%d Process Complete ^^^\n==============================", i + 1, trainDataFiles.size());
-        //
     }
 
     public static RecXmlObject getRecXmlObjectFromCells(List<String> headerRow, String[] cells) {

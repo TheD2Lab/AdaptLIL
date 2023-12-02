@@ -11,7 +11,7 @@ from csv import DictWriter
 from keras.callbacks import CSVLogger
 from scipy.io import arff
 from sklearn import model_selection
-from sklearn.model_selection import StratifiedKFold, LeaveOneOut
+from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout, MaxPooling1D, Conv1D
@@ -345,11 +345,11 @@ def getModelConfig(timeSequences, attributes, windowSize):
     
     conv_stacked_lstm.add(
         Conv1D(25, kernelSize, input_shape=(timeSequences, attributes))
-    ) #filter size of 3 to split the window into three frames.
+    ) #filter size of 25 to split the window into three frames.
 
-#    conv_stacked_lstm.add(
- #       MaxPooling1D(pool_size=1)
-#    )
+    conv_stacked_lstm.add(
+        MaxPooling1D(pool_size=1)
+    )
     conv_stacked_lstm.add(Dropout(0.10))
     conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), return_sequences=True, dropout=0.2))
     conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), dropout=0.2))
@@ -358,8 +358,8 @@ def getModelConfig(timeSequences, attributes, windowSize):
     # stacked_lstm_v2.add(LSTM(600, return_sequences=True,dropout=0.15))
 #    conv_stacked_lstm.add(LSTM(1200, dropout=0.15, go_backwards=True))
     # stacked_lstm.add(LSTM(64)))
-    #conv_stacked_lstm.add(Dropout(0.10))
-#    conv_stacked_lstm.add(Dense(int(attributes/kernelSize)))
+    conv_stacked_lstm.add(Dropout(0.10))
+    conv_stacked_lstm.add(Dense(int(attributes/kernelSize)))
     conv_stacked_lstm.add(LeakyReLU())
     conv_stacked_lstm.add(Dense(1, activation='sigmoid'))
 

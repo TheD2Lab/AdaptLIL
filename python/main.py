@@ -2,6 +2,7 @@ import datetime
 import json
 import numpy as np
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import shutil
 import sklearn.metrics
 import sys
@@ -15,7 +16,6 @@ from sklearn.model_selection import StratifiedKFold, LeavePOut
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout, MaxPooling1D, Conv1D
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 #https://github.com/timeseriesAI/tsai
 resultDir = str(datetime.datetime.now()).replace(":", "_").replace(".", ",")
 os.mkdir(resultDir)
@@ -592,10 +592,10 @@ if __name__ == '__main__':
     numMetaAttrs = 0
     windowSize = 75
     #TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
-    epochs = 8  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    epochs = 50  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     numFolds = 14;
     shuffle = False
-    useLoo = True
+    useLoo = False
     if useLoo:
         print_both("using Leave one out")
     else:
@@ -725,9 +725,10 @@ if __name__ == '__main__':
                     acc_per_fold = []
                     loss_per_fold = []
                     # Since we are training on 'profiles' of people, we should always shuffle their data for training.
-                    loo = LeavePOut(windowSize)
-                    print_both("loo splits: " + str(loo.get_n_splits(x_part)))
-                    kfold = StratifiedKFold(n_splits=numFolds,shuffle=True)
+                    loo = LeavePOut(1)
+                    if useLoo:
+                        print_both("loo splits: " + str(loo.get_n_splits(x_part)))
+                    kfold = StratifiedKFold(n_splits=numFolds,shuffle=False)
                     # x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
                     #                                                                   random_state=0, shuffle=True)
                     fold_no = 0
@@ -736,7 +737,7 @@ if __name__ == '__main__':
                     else:
                         split_enumerator = kfold.split(x_part, y_part);
 
-                    for fold_no, (train, test) in split_enumerator:
+                    for train, test in split_enumerator:
                         model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
                                       metrics=get_metrics_for_model())
                         # todo, we need to separate each participant
@@ -761,8 +762,9 @@ if __name__ == '__main__':
                   #                       batch_size=64,
                   #                         callbacks=[callback]
                                          )
-                        scores = model.evaluate(x_part[test], y_part[test], verbose=0)
-                        print_both(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1] * 100}%')
+                        #scores = model.evaluate(x_part[test], y_part[test], verbose=0)
+                        #print_both(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1] * 100}%')
+                        print_both('fold: ' + str(fold_no))
                         #fold_no += 1
                         histories.append(hist)
                 #hist_avg = np.average(hist.histroy['val_accuracy'])

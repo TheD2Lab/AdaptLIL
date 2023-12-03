@@ -259,10 +259,10 @@ public class OntoMapCsv {
 
 
             File[] answersFiles = new File[]{
-//                    p.getAnatomyAnswersFile()
-//            };
+                    p.getAnatomyAnswersFile()
+            };
 //                    ,
-                    p.getConfAnswersFile()};
+//                    p.getConfAnswersFile()};
 
             for (File answerFile : answersFiles){
                 List<String> timeCutoffs = new ArrayList<>();

@@ -35,7 +35,9 @@ public class AdaptationMediator extends Mediator {
     //Thresholds & Constants
 
     private double thresholdForInvokation;
-    private double smallChangeThreshold = 0.10;
+    private double increaseStrengthThresh = 0.20;
+    private double remainThresh = 0.8;
+    private double smallChangeThreshold = 0.20;
     private double bigChangeThreshold = 0.30;
 
     private int numSequencesForClassification;
@@ -63,6 +65,8 @@ public class AdaptationMediator extends Mediator {
         //This will work as the synchronization between all objects as well.
         List<INDArray> gazeWindowINDArrays = new ArrayList<>(this.numSequencesForClassification);
         System.out.println("mediator started");
+        int[] classifications = new int[5];
+        int classificationIndex = 0;
         while (runAdapations) {
 
             //No websockets connected, do not begin reading from gaze buffer. (Note, we may need to flush buffer once we connect for the first time)
@@ -98,21 +102,26 @@ public class AdaptationMediator extends Mediator {
                             });
                     System.out.println("classification shape: " + Arrays.toString(classificationInput.shape()));
                     Integer classificationResult = classifierModel.predict(classificationInput)[0]; //TODO
+                    classifications[classificationIndex++] = classificationResult;
                     System.out.println("classified as : " + classificationResult);
                     Integer participantWrongOrRight = null;
                     Float taskCompletionTime = null; //grab from websocket
                     //Calculate perilScore (risk score)
-                    double curRiskScore = this.calculateRiskScore(classificationResult); //TODO
+                    double curRiskScore = this.calculateRiskScore(classificationResult);
                     double lastRiskScore = this.getLastRiskScore();
                     double riskScoreChange = curRiskScore - lastRiskScore;
-                    System.out.println("risk Score: " + curRiskScore);
-                    if (riskScoreChange > this.thresholdForInvokation || this.currentAdaptations.isEmpty()) {
-                        System.out.println("invoking adaptation change");
-                        this.invokeAdaptation(riskScoreChange);
+                    System.out.println("# of classifications to begin intervention has occured : " + classifications.length);
+                    if (classificationIndex == classifications.length) {
+                        double score = 0.0;
+                        int numClassOne = 0;
+                        for (int i = 0; i < classifications.length; ++i)
+                            if (classifications[i] == 1)
+                                numClassOne++;
+                        score = (double) numClassOne / classifications.length;
+                        this.invokeAdaptation(score);
+                        this.observedAdaptation.setScore(curRiskScore);
+                        this.lastRiskScore = curRiskScore;
                     }
-
-                    this.observedAdaptation.setScore(curRiskScore);
-                    this.lastRiskScore = curRiskScore;
                     gazeWindowINDArrays.clear();
                 }
                 gazeWindow.flush();
@@ -152,101 +161,42 @@ public class AdaptationMediator extends Mediator {
     public void invokeAdaptation(double curRiskScore) {
         double stepAmount = 0.25;
         System.out.println(this.currentAdaptations.size());
-        if (this.currentAdaptations.isEmpty()) {
+
+        //Case 0
+        if (curRiskScore <= 0.0) {
             this.invokeNewAdaptation();
-            System.out.println("Added new adaptation: " + this.observedAdaptation.getType());
-        } else { //Has adaptations, review the currently observed one.
+            System.out.println("Added new adaptation because there is not one currently there: " + this.observedAdaptation.getType());
+        } else if (curRiskScore > 0.0){ //Has adaptations, review the currently observed one.
+            if (!this.currentAdaptations.isEmpty()) {  //Has an adaptation, we can review it and compare to the base line (presumed that it's always classifcations: [0_0,0_1,...,0_n]
+                //Case 1
+                if (curRiskScore < this.increaseStrengthThresh) { //Adaptation Risk increased.
+                    //Select new adaptation
+                    if (this.observedAdaptation.hasFlipped()) //Cannot increase/decrease strenth of adaptation, must select a new one (c2.a)
+                        this.invokeNewAdaptation();
+                    else if (!this.observedAdaptation.hasFlipped()) //(c2.b)
+                    {
+                        this.observedAdaptation.flipDirection(); //Flip direction
+                        this.observedAdaptation.applyStyleChange(stepAmount);
+                        this.invokeAdaptationChange();
+                    }
+                    //or iterate over current adaptation
+                } else if (curRiskScore >= this.increaseStrengthThresh && curRiskScore < this.remainThresh) { //Case 2
 
-            if (curRiskScore > observedAdaptation.getScore()) { //Adaptation Risk increased.
-                double scoreDifference = curRiskScore - observedAdaptation.getScore();
-                //Select new adaptation
-                boolean selectNewAdaptation = scoreDifference > bigChangeThreshold;
-                boolean changeStyleChangeDirection = scoreDifference < bigChangeThreshold && scoreDifference > smallChangeThreshold;
-
-                if (selectNewAdaptation) {
-                    this.invokeNewAdaptation();
-                } else if (changeStyleChangeDirection){ //Decrease was less substantial, try a different direction.
-
-                    MutableTriple<String, Integer, Double> lastStyle = this.observedAdaptation.getLastStyleChange();
-                    this.observedAdaptation.applyStyleChange(lastStyle.middle  * -1, stepAmount);
-                    this.invokeAdaptationChange();
-                } else {
-
-                    //Too small of a change, may have leveld out.
-                }
-                //or iterate over current adaptation
-            } else {
-                //Adaptation improved
-
-                double scoreDiff = curRiskScore - observedAdaptation.getScore();
-                if (scoreDiff > smallChangeThreshold && scoreDiff < bigChangeThreshold) {//if slight improvement, make a change, may have leveld out.
-                    //Potentially try a new adaptation?
-
-                } else if (scoreDiff > bigChangeThreshold) { //if major improvement, good job, going in right direction
-                    //apply change with similar as last change
-                    //The direction of the last change
-                    MutableTriple<String, Integer, Double> lastStyleChange = this.observedAdaptation.getLastStyleChange();
-                    this.observedAdaptation.applyStyleChange(lastStyleChange.middle, stepAmount);
-                    this.invokeAdaptationChange();
+                    //Check strength,
+                    //If we can increase strength, do so in same direction
+                    if (this.observedAdaptation.getStrength() > 0.0 && this.observedAdaptation.getStrength() < 1.0) { //Not at max, increase adaptation strength (c2.a)
+                        this.observedAdaptation.applyStyleChange(stepAmount);
+                        this.invokeAdaptationChange();
+                    } else { //(c2.b)
+                        //Do nothing, reached max. Continue onwards.
+                    }
 
                 }
-
             }
         }
 
     }
 
-    /**
-     * @deprecated invoking adaptation like this is overly complex. Listen to classifcation results only as that is suppose to be
-     * an deep learning classification of cognitive load.
-     * @param curRiskScore
-     */
-    public void _invokeAdaptation(double curRiskScore) {
-        double stepAmount = 0.25;
-        //if no adaptations, create a new one
-        if (this.currentAdaptations.isEmpty()) {
-            this.observedAdaptation = getNewAdaptation();
-            this.observedAdaptation.setBeingObservedByMediator(true);
-            this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
-        } else { //Has adaptations, review the currently observed one.
-
-            if (curRiskScore > observedAdaptation.getScore()) { //Adaptation Risk increased.
-                double scoreDifference = curRiskScore - observedAdaptation.getScore();
-                //Select new adaptation
-                boolean selectNewAdaptation = scoreDifference > bigChangeThreshold;
-                boolean changeStyleChangeDirection = scoreDifference < bigChangeThreshold && scoreDifference > smallChangeThreshold;
-
-                if (selectNewAdaptation) {
-                    this.invokeNewAdaptation();
-                } else if (changeStyleChangeDirection){ //Decrease was less substantial, try a different direction.
-
-                    MutableTriple<String, Integer, Double> lastStyle = this.observedAdaptation.getLastStyleChange();
-                    this.observedAdaptation.applyStyleChange(lastStyle.middle  * -1, stepAmount);
-                    this.invokeAdaptationChange();
-                } else {
-
-                    //Too small of a change, may have leveld out.
-                }
-                //or iterate over current adaptation
-            } else {
-                //Adaptation improved
-
-                double scoreDiff = curRiskScore - observedAdaptation.getScore();
-                if (scoreDiff > smallChangeThreshold && scoreDiff < bigChangeThreshold) {//if slight improvement, make a change, may have leveld out.
-                    //Potentially try a new adaptation?
-
-                } else if (scoreDiff > bigChangeThreshold) { //if major improvement, good job, going in right direction
-                    //apply change with similar as last change
-                    //The direction of the last change
-                    MutableTriple<String, Integer, Double> lastStyleChange = this.observedAdaptation.getLastStyleChange();
-                    this.observedAdaptation.applyStyleChange(lastStyleChange.middle, stepAmount);
-                    this.invokeAdaptationChange();
-
-                }
-
-            }
-        }
-    }
 
     public Adaptation getNewAdaptation() {
         Random rand = new Random();

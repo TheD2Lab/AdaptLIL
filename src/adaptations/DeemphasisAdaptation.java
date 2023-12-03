@@ -19,10 +19,11 @@ public class DeemphasisAdaptation extends Adaptation {
     }
 
     @Override
-    public void applyStyleChange(int direction, double stepAmount) {
+    public void applyStyleChange(double stepAmount) {
         float currentOpacity = Float.parseFloat(this.getStyleConfig().get("opacity"));
         float maxOpacity = 1;
         float minOpacity = 0;
+        int direction = this.isFlippedDir() ? -1 : 1;
         if (direction > 0) {
             currentOpacity += (float) (stepAmount * maxOpacity);
             if (currentOpacity > maxOpacity)
@@ -33,6 +34,7 @@ public class DeemphasisAdaptation extends Adaptation {
                 currentOpacity = minOpacity;
         }
 
+        this.setStrength(currentOpacity);
         this.getStyleConfig().put("opacity", String.valueOf(currentOpacity));
         this.setLastStyleChangePair("opacity", direction, currentOpacity);
     }

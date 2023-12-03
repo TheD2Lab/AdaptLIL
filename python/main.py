@@ -11,7 +11,7 @@ from csv import DictWriter
 from keras.callbacks import CSVLogger
 from scipy.io import arff
 from sklearn import model_selection
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, LeavePOut
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout, MaxPooling1D, Conv1D
@@ -351,8 +351,8 @@ def getModelConfig(timeSequences, attributes, windowSize):
         MaxPooling1D(pool_size=1)
     )
     conv_stacked_lstm.add(Dropout(0.10))
-    conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), return_sequences=True, dropout=0.2))
-    conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), dropout=0.2))
+    conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), return_sequences=True, dropout=0.05))
+    conv_stacked_lstm.add(LSTM(int(attributes/kernelSize), dropout=0.05))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
 #    conv_stacked_lstm.add(LSTM(1200, return_sequences=True, go_backwards=True, dropout=0.15, recurrent_dropout=0.2))
     # stacked_lstm_v2.add(LSTM(600, return_sequences=True,dropout=0.15))
@@ -593,8 +593,13 @@ if __name__ == '__main__':
     windowSize = 75
     #TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
     epochs = 8  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
-    numFolds = 10;
+    numFolds = 14;
     shuffle = False
+    useLoo = True
+    if useLoo:
+        print_both("using Leave one out")
+    else:
+        print_both("Using K Fold")
     callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10, start_from_epoch=15, baseline=0.75, mode='min', restore_best_weights=True)
 
     yAll = np.array([])
@@ -616,19 +621,22 @@ if __name__ == '__main__':
 
     # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/bpog only/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/creat_conf/"
 
     # models = getModelConfig(timeSequences, (numAttributes * windowSize) + numMetaAttrs)
     models = getModelConfig(timeSequences, numAttributes, windowSize)
     all_models_by_tp_and_tn = {};
     all_models_stats = []
     trainDataParticipants = []
+    testDataParticipants = []
     attr_min_max = {}
     bc = 0
+
+    print_both("normalization through files")
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
-        print_both(filename)
         # Skip non trainData files.
+        continue;
         if "trainData" not in filename:
             continue
         #if bc > 0:
@@ -643,39 +651,37 @@ if __name__ == '__main__':
         (samples,windowSize,attributes)
         Also pair the correct answers together.
         '''
+
+    print_both("Done printing normalizations")
     cc = 0
     participants = []
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
-        if "trainData" not in filename:
+        print_both(filename)
+        if "trainData" not in filename and "testData" not in filename:
             continue
         #if cc > 0:
         #    continue
         cc += 1 
-        trainData = convertArffToDataFrame(f)
-        participants.append(filename)
-        x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences, numMetaAttrs)
+        if "trainData" in filename:
+            trainData = convertArffToDataFrame(f)
+            participants.append(filename)
+            x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences, numMetaAttrs)
 
-        print_both('full input shape: ' + str(x_part.shape))
-        yAll = np.concatenate((yAll, y_part), axis=0)
-        # x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
-        trainDataParticipants.append({'x': x_part, 'y': y_part, 'fileName' : filename})
+            print_both('full input shape: ' + str(x_part.shape))
+            yAll = np.concatenate((yAll, y_part), axis=0)
+            # x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
+            trainDataParticipants.append({'x': x_part, 'y': y_part, 'fileName' : filename})
+        elif "testData" in filename:
+            testData = convertArffToDataFrame(f)
+            xTest, yTest = convertDataToLTSMFormat(testData, timeSequences, numMetaAttrs)
+            testDataParticipants.append({'x': xTest, 'y': yTest, 'fileName': filename})
 
     print_both("normalization data attributes (keep handy)")
     print_both(json.dumps(str(attr_min_max)))
 
-    testData = convertArffToDataFrame("/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/bpog only/" + "/testData_500.0msec_window_1.arff")
-    # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
-    xTest, yTest = convertDataToLTSMFormat(testData, timeSequences, numMetaAttrs)
     # xTest = normalizeData(xTest, windowSize, numAttributes, numMetaAttrs, attr_min_max)
 
-    '''
-    Weight biasing to help correct some issues with skewed class representation
-    '''
-    weights = get_weight_bias(yAll)
-
-    print_both('class 0 weight: ' + str(weights[0]))
-    print_both('class 1 weight: ' + str(weights[1]))
     # with strategy.scope():
     for model_name, model_uncloned in models.items():
             model = tf.keras.models.clone_model(model_uncloned)
@@ -719,12 +725,18 @@ if __name__ == '__main__':
                     acc_per_fold = []
                     loss_per_fold = []
                     # Since we are training on 'profiles' of people, we should always shuffle their data for training.
+                    loo = LeavePOut(windowSize)
+                    print_both("loo splits: " + str(loo.get_n_splits(x_part)))
                     kfold = StratifiedKFold(n_splits=numFolds,shuffle=True)
                     # x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
                     #                                                                   random_state=0, shuffle=True)
                     fold_no = 0
-                    for train, test in kfold.split(x_part, y_part):
-                        print_both(x_part.shape)
+                    if useLoo:
+                        split_enumerator = enumerate(loo.split(x_part))
+                    else:
+                        split_enumerator = kfold.split(x_part, y_part);
+
+                    for fold_no, (train, test) in split_enumerator:
                         model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
                                       metrics=get_metrics_for_model())
                         # todo, we need to separate each participant
@@ -732,21 +744,26 @@ if __name__ == '__main__':
                         # have a representation of that person
                         # then we retrain on the next person, so on and so forth.
 
-                        weights = get_weight_bias(y_part[train])
+                        if not useLoo:
+                            weights = get_weight_bias(y_part[train])
 
-                        print_both('class 0 weight: ' + str(weights[0]))
-                        print_both('class 1 weight: ' + str(weights[1]))
-                        hist = model.fit(x_part[train], y_part[train],
+                            print_both('class 0 weight: ' + str(weights[0]))
+                            print_both('class 1 weight: ' + str(weights[1]))
+                        hist = model.fit(
+                                x_part[train], 
+                                y_part[train], 
+
+
                                          # validation_data=(x_val, y_val),
                                          epochs=epochs,
-                                         # class_weight=weights,
+                                         class_weight=None if useLoo else weights,
                                          shuffle=shuffle,
                   #                       batch_size=64,
                   #                         callbacks=[callback]
                                          )
                         scores = model.evaluate(x_part[test], y_part[test], verbose=0)
                         print_both(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1] * 100}%')
-                        fold_no += 1
+                        #fold_no += 1
                         histories.append(hist)
                 #hist_avg = np.average(hist.histroy['val_accuracy'])
                 #print_both('avh: ' + str(hist_avg))
@@ -759,74 +776,79 @@ if __name__ == '__main__':
                 '''
                 Done fitting on multiple participants, time for real world data testing
                 '''
-                y_hat = model.predict(xTest)
-                # results = model.evlauate(xVal, yTest)
-                y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
+                for testPInd in range(0,len(testDataParticipants)):
+                    testP = testDataParticipants[testPInd]
+                    print_both('Testing on : ' + str(testP['fileName']))
+                    xTest = testP['x']
+                    yTest = testP['y']
+                    y_hat = model.predict(xTest)
+                    # results = model.evlauate(xVal, yTest)
+                    y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
 
-                '''
-                Metrics
-                '''
+                    '''
+                    Metrics
+                    '''
 
-                hist_str = ''
-                print_both(str(histories))
-                histories_of_all_cross = []
-                for history in histories:
-                    metrics_by_epoch = [];
-                    total_histories_of_cross = {}
-                    for key in history.history.keys():
-                        epochs = len(history.history[key])
-                        total_histories_of_cross[key] = [0 for i in range(epochs)]
-                        #key: [e1,e2,e3]
-                        for i in range(epochs):
-                            total_histories_of_cross[key][i] += history.history[key][i]
+                    hist_str = ''
+                    print_both(str(histories))
+                    histories_of_all_cross = []
+                    for history in histories:
+                        metrics_by_epoch = [];
+                        total_histories_of_cross = {}
+                        for key in history.history.keys():
+                            epochs = len(history.history[key])
+                            total_histories_of_cross[key] = [0 for i in range(epochs)]
+                            #key: [e1,e2,e3]
+                            for i in range(epochs):
+                                total_histories_of_cross[key][i] += history.history[key][i]
 
-                        #now calculate avg
-                        for i in range(epochs):
-                            total_histories_of_cross[key][i] /= epochs
-                    #now we have cross -> [key : [e1,e3]/avg,...]
-                    histories_of_all_cross.append(total_histories_of_cross)
+                            #now calculate avg
+                            for i in range(epochs):
+                                total_histories_of_cross[key][i] /= epochs
+                        #now we have cross -> [key : [e1,e3]/avg,...]
+                        histories_of_all_cross.append(total_histories_of_cross)
 
-                #Don't use
-                #now we can go by key of total_histories_of_all_cross and calculate metrics
-                #avg_history_by_epoch = []
-                #for key in histories[0].history.keys():
-                #     #generate a 0 value for each epoch in the metric
-                #    avg_history_by_epoch[key]=[0 for i in range(len(histories[0].history[key]))]
-                #     #then for each of the cross folds metrics, calculate the averages
-                #    for h in histories:
+                    #Don't use
+                    #now we can go by key of total_histories_of_all_cross and calculate metrics
+                    #avg_history_by_epoch = []
+                    #for key in histories[0].history.keys():
+                    #     #generate a 0 value for each epoch in the metric
+                    #    avg_history_by_epoch[key]=[0 for i in range(len(histories[0].history[key]))]
+                    #     #then for each of the cross folds metrics, calculate the averages
+                    #    for h in histories:
                           #calculate the average metric value per epoch
-                #        for i in range(h.history[key]):
-                #            avg_history_by_epoch['history'][key][i] += h.history[key][i]
-                #
-                #        for i in range(h.history[key]):
-                #            avg_history_by_epoch['history'][key][i] /= len(h.history[key])
-                #
+                    #        for i in range(h.history[key]):
+                    #            avg_history_by_epoch['history'][key][i] += h.history[key][i]
+                    #
+                    #        for i in range(h.history[key]):
+                    #            avg_history_by_epoch['history'][key][i] /= len(h.history[key])
+                    #
 
-                hist_str = ''
-                for key in histories_of_all_cross[0].keys():
-                    hist_str += str(key) + " : " + str(sum( sum(his[key]) for his in histories_of_all_cross) / len(histories_of_all_cross)) + "\n"
-                #     #finally, we now have the avg history of each metric per each epoch and per each model
+                    hist_str = ''
+                    for key in histories_of_all_cross[0].keys():
+                        hist_str += str(key) + " : " + str(sum( sum(his[key]) for his in histories_of_all_cross) / len(histories_of_all_cross)) + "\n"
+                    #     #finally, we now have the avg history of each metric per each epoch and per each model
 
 
-                print_both(hist_str)
+                    print_both(hist_str)
 
-                conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
-                print_both('putting in conf matrix')
-                all_models_by_tp_and_tn[unique_model_id] = conf_matrix
-                print_both(conf_matrix)
+                    conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
+                    print_both('putting in conf matrix')
+                    all_models_by_tp_and_tn[unique_model_id] = conf_matrix
+                    print_both(conf_matrix)
 
-                # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
-                # Only save when using Linux keras 2.14!!!
+                    # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
+                    # Only save when using Linux keras 2.14!!!
                 model.save(resultDir + "/" + unique_model_id+".h5", save_format='h5')
-                #
-                all_models_stats.append({
-                    'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,
-                    'lr': str(tf.keras.backend.eval(optimizer.lr)) if (type(optimizer) != type('')) else '',
-                    'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-                    'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-                    'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
-                    'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
-                })
+                    #
+                #    all_models_stats.append({
+                #        'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,
+                #        'lr': str(tf.keras.backend.eval(optimizer.lr)) if (type(optimizer) != type('')) else '',
+                #        'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
+                #        'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
+                #        'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
+                #        'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
+                #    })
 
 
 

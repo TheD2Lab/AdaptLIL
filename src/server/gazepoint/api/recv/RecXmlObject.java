@@ -41,15 +41,19 @@ public class RecXmlObject extends XmlObject {
     private PupilDiameter pupilDiameter;
 
     //-----------------ENABLE_SEND_POG_FIX----------------
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGX")
     public Double FPOGX;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGY")
     public Double FPOGY;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGS")
     public Double FPOGS;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "FPOGD")
     public Double FPOGD;
 
@@ -109,6 +113,7 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "LPCY")
     public Double LPCY;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "LPD")
     public Double LPD;
 
@@ -130,6 +135,7 @@ public class RecXmlObject extends XmlObject {
     @JacksonXmlProperty(isAttribute = true, localName = "RPCY")
     public Double RPCY;
 
+    @IgnoreWekaAttribute
     @JacksonXmlProperty(isAttribute = true, localName = "RPD")
     public Double RPD;
 

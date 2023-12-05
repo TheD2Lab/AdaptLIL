@@ -1,6 +1,5 @@
 package adaptations;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.tuple.MutableTriple;
 
@@ -14,9 +13,10 @@ public abstract class Adaptation {
     private double timeModified;
     private double timeStopped;
     private Map<String, String> styleConfig;
-
     private boolean isBeingObservedByMediator;
     private double score;
+    private double strength;
+    private boolean hasFlipped = false;
 
     private MutableTriple<String, Integer, Double> lastStyleChangePair;
 
@@ -126,5 +126,25 @@ public abstract class Adaptation {
         return styleConfig;
     }
 
-    public abstract void applyStyleChange(int direction, double stepAmount);
+    public abstract void applyStyleChange(double stepAmount);
+
+    public double getStrength() {
+        return strength;
+    }
+
+    public void setStrength(double strength) {
+        this.strength = strength;
+    }
+
+    public boolean hasFlipped() {
+        return hasFlipped;
+    }
+
+    public void setHasFlipped(boolean hasFlipped) {
+        this.hasFlipped = hasFlipped;
+    }
+
+    public void flipDirection() {
+        this.hasFlipped = !this.hasFlipped;
+    }
 }

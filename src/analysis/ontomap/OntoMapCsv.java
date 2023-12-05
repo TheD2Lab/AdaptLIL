@@ -37,7 +37,21 @@ public class OntoMapCsv {
                 "P41",
                 "P44",
                 "P57",
-                "P75"
+                "P75",
+//                "P43", //4 min on conf, 8 on anat
+//                "P51", //Spent 10 min in total
+//                "P63", //very poor eval score.
+//                "P52",
+//                "P48",
+//                "P54",
+//                "P78",
+//                "P15",
+//                "P67",
+//                "P77",
+//                "P69",
+//                "P13",
+//                "P37",
+//                "P35"
         });
     }
 
@@ -61,7 +75,7 @@ public class OntoMapCsv {
      * @param filterForLinkedList
      * @return
      */
-    private static Map<String, List<File>> mapParticipantsToStudyData(String dir, boolean isGazePointFolder, boolean filterForLinkedList) {
+    private static Map<String, List<File>> mapParticipantsToStudyData(String dir, boolean isGazePointFolder, String filter) {
         Map<String, List<File>> filteredFiles = new HashMap<>();
         File directoryFile = new File(dir);
         Pattern participantNamePattern = Pattern.compile("P\\d+");
@@ -84,7 +98,8 @@ public class OntoMapCsv {
 
                         //check if it has .LIL.
                         if (gpFileORDir.getName().contains("LIL") || gpFileORDir.getName().contains("Matrix")) {
-
+                            if (filter.equals("matrix") && gpFileORDir.getName().contains("Matrix"))
+                                continue;
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
@@ -104,8 +119,8 @@ public class OntoMapCsv {
                         continue;
 
                     //look through files of raw data
-                    FilenameFilter filter = (dir1, name) -> !name.equals("Raw Data");
-                    File[] answerFiles = fileOrDir.listFiles(filter);
+                    FilenameFilter rawDataFilter = (dir1, name) -> !name.equals("Raw Data");
+                    File[] answerFiles = fileOrDir.listFiles(rawDataFilter);
                     for (File taskFileOrDir : answerFiles) {
                         if (taskFileOrDir.getName().contains("xlsx") || taskFileOrDir.isDirectory()) //ignore, cant read this in opencsv
                             continue;
@@ -113,6 +128,8 @@ public class OntoMapCsv {
                         //check if it has .LIL.
 
                         if (taskFileOrDir.getName().toLowerCase().contains("list") || taskFileOrDir.getName().toLowerCase().contains("matrix")) {
+                            if (filter.equals("matrix") && taskFileOrDir.getName().contains("matrix"))
+                                continue;
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
@@ -126,14 +143,18 @@ public class OntoMapCsv {
         }
         return filteredFiles;
     }
+
+    public List<String> getParticipantsThatDidntTry() {
+        return null;
+    }
     public static void main(String[] args) {
 
         String baseDir = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/DataVisStudy/Participant Data/";
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
-        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Gazepoint", true, true);
-        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Task Data", false, true);
+        Map<String, List<File>> gazePointFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Gazepoint", true, "");
+        Map<String, List<File>> taskFilesByParticipant = OntoMapCsv.mapParticipantsToStudyData(baseDir+"Task Data", false, "");
         Map<String, Participant> participantsById = new HashMap<>();
 
 
@@ -197,19 +218,20 @@ public class OntoMapCsv {
 
     }
 
-    private static List<String> getRandomTestParticipantsIds(int numTestParticipants) {
-        String[] testParticipants = new String[numTestParticipants];
+    private static List<String> getRandomTestParticipantsIds(int numTestParticipants, HashMap<String, Participant> mapParticipants) {
+        List<String> testParticipants = new ArrayList<>();
         List<String> excludedParticipants = OntoMapCsv.discardedParticipantIds();
         Random random = new Random();
         for (int i = 0; i < numTestParticipants; ++i) {
             int randomId = random.nextInt(1,81);
             String randParticipantId = "P" + randomId;
-            while (excludedParticipants.contains(randParticipantId)) {
+            while (excludedParticipants.contains(randParticipantId) || testParticipants.contains(randParticipantId)
+            || !mapParticipants.containsKey(randParticipantId) || mapParticipants.get(randParticipantId).getAnatomyAnswersFile().getName().toLowerCase().contains("matrix")) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
                 randParticipantId = "P" + random.nextInt(1, 81);
             }
-            testParticipants[i] = randParticipantId;
+            testParticipants.add(randParticipantId);
         }
-        return List.of(testParticipants);
+        return testParticipants;
     }
 
     private static void logTestParticipants(File outputDir, List<String> testParticipantIds) throws IOException {
@@ -220,11 +242,17 @@ public class OntoMapCsv {
         }
         testParticipantsFile.close();
     }
+    public static HashMap<String, Participant> mapParticipantsToId(Participant[] participants) {
+        HashMap<String, Participant> map = new HashMap<>();
+        for (int i = 0; i <participants.length; ++i)
+            map.put(participants[i].getId(), participants[i]);
+        return map;
+    }
     public static void testParticipantInstances(Participant[] participants) throws Exception {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
-        float windowSizeInMilliseconds = 500;
+        float windowSizeInMilliseconds = 1000;
         int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.2); // 20% split
         Map<String, List<Instance>> participantTrainingInstances = new HashMap<>();
         Map<String, List<Instance>> participantTestInstances = new HashMap<>();
@@ -233,8 +261,8 @@ public class OntoMapCsv {
         Instances trainDataInstances = null;
         Instances testDataInstances = null;
         List<String> nominalValues = new ArrayList<>(Arrays.asList("1", "0"));
-
-        List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData);
+        HashMap<String, Participant> participantById = OntoMapCsv.mapParticipantsToId(participants);
+        List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData, participantById);
 
         File outputDir = new File("/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/" + LocalDateTime.now().toString().replace(':', ';'));
         outputDir.mkdirs();
@@ -245,9 +273,11 @@ public class OntoMapCsv {
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
 
 
-            File[] answersFiles = new File[]{p.getAnatomyAnswersFile()
+            File[] answersFiles = new File[]{
+                    p.getAnatomyAnswersFile()
 //            };
-                    , p.getConfAnswersFile()};
+                    ,
+                    p.getConfAnswersFile()};
 
             for (File answerFile : answersFiles){
                 List<String> timeCutoffs = new ArrayList<>();
@@ -264,9 +294,20 @@ public class OntoMapCsv {
                 answersCsvReader.readNext(); //Skip first line.
                 int timeStampIndex = 8;
                 int correctIndex = 6;
-                while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() < 14) {
+                int questionToStartAt = 0;
+                int qidToEndTrainingAt = 14;
+                Double timeToComplete = Double.parseDouble(answersCsvReader.readAll().get(17)[11]);
+                answersCsvReader.close();
+                answersFileReader.close();
+                answersFileReader = new FileReader(answerFile);
+                answersCsvReader = new CSVReader(answersFileReader);
+                answersCsvReader.readNext(); //Skip first line.
+                System.out.println("time to completE: " + timeToComplete);
+                if (timeToComplete < 14)
+                    continue;
+                while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() <= qidToEndTrainingAt) {
                     String timeCutoff = cells[timeStampIndex];
-                    Boolean rightOrWrong = cells[correctIndex].trim().contains("1");
+                    Boolean rightOrWrong = cells[correctIndex] != null && cells[correctIndex].trim().contains("1");
 
                     if (rightOrWrong)
                         numCorrect++;
@@ -292,6 +333,7 @@ public class OntoMapCsv {
                 List<String> headerRow = Arrays.asList(fixationCsvReader.readNext());
 
                 String[] last = new String[0];
+                int numWindowsAdded = 0;
                 //Loop over each line of gaze data. until we reach the last question and then continue onto next participant.
                 while ((cells = fixationCsvReader.readNext()) != null && currentQuestionIndex < rightOrWrongs.size()) { //ignore the multiple choice question for now.
                     //read fixation data up to the timecutoff
@@ -312,55 +354,68 @@ public class OntoMapCsv {
                         if (!participantWindow.isFull() && participantWindow.getInternalIndex() < participantWindow.getWindowSize() - 1)
                             participantWindow.flush();
                     }
+                    //Reduce to only adding one window
                     //Add to windows for task
                     participantWindow.add(recXmlObject);
 
+
                     //control window size and add to taskwindows once size is too large.
-                    if (participantWindow.isFull()) {
+                    if (participantWindow.isFull() && numWindowsAdded < (15000/windowSizeInMilliseconds)) {
                         //preprocess data before sending it to instances
-                        participantWindow.interpolateMissingValues();
-                        //We set all instances to have the classification right/wrong
-                        //Any window where the user got it right, is grouped into the good section -> 1
-                        //any window where the user got it wrong, is grouped into the bad section -> 0
-                        //Hopefully we can then compute a probability that they will get it right
-                        //given the current gaze data.
-                        Instance windowInstance = participantWindow.toDenseInstance(false, true);
+                        if (currentQuestionIndex >= questionToStartAt && currentQuestionIndex <= qidToEndTrainingAt) {
+                            participantWindow.interpolateMissingValues();
+                            //We set all instances to have the classification right/wrong
+                            //Any window where the user got it right, is grouped into the good section -> 1
+                            //any window where the user got it wrong, is grouped into the bad section -> 0
+                            //Hopefully we can then compute a probability that they will get it right
+                            //given the current gaze data.
+                            Instance windowInstance = participantWindow.toDenseInstance(false, false);
 
-                        Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false, true), 1);
-                        Attribute correctAttribute = new Attribute("correct", nominalValues);
-                        dataset.insertAttributeAt(correctAttribute, dataset.numAttributes());
-                        windowInstance.insertAttributeAt(windowInstance.numAttributes()); //Insert a slot for the correct attribute for the window instance
-                        dataset.setClassIndex(dataset.attribute(correctAttribute.name()).index());
-                        //Set the nominal class value for each window if is correct [0,1]
-                        //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
-                        windowInstance.setDataset(dataset);
-                        windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
+                            Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false, false), 1);
+                            Attribute correctAttribute = new Attribute("correct", nominalValues);
+                            dataset.insertAttributeAt(correctAttribute, dataset.numAttributes());
+                            windowInstance.insertAttributeAt(windowInstance.numAttributes()); //Insert a slot for the correct attribute for the window instance
+                            dataset.setClassIndex(dataset.attribute(correctAttribute.name()).index());
+                            //Set the nominal class value for each window if is correct [0,1]
+                            //Insert the correct attribute/class (it's attribute name will be set when we merge all instances)
+                            windowInstance.setDataset(dataset);
+                            windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
 
-                        if (useParticipantForTrainingData) {
+                            if (useParticipantForTrainingData) {
 
-                            //TODO, here we will add the trainInstance List to belong only to
-                            //the current participant,
-                            if (!participantTrainingInstances.containsKey(p.getId()))
-                                participantTrainingInstances.put(p.getId(), new ArrayList<Instance>());
+                                //TODO, here we will add the trainInstance List to belong only to
+                                //the current participant,
+                                if (!participantTrainingInstances.containsKey(p.getId()))
+                                    participantTrainingInstances.put(p.getId(), new ArrayList<Instance>());
 
-                            participantTrainingInstances.get(p.getId()).add(windowInstance);
-//                            trainInstanceList.add(windowInstance);
-                        } else {
-                            testInstanceList.add(windowInstance);
+                                participantTrainingInstances.get(p.getId()).add(windowInstance);
+                                trainInstanceList.add(windowInstance);
+                            } else if (answerFile.getName().toLowerCase().contains("conf")) {
+                                if (!participantTestInstances.containsKey(p.getId()))
+                                    participantTestInstances.put(p.getId(), new ArrayList<Instance>());
+
+                                participantTestInstances.get(p.getId()).add(windowInstance);
+                                testInstanceList.add(windowInstance);
+                            }
+                            numWindowsAdded += 1;
+
                         }
                         //Clear window data by repointing to new instantiation
                         participantWindow.flush();
 
                     }
 
-
                     if (incrementCurrentQuestionIndexAfterLoopLogic) {
+
+
 
                         if (rightOrWrongs.get(currentQuestionIndex))
                             numCorrect--;
                         else
                             numWrong--;
                         currentQuestionIndex++;
+
+                        numWindowsAdded = 0;
                     }
 
                 }
@@ -377,91 +432,112 @@ public class OntoMapCsv {
 
                 System.out.println(numWrong == 0 ? " validation passed for numWrong" : "FAILED numWrong");
                 System.out.println(numWrong);
-                if (useParticipantForTrainingData) {
-                    List<Instance> participantTrainInstanceList = participantTrainingInstances.get(p.getId());
-                    ArrayList<Attribute> attributeList = Collections.list(participantTrainInstanceList.get(0).enumerateAttributes());
-                    attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
-                    trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, participantTrainInstanceList.get(0).numAttributes());
 
-                    for (int i = 1; i < participantTrainInstanceList.size(); ++i) {
-                        trainDataInstances.add(participantTrainInstanceList.get(i));
-                    }
-                    trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
-                    OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath() + "/trainData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
-                    trainDataInstances.clear();
-                }
+//                OntoMapCsv.saveParticipantDataAsSeparateFile(useParticipantForTrainingData, p, useParticipantForTrainingData ? participantTrainingInstances.get(p.getId()) : participantTestInstances.get(p.getId()),
+//                        nominalValues, answerFile, outputDir);
+
+//                if (useParticipantForTrainingData) {
+//                    List<Instance> participantTrainInstanceList = participantTrainingInstances.get(p.getId());
+//                    ArrayList<Attribute> attributeList = Collections.list(participantTrainInstanceList.get(0).enumerateAttributes());
+//                    attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
+//                    trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, participantTrainInstanceList.get(0).numAttributes());
+//
+//                    for (int i = 1; i < participantTrainInstanceList.size(); ++i) {
+//                        trainDataInstances.add(participantTrainInstanceList.get(i));
+//                    }
+//                    trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+//                    OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath() + "/trainData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
+//                    trainDataInstances.clear();
+//                } else {
+//                    List<Instance> participantTestInstanceList = participantTestInstances.get(p.getId());
+//                    ArrayList<Attribute> attributeList = Collections.list(participantTestInstanceList.get(0).enumerateAttributes());
+//                    attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
+//                    testDataInstances = new Instances("OntoMapTestGaze", attributeList, participantTestInstanceList.get(0).numAttributes());
+//
+//                    for (int i = 1; i < participantTestInstanceList.size(); ++i) {
+//                        testDataInstances.add(participantTestInstanceList.get(i));
+//                    }
+//                    testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
+//                    OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath() + "/testData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
+//                    testDataInstances.clear();
+//                }
                 fixationFileReader.close();
                 fixationCsvReader.close();
             }
+
             System.out.println("processed: " + p.getId());
 
-
         }
+        OntoMapCsv.saveTestAndTrainingToOneFile(trainInstanceList, testInstanceList, nominalValues, outputDir);
+        //Readd saving as one whole file (and do some c ross fold validation)
+        //
+    }
 
-//        Classifier[] classifiers = WekaExperiment.getClassificationClassifiers();
-//        HashMap<String, HashMap<String, Double>> totalResultsOfClassifiers = new HashMap<>();
-//        for (Classifier c : classifiers) {
-//            totalResultsOfClassifiers.put(c.getClass().getName(), new HashMap<>());
-//        }
-        int totalNumInstance = 0;
-
+    /**
+     * Save training and test data to a single file
+     * @param trainInstanceList
+     * @param testInstanceList
+     * @param nominalValues
+     * @param outputDir
+     * @throws IOException
+     */
+    public static void saveTestAndTrainingToOneFile(List<Instance> trainInstanceList, List<Instance> testInstanceList, List<String> nominalValues, File outputDir) throws IOException {
         ArrayList<Attribute> attributeList = Collections.list(testInstanceList.get(0).enumerateAttributes());
         attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
         //Merging all instances together again.
-//        trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
-        testDataInstances = new Instances("OntoMapTestGaze", attributeList, testInstanceList.get(0).numAttributes());
+        Instances trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, trainInstanceList.get(0).numAttributes());
+        Instances testDataInstances = new Instances("OntoMapTestGaze", attributeList, testInstanceList.get(0).numAttributes());
 
         //Set Class index for last attribute (correct attr).
-//        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
 
-//        for (int i = 1; i < trainInstanceList.size(); ++i) {
-//            trainDataInstances.add(trainInstanceList.get(i));
-//        }
+        for (int i = 1; i < trainInstanceList.size(); ++i) {
+            trainDataInstances.add(trainInstanceList.get(i));
+        }
         for (int i = 1; i < testInstanceList.size(); ++i) {
             testDataInstances.add(testInstanceList.get(i));
         }
 
-//        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
+        trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
         testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
 
 
-//        OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData_"+windowSizeInMilliseconds+"mssec_window_1.arff");
-        OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath()+"/testData_"+windowSizeInMilliseconds+"msec_window_1.arff");
-        /**
-        Instances trainDataInstance = allInstances.trainCV(2, 0);
-        Instances testDataInstance = trainDataInstance.testCV(2, 0);
-        testDataInstance.setClassIndex(testDataInstance.numAttributes() - 1);
+        OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath()+"/trainData.arff");
+        OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath()+"/testData.arff");
+    }
 
-        HashMap<String, HashMap<String, Double>> resultsOfClassifiers = MachineLearningExperiments.evaluateAllClassifiers(classifiers, trainDataInstance, testDataInstance);
-        for (String classifierName : resultsOfClassifiers.keySet()) {
-            for (String resultKey : resultsOfClassifiers.get(classifierName).keySet()) {
-                if (totalResultsOfClassifiers.get(classifierName).containsKey(resultKey)) {
-                    double newAvg = totalResultsOfClassifiers.get(classifierName).get(resultKey) +
-                            resultsOfClassifiers.get(classifierName).get(resultKey);
+    /**
+     * Save an individual participant's gaze training/test data to a single file.
+     * @param useParticipantForTrainingData
+     * @param p
+     * @param instanceList
+     * @param nominalValues
+     * @param answerFile
+     * @param outputDir
+     * @throws IOException
+     */
+    public static void saveParticipantDataAsSeparateFile(boolean useParticipantForTrainingData, Participant p, List<Instance> instanceList, List<String> nominalValues, File answerFile, File outputDir) throws IOException {
+        ArrayList<Attribute> attributeList = Collections.list(instanceList.get(0).enumerateAttributes());
+        attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
+        Instances instances;
+        if (useParticipantForTrainingData) {
 
-                    totalResultsOfClassifiers.get(classifierName).put(resultKey, newAvg);
-                } else {
-                    totalResultsOfClassifiers.get(classifierName).put(resultKey, resultsOfClassifiers.get(classifierName).get(resultKey));
-                }
+            instances = new Instances("OntoMapTrainGaze", attributeList, instanceList.get(0).numAttributes());
+
+            for (int i = 1; i < instanceList.size(); ++i) {
+                instances.add(instanceList.get(i));
             }
+            instances.setClassIndex(instances.numAttributes() - 1);
+            OntoMapCsv.saveInstancesToFile(instances, outputDir.getPath() + "/trainData_" + p.getId() + " " + answerFile.getName() + ".arff");
+        } else {
+            instances = new Instances("OntoMapTestGaze", attributeList, instanceList.get(0).numAttributes());
+            for (int i = 1; i < instanceList.size(); ++i) {
+                instances.add(instanceList.get(i));
+            }
+            instances.setClassIndex(instances.numAttributes() - 1);
+            OntoMapCsv.saveInstancesToFile(instances, outputDir.getPath() + "/testData_" + p.getId() + " " + answerFile.getName() + ".arff");
         }
-         **/
-        //
-        //System.out.println("-----------------------------------");
-        //System.out.println("--------------Averages-------------");
-        //System.out.println("-----------------------------------");
-        //
-        //for (String classifierName : totalResultsOfClassifiers.keySet()) {
-        //    System.out.println("--------classifier: " + classifierName + " -------------");
-        //    for (String resultKey : totalResultsOfClassifiers.get(classifierName).keySet()) {
-        //        double avgVal = totalResultsOfClassifiers.get(classifierName).get(resultKey) / testDataFiles.size();
-        //        System.out.println("key: " + resultKey + " Avg Val: " + avgVal);
-        //    }
-        //}
-        //
-        //System.out.printf("%d/%d Process Complete ^^^\n==============================", i + 1, trainDataFiles.size());
-        //
     }
 
     public static RecXmlObject getRecXmlObjectFromCells(List<String> headerRow, String[] cells) {

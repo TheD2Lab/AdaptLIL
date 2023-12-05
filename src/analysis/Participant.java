@@ -5,6 +5,7 @@ import java.io.FileReader;
 
 public class Participant {
     private String id;
+    private String visType;
 
     private File anatomyGazeFile;
     private File confGazeFile;
@@ -14,6 +15,7 @@ public class Participant {
     private File baselineFixationFile;
     private File anatomyAnswersFile;
     private File confAnswersFile;
+
     public Participant(String id) {
         this.id = id;
     }
@@ -91,12 +93,21 @@ public class Participant {
         this.confAnswersFile = confAnswersFile;
     }
 
+    public String getVisType() {
+        return visType;
+    }
+
+    public void setVisType(String visType) {
+        this.visType = visType;
+    }
+
     public String toString() {
         return "id: " + getId() + "\n anatomFile: " +this.anatomyGazeFile.getAbsolutePath()
                 +"\n anatomyFile fix: " + anatomyFixationFile.getAbsolutePath()
                 + "\n anatFileanswer: " + anatomyAnswersFile.getAbsolutePath()
                 + "\n conf gaze: " + confGazeFile.getAbsolutePath()
                 + "\n conf fix: " + confFixationFile.getAbsolutePath()
-                + "\n conf answer: " + confAnswersFile.getAbsolutePath();
+                + "\n conf answer: " + confAnswersFile.getAbsolutePath()
+                + "\nvisType: " + this.getVisType();
      }
 }

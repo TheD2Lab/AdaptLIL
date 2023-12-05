@@ -2,25 +2,31 @@ import datetime
 import json
 import numpy as np
 import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import shutil
 import sklearn.metrics
 import sys
 import tensorflow as tf
+import random
+import matplotlib.pyplot as plt
 from collections import OrderedDict
 from csv import DictWriter
 from keras.callbacks import CSVLogger
 from scipy.io import arff
 from sklearn import model_selection
+from sklearn.model_selection import StratifiedKFold, LeavePOut, KFold
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
-from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout
-from sklearn.model_selection import StratifiedKFold
-#https://github.com/timeseriesAI/tsai
+from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout, MaxPooling1D, Conv1D
+
+# https://github.com/timeseriesAI/tsai
 resultDir = str(datetime.datetime.now()).replace(":", "_").replace(".", ",")
 os.mkdir(resultDir)
 
 outputFile = open(os.path.join(resultDir, "output.txt"), 'wt')
 from numpy.random import seed
+
 seed(0)
 tf.config.experimental.enable_op_determinism()
 tf.keras.utils.set_random_seed(0)
@@ -29,11 +35,23 @@ tf.keras.utils.set_random_seed(0)
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
+def plotLines(lines, resultDir, unique_model_id):
+    for label,line in lines.items():
+        plt.plot(range(0, len(line)), line, label=label)
+
+    plt.legend()
+    plt.title('TP% & TN% over cross fold of true unseen participants')
+    plt.savefig(resultDir + '/' + unique_model_id + '.png')
+    plt.show();
+def savePythonFile(resultDir):
+    script_path = os.path.abspath(__file__)
+    destination_path = resultDir + "/main.py"
+    shutil.copy(script_path, destination_path)
+    print(f"Script saved to: {destination_path}")
+
 '''
 Returns Arff file to a dataframe for training
 '''
-
-
 def convertArffToDataFrame(fileName):
     dataset = arff.loadarff(open(fileName))
     data_list = [list(item) for item in dataset[0]]
@@ -65,11 +83,11 @@ def normalizeData(data, numPolls, numAttributes, numMetaAttrs, attributesMinMax)
     for i in range(len(data)):
         for j in range(len(data[i])):
             for k in range(len(data[i][j])):
-                if ( k > (numPolls * numAttributes)): #skip the meta attributes
+                if (k > (numPolls * numAttributes)):  # skip the meta attributes
                     continue;
                 l = k % numAttributes
                 data[i][j][k] = (data[i][j][k] - attributesMinMax[l]['min']) / (
-                            attributesMinMax[l]['max'] - attributesMinMax[l]['min'])
+                        attributesMinMax[l]['max'] - attributesMinMax[l]['min'])
     return data
 
 
@@ -96,7 +114,8 @@ def convertDataToLTSMFormat(data, timeSequences, numMetaAttrs):
     y = np.array(y)
     return [x, y]
 
-def normalizationByPollingSample(data, numAttributes, numMetaAttrs, attribute_min_max={}) :
+
+def normalizationByPollingSample(data, numAttributes, numMetaAttrs, attribute_min_max={}):
     for i in data:
         correct = i[-1]
         attrs = i[:(-1 * (1 + numMetaAttrs))]
@@ -112,6 +131,7 @@ def normalizationByPollingSample(data, numAttributes, numMetaAttrs, attribute_mi
                 attribute_min_max[k]['max'] = max(attribute_min_max[k]['max'], attrs[j])
 
     return attribute_min_max
+
 
 def print_both(*args):
     temp = sys.stdout  # assign console output to a variable
@@ -168,19 +188,19 @@ def get_metrics_for_model():
 
 def get_optimizers():
     return [
-       tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
-    #     "adam"
-    #     tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
-    #     tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
-        
-        #tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
+        # tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        #     "adam"
+        #     tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
+        # tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
+
+        # tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
         # tf.keras.optimizers.SGD(learning_rate=0.04),
         # tf.keras.optimizers.SGD(learning_rate=0.08),
 
         # tf.keras.optimizers.Adagrad(learning_rate=0.0013, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0014, name='Adagrad'),
-        #tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
+        # tf.keras.optimizers.Adagrad(learning_rate=0.001, name='Adagrad'),
 
         # tf.keras.optimizers.Adagrad(learning_rate=0.01, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
@@ -199,7 +219,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.49, use_ema=True, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.40, use_ema=True, weight_decay=2e-4),
         #
-        tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=False), #control
+        tf.keras.optimizers.Adam(learning_rate=1.3e-4, use_ema=False),  # control
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.38, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.39, use_ema=False),
@@ -223,89 +243,62 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.9e-3),
-        #tf.keras.optimizers.Adam(learning_rate=1e-1),
+        # tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1e-2),
-        #tf.keras.optimizers.Nadam(learning_rate=1e-3),
-        tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-3),
+        # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
-        #tf.keras.optimizers.Nadam(learning_rate=1e-2),
+        # tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
 
         # tf.keras.optimizers.RMSprop
     ]
 
-def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
-    #Norm and Attention
-    x = layers.LayerNormalization(epsilon=1e-6)(inputs) #What does passing inputs do to x?
-    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads, dropout=dropout)(x,x) #What does passing x,x do?
-    x = layers.Dropout(dropout)(x)
-    res = x + inputs #res? 
 
-    #feed foward
+def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
+    # Norm and Attention
+    x = layers.LayerNormalization(epsilon=1e-6)(inputs)  # What does passing inputs do to x?
+    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads, dropout=dropout)(x,
+                                                                                           x)  # What does passing x,x do?
+    x = layers.Dropout(dropout)(x)
+    res = x + inputs  # res?
+
+    # feed foward
     x = layers.LayerNormalization(epsilon=1e-6)(res)
-    x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(x) #Might need to put the activation layer as separate var for d4j
+    x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(
+        x)  # Might need to put the activation layer as separate var for d4j
     x = layers.Dropout(dropout)(x)
     x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
     return x + res
 
-def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_transformer_blocks, mlp_units, dropout=0, mlp_dropout=0):
+
+def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_transformer_blocks, mlp_units, dropout=0,
+                            mlp_dropout=0):
     inputs = tf.keras.Input(shape=input_shape)
     x = inputs
+    x = layers.Conv1D(3, 2, input_shape=input_shape)(x)
+    x = layers.LSTM(100, return_sequences=True)(x)
     for _ in range(num_transformer_blocks):
         x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
 
-    x = layers.GlobalAveragePooling1D(data_format="channels_first")(x) #What does channels_first do?
+    x = layers.GlobalAveragePooling1D(data_format="channels_first")(x)  # What does channels_first do?
     for dim in mlp_units:
-        x = layers.Dense(dim, activation='relu')(x) #What does passing x do here?
+        x = layers.Dense(dim, activation='relu')(x)  # What does passing x do here?
         x = layers.Dropout(mlp_dropout)(x)
 
-    outputs = layers.Dense(1, activation='sigmoid')(x) #2 here is because we have a binary class.
+    # x = layers.LSTM()
+    outputs = layers.Dense(1, activation='sigmoid')(x)  # 2 here is because we have a binary class.
     return tf.keras.Model(inputs, outputs)
 
-def getModelConfig(timeSequences, attributes):
-    input_shape=(timeSequences, attributes)
+
+def getModelConfig(timeSequences, attributes, windowSize):
+    input_shape = (timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=64, num_heads=8, ff_dim=4, num_transformer_blocks=8, mlp_units=[256], mlp_dropout=0.15, dropout=0.25)
-    model_simple_ltsm = Sequential()
-    model_simple_ltsm.add(LSTM(4, input_shape=(timeSequences, attributes)))
-    model_simple_ltsm.add(Dense(8, activation='relu'))
-    model_simple_ltsm.add(Dense(16, activation='relu'))
-    model_simple_ltsm.add(Dense(4, activation='relu'))
-    model_simple_ltsm.add(Dense(1, activation='sigmoid'))
-
-    model_one_layer_ltsm = Sequential()
-    model_one_layer_ltsm.add(LSTM(2400, input_shape=(timeSequences, attributes)))
-    model_one_layer_ltsm.add(Dense(8, activation='relu'))
-    model_one_layer_ltsm.add(Dense(1, activation='sigmoid'))
-
-    model_one_layer_ltsm_smaller = Sequential()
-    model_one_layer_ltsm_smaller.add(LSTM(4, input_shape=(timeSequences, attributes)))
-    model_one_layer_ltsm_smaller.add(Dense(8, activation='relu'))
-    model_one_layer_ltsm_smaller.add(Dense(1, activation='sigmoid'))
-
-    # v2 has 4 more nodes in the intermediate dense layer
-    model_one_layer_ltsm_v2 = Sequential()
-    model_one_layer_ltsm_v2.add(LSTM(4, input_shape=(timeSequences, attributes)))
-    model_one_layer_ltsm_v2.add(Dense(12, activation='relu'))
-    model_one_layer_ltsm_v2.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_lstm = Sequential()
-    model_bigger_lstm.add(LSTM(8, input_shape=(timeSequences, attributes)))
-    model_bigger_lstm.add(Dense(8, activation='relu'))
-    model_bigger_lstm.add(Dense(2, activation='relu'))
-    model_bigger_lstm.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_bigger_lstm = Sequential()
-    model_bigger_bigger_lstm.add(LSTM(12, input_shape=(timeSequences, attributes)))
-    model_bigger_bigger_lstm.add(Dense(8, activation='relu'))
-    model_bigger_bigger_lstm.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm = Sequential()
-    model_bigger_biggest_lstm.add(LSTM(16, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm.add(Dense(4, activation='relu'))
-    model_bigger_biggest_lstm.add(Dense(1, activation='sigmoid'))
+    transformer_model = build_transformer_model(input_shape, head_size=int(attributes/ 10), num_heads=14, ff_dim=int(attributes / 10),
+                                                num_transformer_blocks=6, mlp_units=[attributes * 2], mlp_dropout=0.15,
+                                                dropout=0.1)
 
     stacked_lstm = Sequential()
     '''
@@ -327,6 +320,41 @@ def getModelConfig(timeSequences, attributes):
     stacked_lstm.add(LeakyReLU())
     stacked_lstm.add(Dense(1, activation='sigmoid'))
 
+    conv_stacked_lstm = Sequential()
+    '''
+    10-27-2023 I am noticing a bigger first lstm layer followed by two subsequent smaller lstm layers (size 16 each) and a dense layer of size 16
+    works better when the first layer is larger than the other layers
+    It's possible that 148 was a good sweet spot because there are 75 attributes, this leads one lstm node per attribute
+    and therefore can trigger it to forget or keep the memory for each 0,1 class.
+    I.e., for each attribute, allocate 1 node per class.
+    '''
+    '''
+    Using pure point of gaze, applying convolution to a dense layer, some dropout and max pooling, and then the lstm followed by another dense layer and the prediction
+    Based on paper "Toward a deep convolutional LSTM for eye gaze spatiotemporal data sequence classification
+    '''
+    kernelSize = 2  # filters is the num windows, and 2 b/c (x,y)
+    filterSize = int(windowSize/2)
+
+    conv_stacked_lstm.add(
+        Conv1D(3, kernelSize, input_shape=(timeSequences, attributes))
+    )  # filter size of 25 to split the window into three frames.
+
+    conv_stacked_lstm.add(
+        MaxPooling1D(pool_size=1)
+    )
+    conv_stacked_lstm.add(Dropout(0.10))
+    conv_stacked_lstm.add(LSTM(int(attributes / kernelSize), dropout=0.2, return_sequences=True))
+    conv_stacked_lstm.add(LSTM(int(attributes / kernelSize), dropout=0.2 ))
+    # stacked_lstm.add(LSTM(128, return_sequences=True))
+    #    conv_stacked_lstm.add(LSTM(1200, return_sequences=True, go_backwards=True, dropout=0.15, recurrent_dropout=0.2))
+    # stacked_lstm_v2.add(LSTM(600, return_sequences=True,dropout=0.15))
+    #    conv_stacked_lstm.add(LSTM(1200, dropout=0.15, go_backwards=True))
+    # stacked_lstm.add(LSTM(64)))
+    conv_stacked_lstm.add(Dropout(0.20))
+    conv_stacked_lstm.add(Dense(int(attributes / kernelSize)))
+    conv_stacked_lstm.add(LeakyReLU())
+    conv_stacked_lstm.add(Dense(1, activation='sigmoid'))
+
     stacked_lstm_v2 = Sequential()
     '''
     10-27-2023 I am noticing a bigger first lstm layer followed by two subsequent smaller lstm layers (size 16 each) and a dense layer of size 16
@@ -335,201 +363,25 @@ def getModelConfig(timeSequences, attributes):
     and therefore can trigger it to forget or keep the memory for each 0,1 class.
     I.e., for each attribute, allocate 1 node per class.
     '''
-    stacked_lstm_v2.add(LSTM(600, input_shape=(timeSequences, attributes), return_sequences=True))
+    stacked_lstm_v2.add(
+        LSTM(1200, input_shape=(timeSequences, attributes), return_sequences=True, go_backwards=True, dropout=0.4,
+             recurrent_dropout=0.2))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600, return_sequences=True))
-    stacked_lstm_v2.add(LSTM(600))
+    stacked_lstm_v2.add(LSTM(1200, return_sequences=True, go_backwards=True, dropout=0.15, recurrent_dropout=0.2))
+    # stacked_lstm_v2.add(LSTM(600, return_sequences=True,dropout=0.15))
+    stacked_lstm_v2.add(LSTM(1200, dropout=0.15, go_backwards=True))
     # stacked_lstm.add(LSTM(64)))
+    stacked_lstm_v2.add(Dropout(0.10))
     stacked_lstm_v2.add(Dense(1200))
-    stacked_lstm_v2.add(LeakyReLU())
-    stacked_lstm_v2.add(Dense(600))
     stacked_lstm_v2.add(LeakyReLU())
     stacked_lstm_v2.add(Dense(1, activation='sigmoid'))
 
-    model_bigger_biggest_lstm_v2_leaky_relu = Sequential()
-    model_bigger_biggest_lstm_v2_leaky_relu.add(LSTM(32, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v2_leaky_relu.add(Dense(16, activation='leaky_relu'))
-    model_bigger_biggest_lstm_v2_leaky_relu.add(Dense(4, activation='leaky_relu'))
-    model_bigger_biggest_lstm_v2_leaky_relu.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v2 = Sequential()
-    model_bigger_biggest_lstm_v2.add(LSTM(32, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v2.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v2.add(Dense(4, activation='relu'))
-    model_bigger_biggest_lstm_v2.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v3 = Sequential()
-    model_bigger_biggest_lstm_v3.add(LSTM(64, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v3.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v3.add(Dense(4, activation='relu'))
-    model_bigger_biggest_lstm_v3.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v4 = Sequential()
-    model_bigger_biggest_lstm_v4.add(LSTM(56, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v4.add(Dense(4, activation='relu'))
-    model_bigger_biggest_lstm_v4.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v5 = Sequential()
-    model_bigger_biggest_lstm_v5.add(LSTM(24, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v5.add(Dense(4, activation='relu'))
-    model_bigger_biggest_lstm_v5.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v6 = Sequential()
-    model_bigger_biggest_lstm_v6.add(LSTM(128, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v6.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v6.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v6.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v7 = Sequential()
-    model_bigger_biggest_lstm_v7.add(LSTM(256, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v7.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v7.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v7.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v8 = Sequential()
-    model_bigger_biggest_lstm_v8.add(LSTM(256, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v8.add(Dense(8, activation='relu'))
-    model_bigger_biggest_lstm_v8.add(Dense(8, activation='leaky_relu'))
-    model_bigger_biggest_lstm_v8.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v12_half_bank = Sequential()
-    model_bigger_biggest_lstm_v12_half_bank.add(LSTM(256, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='leaky_relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(12, activation='leaky_relu'))
-    model_bigger_biggest_lstm_v12_half_bank.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v16 = Sequential()
-    model_bigger_biggest_lstm_v16.add(LSTM(256, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(16, activation='leaky_relu'))
-    model_bigger_biggest_lstm_v16.add(Dense(1, activation='sigmoid'))
-    model_bigger_biggest_lstm_v16 = Sequential()
-
-    '''
-    Inspired by https://arxiv.org/abs/1406.1078
-    and my love for cars,
-    Imagine a DOHC engine. For each cylinder, there are two cam shafts per bank of cylinder head. One shaft for intake valves, and the other for exhaust valves.
-    Each bank will look like this intake -> cylinder -> exhaust.
-    The RNN will look like this: Dense -> LSTM -> Dense
-    we can think of each lstm as a 'cyinder', remembering and storing data, dense nodes are used for information traversal.
-
-    '''
-    model_stacked_v6 = Sequential()
-    model_stacked_v6.add(LSTM(256, input_shape=(timeSequences, attributes), return_sequences=True))
-    model_stacked_v6.add(LSTM(256, return_sequences=True))
-    model_stacked_v6.add(LSTM(128, return_sequences=True))
-    model_stacked_v6.add(LSTM(128, return_sequences=True))
-
-    model_stacked_v6.add(LSTM(64, ))
-    model_stacked_v6.add(Dense(64, activation='relu'))
-    model_stacked_v6.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_biggest_lstm_v9 = Sequential()
-    model_bigger_biggest_lstm_v9.add(LSTM(128, input_shape=(timeSequences, attributes)))
-    model_bigger_biggest_lstm_v9.add(Dense(16, activation='relu'))
-    model_bigger_biggest_lstm_v9.add(Dense(4, activation='relu'))
-    model_bigger_biggest_lstm_v9.add(Dense(1, activation='sigmoid'))
-
-    model_bigger_lstm_v2 = Sequential()
-    model_bigger_lstm_v2.add(LSTM(8, input_shape=(timeSequences, attributes)))
-    model_bigger_lstm_v2.add(Dense(12, activation='relu'))
-    model_bigger_lstm_v2.add(Dense(36, activation='relu'))
-    model_bigger_lstm_v2.add(Dense(1, activation='sigmoid'))
-
-    model_double_lstm = Sequential()
-    model_double_lstm.add(LSTM(8, input_shape=(timeSequences, attributes), return_sequences=True))
-    model_double_lstm.add(LSTM(16))
-    model_double_lstm.add(Dense(8, activation='relu'))
-    model_double_lstm.add(Dense(4, activation='relu'))
-    model_double_lstm.add(Dense(1, activation='sigmoid'))
-
-    model_double_lstm_double_layers = Sequential()
-    model_double_lstm_double_layers.add(LSTM(16, input_shape=(timeSequences, attributes), return_sequences=True))
-    model_double_lstm_double_layers.add(LSTM(16, return_sequences=True))
-    model_double_lstm_double_layers.add(LSTM(8))
-    model_double_lstm_double_layers.add(Dense(4, activation='relu'))
-    model_double_lstm_double_layers.add(Dense(1, activation='sigmoid'))
-
-    model_double_lstm_double_layers_more_nodes = Sequential()
-    model_double_lstm_double_layers_more_nodes.add(
-        LSTM(8, input_shape=(timeSequences, attributes), return_sequences=True))
-    model_double_lstm_double_layers_more_nodes.add(LSTM(16))
-    model_double_lstm_double_layers_more_nodes.add(Dense(12, activation='relu'))
-    model_double_lstm_double_layers_more_nodes.add(Dense(36, activation='relu'))
-    model_double_lstm_double_layers_more_nodes.add(Dense(8, activation='relu'))
-    model_double_lstm_double_layers_more_nodes.add(Dense(1, activation='sigmoid'))
-
-    model_ltsm_straight_to_output = Sequential()
-    model_ltsm_straight_to_output.add(LSTM(8, input_shape=(timeSequences, attributes)))
-    model_ltsm_straight_to_output.add(Dense(1, activation='sigmoid'))
-    # models['transformer_model'] = transformer_model
-    #
-    #models['stacked_lstm'] = stacked_lstm;
-
-    models['stacked_lstm_v2'] = stacked_lstm_v2;
 
 
-    models['model_one_layer_ltsm'] = model_one_layer_ltsm
+    models['transformer_model'] = transformer_model
+    # models['stacked_lstm'] = stacked_lstm;
+    models['conv_stacked_lstm'] = conv_stacked_lstm
 
-    models['model_simple_ltsm'] = model_simple_ltsm
-    """
-    models['model_one_layer_ltsm_v2'] = model_one_layer_ltsm_v2;
-    models['model_bigger_lstm'] = model_bigger_lstm;
-    models['model_bigger_bigger_lstm'] = model_bigger_bigger_lstm
-    models['model_bigger_biggest_lstm'] = model_bigger_biggest_lstm
-    models['model_bigger_biggest_lstm_v2'] = model_bigger_biggest_lstm_v2
-    models['model_bigger_biggest_lstm_v3'] = model_bigger_biggest_lstm_v3
-    models['model_bigger_biggest_lstm_v4'] = model_bigger_biggest_lstm_v4
-
-    models['model_bigger_biggest_lstm_v5'] = model_bigger_biggest_lstm_v5
-    models['model_bigger_biggest_lstm_v6'] = model_bigger_biggest_lstm_v6
-    models['model_bigger_biggest_lstm_v7'] = model_bigger_biggest_lstm_v7
-    models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
-    models['model_bigger_biggest_lstm_v9'] = model_bigger_biggest_lstm_v9
-    models['model_bigger_biggest_lstm_v2_leaky_relu'] = model_bigger_biggest_lstm_v2_leaky_relu
-    models['model_bigger_biggest_lstm_v12_half_bank'] = model_bigger_biggest_lstm_v12_half_bank
-    models['model_bigger_biggest_lstm_v16'] = model_bigger_biggest_lstm_v16
-    # Past here, overfitting occurs
-    models['model_double_stm'] = model_double_lstm;
-    models['model_double_lstm_double_layers'] = model_double_lstm_double_layers
-    models['model_ltsm_straight_to_output'] = model_ltsm_straight_to_output
-    models['model_double_lstm_double_layers_more_nodes'] = model_double_lstm_double_layers_more_nodes
-    #
-    # '''Unique Architectures'''
-    
-    """
-    # models['model_bigger_lstm_v2'] = model_bigger_lstm_v2
-    models['model_bigger_biggest_lstm_v8'] = model_bigger_biggest_lstm_v8
-
-    models['model_stacked_v6'] = model_stacked_v6
     return models
 
 
@@ -552,48 +404,53 @@ def getMinMax(data):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    savePythonFile(resultDir)
     timeSequences = 2
-    numAttributes = 600
+    numAttributes = 150 * 2
     numMetaAttrs = 0
-    windowSize = 75
-    epochs = 100  # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
-    numFolds = 10;
+    windowSize = 150#75
+    # TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
+    epochs = 14 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    numFolds = 14;
     shuffle = False
-    callback = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=20, start_from_epoch=50, baseline=0.73, mode='max', restore_best_weights=False)
+    useLoo = False
+    kfold = StratifiedKFold(n_splits=numFolds, shuffle=True)
+
+    if useLoo:
+        print_both("using Leave one out")
+    else:
+        print_both("Using K Fold")
+    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10,
+                                                 restore_best_weights=False)
 
     yAll = np.array([])
     print_both('epochs: ' + str(epochs))
     print_both('Shuffle on compile: ' + str(shuffle))
-    # strategy = tf.distribute.MirroredStrategy()
-    # print_both('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
     consoleOut = sys.stdout  # assign console output to a variable
 
- #   allTrainData = convertArffToDataFrame(
-  #      "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/2023-10-26T15;17;59.575004/trainData_500.0mssec_window_1.arff")
-    #Todo
-    #More advanced normalization
-    #figure out min max for one data sample and apply to all via modulation
-    # xAttrMinMax = normalizationByPollingSample(allTrainData, numAttributes)
 
-    #xAll, yAll = convertDataToLTSMFormat(allTrainData, timeSequences)
-
-    # trainData = convertArffToDataFrame("E:\\trainData_2sec_window_1_no_v.arff")
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/matAndLilBySet/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/onetorulethemall/"
 
-    # models = getModelConfig(timeSequences, (numAttributes * windowSize) + numMetaAttrs)
-    models = getModelConfig(timeSequences, numAttributes)
+    models = getModelConfig(timeSequences, numAttributes, windowSize)
     all_models_by_tp_and_tn = {};
     all_models_stats = []
     trainDataParticipants = []
+    testDataParticipants = []
     attr_min_max = {}
+    bc = 0
+
+    print_both("normalization through files")
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
-        print_both(filename)
         # Skip non trainData files.
+        continue;
         if "trainData" not in filename:
             continue
+        # if bc > 0:
+        #    continue
+        bc += 1
         trainData = convertArffToDataFrame(f)
 
         attr_min_max = normalizationByPollingSample(trainData, numAttributes, numMetaAttrs, attr_min_max)
@@ -603,125 +460,186 @@ if __name__ == '__main__':
         (samples,windowSize,attributes)
         Also pair the correct answers together.
         '''
+
+    print_both("Done printing normalizations")
+    cc = 0
     participants = []
     for filename in os.listdir(baseDirForTrainData):
         f = os.path.join(baseDirForTrainData, filename)
-        if "trainData" not in filename:
+        print_both(filename)
+        if "trainData" not in filename and "testData" not in filename:
             continue
-        trainData = convertArffToDataFrame(f)
-        participants.append(filename)
-        x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences, numMetaAttrs)
+        # if cc > 0:
+        #    continue
+        cc += 1
+        if "trainData" in filename:
+            trainData = convertArffToDataFrame(f)
+            participants.append(filename)
+            x_part, y_part = convertDataToLTSMFormat(trainData, timeSequences, numMetaAttrs)
 
-        print_both('full input shape: ' + str(x_part.shape))
-        yAll = np.concatenate((yAll, y_part), axis=0)
-        # x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
-        trainDataParticipants.append({'x': x_part, 'y': y_part, 'fileName' : filename})
+            print_both('full input shape: ' + str(x_part.shape))
+            yAll = np.concatenate((yAll, y_part), axis=0)
+            # x_part = normalizeData(x_part, windowSize, numAttributes, numMetaAttrs, attr_min_max)
+            trainDataParticipants.append({'x': x_part, 'y': y_part, 'fileName': filename})
+        elif "testData" in filename:
+            testData = convertArffToDataFrame(f)
+            xTest, yTest = convertDataToLTSMFormat(testData, timeSequences, numMetaAttrs)
+            testDataParticipants.append({'x': xTest, 'y': yTest, 'fileName': filename})
 
     print_both("normalization data attributes (keep handy)")
     print_both(json.dumps(str(attr_min_max)))
 
-    testData = convertArffToDataFrame(baseDirForTrainData + "/testData_500.0msec_window_1.arff")
-    # validationData = convertArffToDataFrame("E:\\testData_2sec_window_1_no_v.arff")
-    xTest, yTest = convertDataToLTSMFormat(testData, timeSequences, numMetaAttrs)
     # xTest = normalizeData(xTest, windowSize, numAttributes, numMetaAttrs, attr_min_max)
 
-    '''
-    Weight biasing to help correct some issues with skewed class representation
-    '''
-    weights = get_weight_bias(yAll)
-
-    print_both('class 0 weight: ' + str(weights[0]))
-    print_both('class 1 weight: ' + str(weights[1]))
     # with strategy.scope():
     for model_name, model_uncloned in models.items():
-            model = tf.keras.models.clone_model(model_uncloned)
-            optimizers = get_optimizers()
+        model = tf.keras.models.clone_model(model_uncloned)
+        optimizers = get_optimizers()
 
-            print_both("*****************************************")
-            print_both(model_name)
+        print_both("*****************************************")
+        print_both(model_name)
 
-            sys.stdout = outputFile
-            model.summary()
-            sys.stdout = consoleOut  # set stdout back to console output
-            model.summary()
+        sys.stdout = outputFile
+        model.summary()
+        sys.stdout = consoleOut  # set stdout back to console output
+        model.summary()
 
-            print_both("*****************************************")
-            histories = []
-            numPart = 0
-            stats_by_participant = {}
-            for optimizer in optimizers:
-                if type(optimizer) != type(""):
-                    unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
-                else:
-                    unique_model_id = model_name + "-"
-                if hasattr(optimizer, 'beta_1'):
-                    unique_model_id += " b1: " + str(optimizer.beta_1)
-                if hasattr(optimizer, 'weight_decay'):
-                    unique_model_id += " wdecay: " + str(optimizer.weight_decay)
-                if hasattr(optimizer, 'use_ema'):
-                    unique_model_id += " ema:" + str(optimizer.use_ema)
-                print_both("-------------------------------")
-                print_both("unique model id: " + unique_model_id)
-                if (type(optimizer) != type("")):
-                    print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
-                else:
-                    print_both("optimizer: " + optimizer)
-                print_both("-------------------------------")
-                for i in range(len(trainDataParticipants)):
-                    print_both("trainig on file: " + str(trainDataParticipants[i]['fileName']))
+        print_both("*****************************************")
+        histories = []
+        numPart = 0
+        avg_tn_tp = []
+        tp_rates = []
+        tn_rates = []
+        stats_by_participant = {}
+        unseen_acc = []
+        max_ratio = 0
+        fold_scores = []
+        for optimizer in optimizers:
+            if type(optimizer) != type(""):
+                unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
+                    tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
+            else:
+                unique_model_id = model_name + "-"
+            if hasattr(optimizer, 'beta_1'):
+                unique_model_id += " b1: " + str(optimizer.beta_1)
+            if hasattr(optimizer, 'weight_decay'):
+                unique_model_id += " wdecay: " + str(optimizer.weight_decay)
+            if hasattr(optimizer, 'use_ema'):
+                unique_model_id += " ema:" + str(optimizer.use_ema)
+            print_both("-------------------------------")
+            print_both("unique model id: " + unique_model_id)
+            if (type(optimizer) != type("")):
+                print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
+            else:
+                print_both("optimizer: " + optimizer)
+            print_both("-------------------------------")
+            model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
+                          metrics=get_metrics_for_model())
+
+            for master_epoch in range(0, 1):
+
+                for i in range(int(len(trainDataParticipants))):
+
+                    print_both("trainig on file: " + str(trainDataParticipants[i]['fileName']) + "master epoch: " + str(master_epoch))
                     x_part = trainDataParticipants[i]['x']
                     y_part = trainDataParticipants[i]['y']
                     # Define per-fold score containers <-- these are new
                     acc_per_fold = []
                     loss_per_fold = []
                     # Since we are training on 'profiles' of people, we should always shuffle their data for training.
-                    kfold = StratifiedKFold(n_splits=numFolds,shuffle=True)
-                    # x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2,
-                    #                                                                   random_state=0, shuffle=True)
+                    loo = LeavePOut(1)
+                    if useLoo:
+                        print_both("loo splits: " + str(loo.get_n_splits(x_part)))
+                    # x_train, x_val, y_train, y_val = model_selection.train_test_split(x_part, y_part, test_size=0.2, random_state=0, shuffle=True)
                     fold_no = 0
-                    for train, test in kfold.split(x_part, y_part):
-                        print_both(x_part.shape)
-                        model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
-                                      metrics=get_metrics_for_model())
-                        # todo, we need to separate each participant
-                        # the model should train against only the participants train data to
-                        # have a representation of that person
-                        # then we retrain on the next person, so on and so forth.
+                    if useLoo:
+                        split_enumerator = enumerate(loo.split(x_part))
+                    elif numFolds > 1:
+                        split_enumerator = kfold.split(x_part, y_part);
 
-                        weights = get_weight_bias(y_part[train])
-
-                        print_both('class 0 weight: ' + str(weights[0]))
-                        print_both('class 1 weight: ' + str(weights[1]))
-                        hist = model.fit(x_part[train], y_part[train],
-                                         # validation_data=(x_val, y_val),
-                                         epochs=epochs,
-                                         class_weight=weights,
-                                         shuffle=shuffle,
-                  #                       batch_size=64,
-                                         callbacks=[callback]
-                                         )
+                    # todo, we need to separate each participant
+                    # the model should train against only the participants train data to
+                    # have a representation of that person
+                    # then we retrain on the next person, so on and so forth.
+                    for train, test in split_enumerator:
+                        if not useLoo:
+                            weights = get_weight_bias(y_part[train])
+                            pass
+                            # print_both('class 0 weight: ' + str(weights[0]))
+                            # print_both('class 1 weight: ' + str(weights[1]))
+                        print(x_part[train].shape)
+                        hist = model.fit(
+                            x_part[train],
+                            y_part[train],
+                            # validation_data=(x_val, y_val),
+                            epochs=epochs,
+                            # class_weight=None if useLoo else weights,
+                            shuffle=shuffle,
+                            # batch_size=1,
+                            callbacks=[callback]
+                        )
                         scores = model.evaluate(x_part[test], y_part[test], verbose=0)
-                        print_both(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1] * 100}%')
+                        print_both(
+                            f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1] * 100}%')
+                        print_both('fold: ' + str(fold_no))
                         fold_no += 1
                         histories.append(hist)
-                #hist_avg = np.average(hist.histroy['val_accuracy'])
-                #print_both('avh: ' + str(hist_avg))
+                        fold_scores.append(scores[1])
+                        cur_tp_tn = 0
+                        '''
+                        Test on each fold.
+                        '''
+                        for testPInd in range(0, len(testDataParticipants)):
+                            testP = testDataParticipants[testPInd]
+                            print_both('Testing on : ' + str(testP['fileName']))
+                            xTest = testP['x']
+                            yTest = testP['y']
+                            y_hat = model.predict(xTest)
+                            # results = model.evlauate(xVal, yTest)
+                            print(y_hat)
+                            y_hat = [(1.0 if y_pred >= 0.50 else 0.0) for y_pred in y_hat]
+                            conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
+                            true_pos = conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])
+                            true_neg = conf_matrix[1][1] / (conf_matrix[1][0] + conf_matrix[1][1])
+                            acc_rate = (conf_matrix[0][0] + conf_matrix[1][1]) / (conf_matrix[0][0] + conf_matrix[0][1] + conf_matrix[1][0] + conf_matrix[1][1])
+                            print_both(conf_matrix)
+                            curRatio = (true_pos + true_neg) / 2
+                            if (curRatio > max_ratio):
+                                max_ratio = curRatio
+                            cur_tp_tn += ((true_pos + true_neg) / 2) / len(testDataParticipants)
+                            print_both("Acc: " + str(acc_rate) + ", " + str(testPInd) + "tp: %: " + str(true_pos) + " tn: %: " + str(true_neg))
+                            tp_rates.append(true_pos)
+                            tn_rates.append(true_neg)
+                            unseen_acc.append(acc_rate)
+                                # print_both(conf_matrix)
                         if (np.average(hist.history['accuracy'][-20:]) < 0.50):
                             if (participants[i] not in stats_by_participant):
                                 stats_by_participant[participants[i]] = []
 
-                            stats_by_participant[participants[i]].append({'f': participants[i], 'model_id': model_name, 'accuracy' : np.average(hist.history['accuracy'][-20:])})
-                            print_both("Participant reached > 0.8 val_acc: " +participants[i])
-                '''
-                Done fitting on multiple participants, time for real world data testing
-                '''
+                            stats_by_participant[participants[i]].append({'f': participants[i], 'model_id': model_name,
+                                                                          'accuracy': np.average(
+                                                                              hist.history['accuracy'][-20:])})
+                            print_both("Participant reached > 0.8 val_acc: " + participants[i])
+            '''
+            Done fitting on multiple participants, time for real world data testing
+            '''
+            print_both("************************************")
+            print_both("--------FINISHED FITTING MODEL------")
+            print_both("************************************")
+            for testPInd in range(0, len(testDataParticipants)):
+                testP = testDataParticipants[testPInd]
+                print_both('Testing on : ' + str(testP['fileName']))
+                xTest = testP['x']
+                yTest = testP['y']
                 y_hat = model.predict(xTest)
                 # results = model.evlauate(xVal, yTest)
                 y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
+                conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
+                print_both(conf_matrix)
 
                 '''
-                Metrics
-                '''
+                    Metrics
+                    '''
 
                 hist_str = ''
                 print_both(str(histories))
@@ -732,25 +650,25 @@ if __name__ == '__main__':
                     for key in history.history.keys():
                         epochs = len(history.history[key])
                         total_histories_of_cross[key] = [0 for i in range(epochs)]
-                        #key: [e1,e2,e3]
+                        # key: [e1,e2,e3]
                         for i in range(epochs):
                             total_histories_of_cross[key][i] += history.history[key][i]
 
-                        #now calculate avg
+                        # now calculate avg
                         for i in range(epochs):
                             total_histories_of_cross[key][i] /= epochs
-                    #now we have cross -> [key : [e1,e3]/avg,...]
+                    # now we have cross -> [key : [e1,e3]/avg,...]
                     histories_of_all_cross.append(total_histories_of_cross)
 
-                #Don't use
-                #now we can go by key of total_histories_of_all_cross and calculate metrics
-                #avg_history_by_epoch = []
-                #for key in histories[0].history.keys():
+                # Don't use
+                # now we can go by key of total_histories_of_all_cross and calculate metrics
+                # avg_history_by_epoch = []
+                # for key in histories[0].history.keys():
                 #     #generate a 0 value for each epoch in the metric
                 #    avg_history_by_epoch[key]=[0 for i in range(len(histories[0].history[key]))]
                 #     #then for each of the cross folds metrics, calculate the averages
                 #    for h in histories:
-                          #calculate the average metric value per epoch
+                # calculate the average metric value per epoch
                 #        for i in range(h.history[key]):
                 #            avg_history_by_epoch['history'][key][i] += h.history[key][i]
                 #
@@ -758,38 +676,39 @@ if __name__ == '__main__':
                 #            avg_history_by_epoch['history'][key][i] /= len(h.history[key])
                 #
 
-                hist_str = ''
-                for key in histories_of_all_cross[0].keys():
-                    hist_str += str(key) + " : " + str(sum( sum(his[key]) for his in histories_of_all_cross) / len(histories_of_all_cross)) + "\n"
+                # hist_str = ''
+                # for key in histories_of_all_cross[0].keys():
+                #     hist_str += str(key) + " : " + str(
+                #         sum(sum(his[key]) for his in histories_of_all_cross) / len(histories_of_all_cross)) + "\n"
                 #     #finally, we now have the avg history of each metric per each epoch and per each model
 
+                # print_both(hist_str)
 
-                print_both(hist_str)
-
-                conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
                 print_both('putting in conf matrix')
                 all_models_by_tp_and_tn[unique_model_id] = conf_matrix
-                print_both(conf_matrix)
-                #
-                all_models_stats.append({
-                    'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,
-                    'lr': str(tf.keras.backend.eval(optimizer.lr)) if (type(optimizer) != type('')) else '',
-                    'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-                    'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-                    'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
-                    'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
-                })
+
                 # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
                 # Only save when using Linux keras 2.14!!!
-                model.save(resultDir + "/" + unique_model_id+".h5", save_format='h5')
+            print_both("max ratio achieved: " + str(max_ratio))
 
+            plotLines({'tp%': tp_rates, 'tn%': tn_rates, 'acc%': unseen_acc, 'val fold acc%': fold_scores}, resultDir, unique_model_id)
 
+            model.save(resultDir + "/" + unique_model_id + ".h5", save_format='h5')
+            #
+            #    all_models_stats.append({
+            #        'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,
+            #        'lr': str(tf.keras.backend.eval(optimizer.lr)) if (type(optimizer) != type('')) else '',
+            #        'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
+            #        'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
+            #        'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
+            #        'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
+            #    })
 
     sorted_all_models_by_tp_and_tn = OrderedDict(sorted(all_models_by_tp_and_tn.items(), key=lambda k:
     (all_models_by_tp_and_tn.get(k[0])[1][1] / (
-                all_models_by_tp_and_tn.get(k[0])[1][0] + all_models_by_tp_and_tn.get(k[0])[1][1]),
+            all_models_by_tp_and_tn.get(k[0])[1][0] + all_models_by_tp_and_tn.get(k[0])[1][1]),
      all_models_by_tp_and_tn.get(k[0])[0][0] / (
-                 all_models_by_tp_and_tn.get(k[0])[0][0] + all_models_by_tp_and_tn.get(k[0])[0][1])
+             all_models_by_tp_and_tn.get(k[0])[0][0] + all_models_by_tp_and_tn.get(k[0])[0][1])
      )))  # sort by what? true negative accuracy by true positive accuracy.
 
     for model_id, conf_matrix in reversed(sorted_all_models_by_tp_and_tn.items()):
@@ -800,7 +719,7 @@ if __name__ == '__main__':
 
     # plot values
 
-    #save python code
+    # save python code
     for key in stats_by_participant:
         print("participant: " + key)
         print(str(stats_by_participant[key]))

@@ -29,7 +29,9 @@ public class GazeMetrics {
     public Double medianSaccadeLen=0.0;
     @IgnoreWekaAttribute
     public Double stdOfSaccadeLen=0.0;
+    @IgnoreWekaAttribute
     public Double minSaccadeLen = 5000.0;
+    @IgnoreWekaAttribute
     public Double maxSaccadeLen = 0.0;
 
     public Double sumOfFixationDuration = 0.0;
@@ -37,7 +39,9 @@ public class GazeMetrics {
     public Double medianFixationDuration=0.0;
     @IgnoreWekaAttribute
     public Double stdOfFixationDuration=0.0;
+    @IgnoreWekaAttribute
     public Double minFixationDuration = 5000.0;
+    @IgnoreWekaAttribute
     public Double maxFixationDuration = 0.0;
 
     public Double sumOfSaccadeDurations = 0.0;
@@ -56,7 +60,9 @@ public class GazeMetrics {
     public Double medianAbsoluteDegree = 0.0;
     @IgnoreWekaAttribute
     public Double stdOfAbsoluteDegrees = 0.0;
+    @IgnoreWekaAttribute
     public Double minAbsoluteDegree = 5000.0;
+    @IgnoreWekaAttribute
     public Double maxAbsoluteDegree = 0.0;
 
     public Double sumOfRelativeDegrees = 0.0;
@@ -64,7 +70,9 @@ public class GazeMetrics {
     public Double medianRelativeDegree = 0.0;
     @IgnoreWekaAttribute
     public Double stdOfRelativeDegrees = 0.0;
+    @IgnoreWekaAttribute
     public Double minRelativeDegree = 5000.0;
+    @IgnoreWekaAttribute
     public Double maxRelativeDegree = 0.0;
 
 

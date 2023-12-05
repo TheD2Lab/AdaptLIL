@@ -14,7 +14,9 @@ public class HighlightingAdaptation extends Adaptation {
     }
 
     @Override
-    public void applyStyleChange(int direction, double stepAmount) {
+    public void applyStyleChange(double stepAmount) {
 
     }
+
+
 }

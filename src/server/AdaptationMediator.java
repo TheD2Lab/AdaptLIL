@@ -106,9 +106,9 @@ public class AdaptationMediator extends Mediator {
                     double lastRiskScore = this.getLastRiskScore();
                     double riskScoreChange = curRiskScore - lastRiskScore;
                     System.out.println("risk Score: " + curRiskScore);
-                    if (riskScoreChange > this.thresholdForInvokation || this.currentAdaptations.isEmpty()) {
+                    if (curRiskScore >= this.thresholdForInvokation || this.currentAdaptations.isEmpty()) {
                         System.out.println("invoking adaptation change");
-                        this.invokeAdaptation(riskScoreChange);
+                        this.invokeAdaptation(curRiskScore);
                     }
 
                     this.observedAdaptation.setScore(curRiskScore);
@@ -181,6 +181,8 @@ public class AdaptationMediator extends Mediator {
                 double scoreDiff = curRiskScore - observedAdaptation.getScore();
                 if (scoreDiff > smallChangeThreshold && scoreDiff < bigChangeThreshold) {//if slight improvement, make a change, may have leveld out.
                     //Potentially try a new adaptation?
+                    this.invokeNewAdaptation();
+                    System.out.println("Added new adaptation b/c of slight change: " + this.observedAdaptation.getType());
 
                 } else if (scoreDiff > bigChangeThreshold) { //if major improvement, good job, going in right direction
                     //apply change with similar as last change
@@ -188,6 +190,10 @@ public class AdaptationMediator extends Mediator {
                     MutableTriple<String, Integer, Double> lastStyleChange = this.observedAdaptation.getLastStyleChange();
                     this.observedAdaptation.applyStyleChange(lastStyleChange.middle, stepAmount);
                     this.invokeAdaptationChange();
+
+                } else {
+                    System.out.println("Added new  b/c it didn;t pass other threshold values: " + this.observedAdaptation.getType());
+                    this.invokeNewAdaptation();
 
                 }
 

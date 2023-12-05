@@ -20,8 +20,9 @@ public class ColorAdaptation extends Adaptation{
     }
 
     @Override
-    public void applyStyleChange(int direction, double stepAmount) {
+    public void applyStyleChange(double stepAmount) {
 
-        //Step amount likely to result in a color wheel shift.
     }
+
+
 }

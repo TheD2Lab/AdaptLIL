@@ -23,7 +23,7 @@ public class DeemphasisAdaptation extends Adaptation {
         float currentOpacity = Float.parseFloat(this.getStyleConfig().get("opacity"));
         float maxOpacity = 1;
         float minOpacity = 0;
-        int direction = this.isFlippedDir() ? -1 : 1;
+        int direction = this.hasFlipped() ? -1 : 1;
         if (direction > 0) {
             currentOpacity += (float) (stepAmount * maxOpacity);
             if (currentOpacity > maxOpacity)

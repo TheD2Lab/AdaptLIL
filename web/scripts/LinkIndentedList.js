@@ -75,10 +75,14 @@ class LinkIndentedList {
         if (d.children == null) {    //if it's collapsed branch node
             console.log(`branch node '${d.data.name}' collapsed`);
             d.collapsed = true;
-            //Sets shown=false to its actual descendants under d._children
-            d._children.forEach(d => d.descendants().forEach(dd => {
-                dd.shown = false;
-            }));
+
+            if (d._children != undefined) {
+
+                //Sets shown=false to its actual descendants under d._children
+                d._children.forEach(d => d.descendants().forEach(dd => {
+                    dd.shown = false;
+                }));
+            }
             d.shown = true; //exclude self!
             console.log(`${d.data.name}'s descendants gets shown=false`);
             // console.log(d._children);

@@ -65,7 +65,6 @@ class Websocket {
         const _this = this;
 
         if (response.name === 'adaptation') {
-            debugger;
             this.visualizationMap.adaptations.toggleAdaptation(response.adaptation.type, response.adaptation.state, response.adaptation.styleConfig);
 
         }
@@ -81,7 +80,6 @@ class Websocket {
 
     handleGazeResponse(response) {
         console.log("shouldnt get here because this code is outdated")
-        debugger;
         // const recXmlStr = response.data;
         // //Super lazily rn but instead of parsing the response.data gaze to json, we are parsing it as xml
         // const parser = new DOMParser();

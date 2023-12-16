@@ -21,6 +21,10 @@ class VisualizationAdaptations {
      */
     toggleAdaptation(adaptationType, state, styleConfig) {
         const _this = this;
+        _this.deemphasisAdaptation.state = false;
+        _this.highlightAdaptation.state = false;
+        _this.colorSchemeAdaptation.state = false;
+        restoreToBaselineAdaptations(d3.select('#baseline-svg'));
         if (adaptationType === 'deemphasis') {
             _this.deemphasisAdaptation.state = state;
             _this.deemphasisAdaptation.styleConfig = styleConfig;

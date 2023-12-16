@@ -200,3 +200,8 @@ function unhighlightAll(g) {
     //Always place direct mappings on top.
     g.selectAll('.map-to-hidden').lower();
 }
+
+function restoreToBaselineAdaptations(svg) {
+    restoreOpacity(svg);
+    unhighlightAll(svg)
+}

@@ -20,7 +20,7 @@ public class ServerMain {
 //    public static ServerMain serverMain;
     public static final String url = "localhost";
     public static final int port = 8080;
-    public static float gazeWindowSizeInMilliseconds = 500;
+    public static float gazeWindowSizeInMilliseconds = 2000;
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
 

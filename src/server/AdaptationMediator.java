@@ -93,6 +93,7 @@ public class AdaptationMediator extends Mediator {
                 gazeWindowINDArrays.add(gazeWindowInput);
                 if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
 
+                    System.out.println("Predicting...");
                     //Error (can only insert a scalar in to another scalar
                     //Find way to join
                     INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1)).reshape(
@@ -100,27 +101,30 @@ public class AdaptationMediator extends Mediator {
                                     this.numSequencesForClassification, // Num sequences to feed
                                     (int) gazeWindowINDArrays.get(0).shape()[0] //Num attributes per sequence
                             });
-                    System.out.println("classification shape: " + Arrays.toString(classificationInput.shape()));
+
                     Integer classificationResult = classifierModel.predict(classificationInput)[0]; //TODO
+                    System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
                     classifications[classificationIndex++] = classificationResult;
-                    System.out.println("classified as : " + classificationResult);
                     Integer participantWrongOrRight = null;
                     Float taskCompletionTime = null; //grab from websocket
                     //Calculate perilScore (risk score)
                     double curRiskScore = this.calculateRiskScore(classificationResult);
                     double lastRiskScore = this.getLastRiskScore();
                     double riskScoreChange = curRiskScore - lastRiskScore;
-                    System.out.println("# of classifications to begin intervention has occured : " + classifications.length);
                     if (classificationIndex == classifications.length) {
+                        System.out.println("# of classifications to begin intervention has occured : " + classificationIndex);
+
                         double score = 0.0;
                         int numClassOne = 0;
                         for (int i = 0; i < classifications.length; ++i)
                             if (classifications[i] == 1)
                                 numClassOne++;
+                        System.out.println("# class of 1: " + numClassOne);
                         score = (double) numClassOne / classifications.length;
                         this.invokeAdaptation(score);
                         this.observedAdaptation.setScore(curRiskScore);
                         this.lastRiskScore = curRiskScore;
+                        classificationIndex = 0;
                     }
                     gazeWindowINDArrays.clear();
                 }
@@ -133,10 +137,15 @@ public class AdaptationMediator extends Mediator {
     }
 
     public void invokeNewAdaptation() {
-        if (this.observedAdaptation != null)
+        Adaptation nextAdaptation = getNewAdaptation();
+        if (this.observedAdaptation != null) {
             this.observedAdaptation.setBeingObservedByMediator(false);
+            //Cycle through if we pick the same one as is being observed.
+            while (nextAdaptation.getType().equals(this.observedAdaptation.getType()))
+                nextAdaptation = getNewAdaptation();
+        }
 
-        this.observedAdaptation = getNewAdaptation();
+        this.observedAdaptation = nextAdaptation;
         this.observedAdaptation.setBeingObservedByMediator(true);
         this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
 
@@ -164,7 +173,7 @@ public class AdaptationMediator extends Mediator {
         //Case 0
         if (curRiskScore <= 0.0) {
             this.invokeNewAdaptation();
-            System.out.println("Added new adaptation because there is not one currently there: " + this.observedAdaptation.getType());
+            System.out.println("Added new adaptation because score was zero: " + this.observedAdaptation.getType());
         } else if (curRiskScore > 0.0){ //Has adaptations, review the currently observed one.
             if (!this.currentAdaptations.isEmpty()) {  //Has an adaptation, we can review it and compare to the base line (presumed that it's always classifcations: [0_0,0_1,...,0_n]
                 //Case 1

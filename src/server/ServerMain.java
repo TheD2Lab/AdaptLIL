@@ -2,6 +2,7 @@ package server;
 import analysis.ScanPath;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.opencsv.exceptions.CsvValidationException;
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.*;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.*;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -28,7 +29,7 @@ public class ServerMain {
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
     public static String modelConfigPath = "C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\models\\";
-    public static String modelName = "stacked_lstm.h5";
+    public static String modelName = "transformer_model.h5";
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
         String serialString = "<REC CNT=\"34\"/>";
@@ -53,7 +54,7 @@ public class ServerMain {
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         try {
             System.out.println("Loading Classification Model: " + modelName);
-            MultiLayerNetwork model = loadKerasModel(modelConfigPath, modelName);
+            ComputationGraph model = loadKerasModel(modelConfigPath, modelName);
             System.out.println("Loaded keras model : " + modelName);
             System.out.println("Starting grizzly HTTP server");
             HttpServer server = initHttpServerAndWebSocketPort();
@@ -145,13 +146,13 @@ public class ServerMain {
 
     }
 
-    public static MultiLayerNetwork loadKerasModel(String modelConfigPath, String modelName) {
+    public static ComputationGraph loadKerasModel(String modelConfigPath, String modelName) {
         //Uses resource directory below. Using hardcoding for now and will revisit when I clean this up.
         //String simpleMlp = new ClassPathResource("simple_mlp.h5").getFile().getPath();
-        MultiLayerNetwork classifier = null;
+        ComputationGraph classifier = null;
         try {
             InputStream modelByteStream = new BufferedInputStream(new FileInputStream(modelConfigPath + modelName));
-            classifier = KerasModelImport.importKerasSequentialModelAndWeights(modelByteStream, false);
+            classifier = KerasModelImport.importKerasModelAndWeights(modelByteStream, false);
         } catch (IOException e) {
             System.err.println("IOException when importing model (likely invalid path)");
             throw new RuntimeException(e);
@@ -170,7 +171,7 @@ public class ServerMain {
         return new GazeWindow(false, windowSizeInMilliseconds);
     }
 
-    public static AdaptationMediator initAdapationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, MultiLayerNetwork model, GazeWindow window) {
+    public static AdaptationMediator initAdapationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, ComputationGraph model, GazeWindow window) {
         return new AdaptationMediator(websocket, gp3Socket, model, window, ServerMain.numSequencesForClassification);
     }
 

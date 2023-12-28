@@ -264,16 +264,15 @@ def get_optimizers():
 def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
     # Norm and Attention
     x = layers.BatchNormalization(epsilon=1e-3)(inputs)  # What does passing inputs do to x?
-    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads, dropout=dropout)(x,
-                                                                                           x)  # What does passing x,x do?
-    x = layers.Dropout(dropout)(x)
+    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads, dropout=dropout)(x,x)  # x,x i.e;. key, dim.
+    # x = layers.Dropout(dropout)(x)
     res = x + inputs  # res?
 
     # feed foward
     x = layers.BatchNormalization(epsilon=1e-3)(res)
     x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(
         x)  # Might need to put the activation layer as separate var for d4j
-    x = layers.Dropout(dropout)(x)
+    # x = layers.Dropout(dropout)(x)
     x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
     return x + res
 
@@ -289,11 +288,10 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
 
     x = layers.GlobalAveragePooling1D(data_format="channels_first")(x)  # What does channels_first do?
     for dim in mlp_units:
-        x = layers.Dense(dim, activation='relu')(x)  # What does passing x do here?
-        x = layers.Dropout(mlp_dropout)(x)
+        x = layers.Dense(dim, activation='relu', dropout=mlp_dropout)(x)  # What does passing x do here?
 
-    # x = layers.LSTM()
     outputs = layers.Dense(1, activation='sigmoid')(x)  # 2 here is because we have a binary class.
+
     return tf.keras.Model(inputs, outputs)
 
 

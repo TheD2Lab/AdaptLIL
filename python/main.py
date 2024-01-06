@@ -42,7 +42,7 @@ def plotLines(lines, resultDir, unique_model_id):
     plt.legend()
     plt.title('TP% & TN% over cross fold of true unseen participants')
     plt.savefig(resultDir + '/' + unique_model_id + '.png')
-    plt.show();
+    # plt.show();
 def savePythonFile(resultDir):
     script_path = os.path.abspath(__file__)
     destination_path = resultDir + "/main.py"
@@ -205,7 +205,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adagrad(learning_rate=0.01, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
-        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=True),
+        tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=True),
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=True),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.53, use_ema=True),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.54, use_ema=True),
@@ -219,6 +219,11 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.49, use_ema=True, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.40, use_ema=True, weight_decay=2e-4),
         #
+        tf.keras.optimizers.Adam(learning_rate=1.35e-4, use_ema=False),  # control
+        tf.keras.optimizers.Adam(learning_rate=1.2e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.5e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.6e-4, use_ema=False),  # control
+        tf.keras.optimizers.Adam(learning_rate=1.7e-4, use_ema=False),  # control
         tf.keras.optimizers.Adam(learning_rate=1.3e-4, use_ema=False),  # control
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.38, use_ema=False),
@@ -227,7 +232,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.32, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.6, use_ema=False),
         #
-        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.8, use_ema=False, weight_decay=2e-4),
+        tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.8, use_ema=False, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.95, use_ema=False, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.85, use_ema=False, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.7, use_ema=False, weight_decay=2e-4),
@@ -242,12 +247,12 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.6e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
-        # tf.keras.optimizers.Adam(learning_rate=1.9e-3),
+        tf.keras.optimizers.Adam(learning_rate=1.9e-4),
         # tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1e-2),
-        # tf.keras.optimizers.Nadam(learning_rate=1e-3),
-        # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        tf.keras.optimizers.Nadam(learning_rate=1e-3),
+        tf.keras.optimizers.Nadam(learning_rate=1.5e-4),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
         # tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
@@ -258,17 +263,16 @@ def get_optimizers():
 
 def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
     # Norm and Attention
-    x = layers.LayerNormalization(epsilon=1e-6)(inputs)  # What does passing inputs do to x?
-    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads, dropout=dropout)(x,
-                                                                                           x)  # What does passing x,x do?
-    x = layers.Dropout(dropout)(x)
+    x = layers.BatchNormalization(epsilon=1e-3)(inputs)  # What does passing inputs do to x?
+    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads)(x,x)  # x,x i.e;. key, dim.
+    # x = layers.Dropout(dropout)(x)
     res = x + inputs  # res?
 
     # feed foward
-    x = layers.LayerNormalization(epsilon=1e-6)(res)
+    x = layers.BatchNormalization(epsilon=1e-3)(res)
     x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(
         x)  # Might need to put the activation layer as separate var for d4j
-    x = layers.Dropout(dropout)(x)
+    # x = layers.Dropout(dropout)(x)
     x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
     return x + res
 
@@ -286,10 +290,9 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
     x = layers.GlobalAveragePooling1D(data_format="channels_first")(x)  # What does channels_first do?
     for dim in mlp_units:
         x = layers.Dense(dim, activation='relu')(x)  # What does passing x do here?
-        x = layers.Dropout(mlp_dropout)(x)
 
-    # x = layers.LSTM()
     outputs = layers.Dense(1, activation='sigmoid')(x)  # 2 here is because we have a binary class.
+
     return tf.keras.Model(inputs, outputs)
 
 
@@ -381,7 +384,7 @@ def getModelConfig(timeSequences, attributes, windowSize):
 
     models['transformer_model'] = transformer_model
     # models['stacked_lstm'] = stacked_lstm;
-    models['conv_stacked_lstm'] = conv_stacked_lstm
+    # models['conv_stacked_lstm'] = conv_stacked_lstm
 
     return models
 
@@ -597,7 +600,7 @@ if __name__ == '__main__':
                             yTest = testP['y']
                             y_hat = model.predict(xTest)
                             # results = model.evlauate(xVal, yTest)
-                            print(y_hat)
+                            # print(y_hat)
                             y_hat = [(1.0 if y_pred >= 0.50 else 0.0) for y_pred in y_hat]
                             conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
                             true_pos = conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])

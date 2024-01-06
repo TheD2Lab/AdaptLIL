@@ -277,6 +277,7 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
                             mlp_dropout=0):
     inputs = tf.keras.Input(shape=input_shape)
     x = inputs
+    #pair inputs by two for x,y and place into 3 filters for 3 time sequences
     x = layers.Conv1D(3, 2, input_shape=input_shape)(x)
     x = layers.LSTM(100, return_sequences=True)(x)
     for _ in range(num_transformer_blocks):

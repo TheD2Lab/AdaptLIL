@@ -103,7 +103,7 @@ public class AdaptationMediator extends Mediator {
                                     (int) gazeWindowINDArrays.get(0).shape()[0] //Num attributes per sequence
                             });
 
-                    Integer classificationResult = classifierModel.outputSingle(classificationInput).getDouble(0) >= 0.5 ? 1 : 0;
+                    Integer classificationResult = classifierModel.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
                     System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
                     classifications[classificationIndex++] = classificationResult;
                     Integer participantWrongOrRight = null;

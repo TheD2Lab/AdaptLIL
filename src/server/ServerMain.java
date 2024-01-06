@@ -2,9 +2,11 @@ package server;
 import analysis.ScanPath;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.opencsv.exceptions.CsvValidationException;
+import org.deeplearning4j.nn.conf.graph.ElementWiseVertex;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.*;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.*;
+import org.deeplearning4j.nn.modelimport.keras.layers.core.KerasMerge;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
@@ -29,7 +31,7 @@ public class ServerMain {
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
     public static String modelConfigPath = "C:\\Users\\nickj\\Downloads\\gazepoint-data-analysis-master\\models\\";
-    public static String modelName = "transformer_model.h5";
+    public static String modelName = "transformer_model_add.h5";
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
         String serialString = "<REC CNT=\"34\"/>";
@@ -48,7 +50,7 @@ public class ServerMain {
 
 
     public static void main(String[] args) {
-
+        System.setProperty("org.bytedeco.javacpp.logger.debug","true");
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
@@ -151,6 +153,7 @@ public class ServerMain {
         //String simpleMlp = new ClassPathResource("simple_mlp.h5").getFile().getPath();
         ComputationGraph classifier = null;
         try {
+            KerasLayer.registerCustomLayer("TFOpLambda", KerasAddLayer.class);
             InputStream modelByteStream = new BufferedInputStream(new FileInputStream(modelConfigPath + modelName));
             classifier = KerasModelImport.importKerasModelAndWeights(modelByteStream, false);
         } catch (IOException e) {

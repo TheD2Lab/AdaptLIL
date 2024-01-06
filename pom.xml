@@ -10,8 +10,9 @@
 
     <properties>
         <exec.mainClass>MNISTCUDNN</exec.mainClass>
-        <dl4j-master.version>1.0.0-M2.1</dl4j-master.version>
+        <dl4j-master.version>1.0.0-SNAPSHOT</dl4j-master.version>
         <logback.version>1.2.3</logback.version>
+         <nd4j.backend>nd4j-cuda-12.1-platform</nd4j.backend>
         <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>18</maven.compiler.source>
@@ -68,11 +69,11 @@
         </dependency>
 
         <!-- deeplearning4j-core: contains main functionality and neural networks -->
-        <dependency>
-            <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-core</artifactId>
-            <version>${dl4j-master.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.deeplearning4j</groupId>-->
+<!--            <artifactId>deeplearning4j-core</artifactId>-->
+<!--            <version>${dl4j-master.version}</version>-->
+<!--        </dependency>-->
 
         <!--
         ND4J backend: every project needs one of these. The backend defines the hardware on which network training
@@ -109,17 +110,32 @@
         This is getting difficult to setup, will leave for future if we need to run training on
         deep learning models faster or in real-time
         -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>cuda-platform</artifactId>
+            <version>12.1-8.9-1.5.9</version>
+        </dependency>
 <!--        <dependency>-->
 <!--            &lt;!&ndash; Additional dependencies to use bundled CUDA, cuDNN, and NCCL &ndash;&gt;-->
 <!--            <groupId>org.bytedeco</groupId>-->
 <!--            <artifactId>cuda-platform-redist</artifactId>-->
 <!--            <version>12.1-8.9-1.5.9</version>-->
 <!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.deeplearning4j</groupId>-->
+<!--            <artifactId>deeplearning4j-nn</artifactId>-->
+<!--            <version>1.0.0-M2</version>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-cuda-11.4</artifactId>
-            <version>1.0.0-M2.1</version>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>hdf5-platform</artifactId>
+            <version>1.14.1-1.5.9</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.nd4j</groupId>-->
+<!--            <artifactId>nd4j-cuda-11.6</artifactId>-->
+<!--            <version>1.0.0-M2.1</version>-->
+<!--        </dependency>-->
 <!--        <dependency>-->
 <!--            <groupId>org.nd4j</groupId>-->
 <!--            <artifactId>nd4j-cuda-11.6</artifactId>-->

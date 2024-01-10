@@ -42,7 +42,7 @@ def plotLines(lines, resultDir, unique_model_id):
     plt.legend()
     plt.title('TP% & TN% over cross fold of true unseen participants')
     plt.savefig(resultDir + '/' + unique_model_id + '.png')
-    plt.show();
+    plt.show()
 def savePythonFile(resultDir):
     script_path = os.path.abspath(__file__)
     destination_path = resultDir + "/main.py"
@@ -219,7 +219,12 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.49, use_ema=True, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.40, use_ema=True, weight_decay=2e-4),
         #
-        tf.keras.optimizers.Adam(learning_rate=1.3e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.35e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.2e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.5e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.6e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.7e-4, use_ema=False),  # control
+        # tf.keras.optimizers.Adam(learning_rate=1.3e-4, use_ema=False),  # control
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.38, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.39, use_ema=False),
@@ -242,12 +247,12 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.6e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
-        # tf.keras.optimizers.Adam(learning_rate=1.9e-3),
+        # tf.keras.optimizers.Adam(learning_rate=1.9e-4),
         # tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1e-2),
-        # tf.keras.optimizers.Nadam(learning_rate=1e-3),
-        # tf.keras.optimizers.Nadam(learning_rate=1.5e-3),
+        tf.keras.optimizers.Nadam(learning_rate=1e-3),
+        # tf.keras.optimizers.Nadam(learning_rate=1.5e-4),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
         # tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
@@ -258,19 +263,17 @@ def get_optimizers():
 
 def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
     # Norm and Attention
-    x = layers.LayerNormalization(epsilon=1e-6)(inputs)  # What does passing inputs do to x?
-    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads, dropout=dropout)(x,
-                                                                                           x)  # What does passing x,x do?
-    x = layers.Dropout(dropout)(x)
-    res = x + inputs  # res?
+    x = layers.BatchNormalization(epsilon=1e-3)(inputs)  # What does passing inputs do to x?
+    x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads)(x,x)  # x,x i.e;. key, dim. (essentially output of layer norm is passed in as two separate inputs)
+    # x = layers.Dropout(dropout)(x)
 
+    res = layers.Add()([x, inputs]);
     # feed foward
-    x = layers.LayerNormalization(epsilon=1e-6)(res)
-    x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(
-        x)  # Might need to put the activation layer as separate var for d4j
-    x = layers.Dropout(dropout)(x)
+    x = layers.BatchNormalization(epsilon=1e-3)(res)
+    x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(x)  # Might need to put the activation layer as separate var for d4j
+    # x = layers.Dropout(dropout)(x)
     x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
-    return x + res
+    return layers.Add()([x, res])
 
 
 def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_transformer_blocks, mlp_units, dropout=0,
@@ -282,13 +285,12 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
     for _ in range(num_transformer_blocks):
         x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
 
-    x = layers.GlobalAveragePooling1D(data_format="channels_first")(x)  # What does channels_first do?
+    x = layers.GlobalAveragePooling1D(data_format="channels_last")(x)  # What does channels_first do?
     for dim in mlp_units:
         x = layers.Dense(dim, activation='relu')(x)  # What does passing x do here?
-        x = layers.Dropout(mlp_dropout)(x)
 
-    # x = layers.LSTM()
     outputs = layers.Dense(1, activation='sigmoid')(x)  # 2 here is because we have a binary class.
+
     return tf.keras.Model(inputs, outputs)
 
 
@@ -296,8 +298,8 @@ def getModelConfig(timeSequences, attributes, windowSize):
     input_shape = (timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=int(attributes/ 10), num_heads=14, ff_dim=int(attributes / 10),
-                                                num_transformer_blocks=6, mlp_units=[attributes * 2], mlp_dropout=0.15,
+    transformer_model = build_transformer_model(input_shape, head_size=int(timeSequences), num_heads=2, ff_dim=int(timeSequences),
+                                                num_transformer_blocks=1, mlp_units=[attributes], mlp_dropout=0.15,
                                                 dropout=0.1)
 
     stacked_lstm = Sequential()
@@ -380,7 +382,7 @@ def getModelConfig(timeSequences, attributes, windowSize):
 
     models['transformer_model'] = transformer_model
     # models['stacked_lstm'] = stacked_lstm;
-    models['conv_stacked_lstm'] = conv_stacked_lstm
+    # models['conv_stacked_lstm'] = conv_stacked_lstm
 
     return models
 
@@ -410,8 +412,8 @@ if __name__ == '__main__':
     numMetaAttrs = 0
     windowSize = 150#75
     # TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
-    epochs = 14 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
-    numFolds = 14;
+    epochs = 15 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    numFolds = 95;
     shuffle = False
     useLoo = False
     kfold = StratifiedKFold(n_splits=numFolds, shuffle=True)
@@ -431,7 +433,7 @@ if __name__ == '__main__':
 
 
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/onetorulethemall/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/onetorulethemall/"
 
     models = getModelConfig(timeSequences, numAttributes, windowSize)
     all_models_by_tp_and_tn = {};
@@ -508,12 +510,9 @@ if __name__ == '__main__':
         histories = []
         numPart = 0
         avg_tn_tp = []
-        tp_rates = []
-        tn_rates = []
+
         stats_by_participant = {}
-        unseen_acc = []
         max_ratio = 0
-        fold_scores = []
         for optimizer in optimizers:
             if type(optimizer) != type(""):
                 unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
@@ -535,6 +534,10 @@ if __name__ == '__main__':
             print_both("-------------------------------")
             model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
                           metrics=get_metrics_for_model())
+            tp_rates = []
+            tn_rates = []
+            unseen_acc = []
+            fold_scores = []
 
             for master_epoch in range(0, 1):
 
@@ -596,7 +599,7 @@ if __name__ == '__main__':
                             yTest = testP['y']
                             y_hat = model.predict(xTest)
                             # results = model.evlauate(xVal, yTest)
-                            print(y_hat)
+                            # print(y_hat)
                             y_hat = [(1.0 if y_pred >= 0.50 else 0.0) for y_pred in y_hat]
                             conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
                             true_pos = conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])

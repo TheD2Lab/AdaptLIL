@@ -12,11 +12,13 @@
         <exec.mainClass>MNISTCUDNN</exec.mainClass>
         <dl4j-master.version>1.0.0-SNAPSHOT</dl4j-master.version>
         <logback.version>1.2.3</logback.version>
-         <nd4j.backend>nd4j-cuda-12.1-platform</nd4j.backend>
+        <nd4j.backend>nd4j-native</nd4j.backend>
+        <nd4j.version>1.0.0-SNAPSHOT</nd4j.version>
         <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
+        <slf4j.version>1.7.21</slf4j.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>18</maven.compiler.source>
-        <maven.compiler.target>18</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
@@ -110,13 +112,13 @@
         This is getting difficult to setup, will leave for future if we need to run training on
         deep learning models faster or in real-time
         -->
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>cuda-platform</artifactId>
-            <version>12.1-8.9-1.5.9</version>
-        </dependency>
 <!--        <dependency>-->
-<!--            &lt;!&ndash; Additional dependencies to use bundled CUDA, cuDNN, and NCCL &ndash;&gt;-->
+<!--            <groupId>org.bytedeco</groupId>-->
+<!--            <artifactId>cuda-platform</artifactId>-->
+<!--            <version>12.1-8.9-1.5.9</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+            <!-- Additional dependencies to use bundled CUDA, cuDNN, and NCCL -->
 <!--            <groupId>org.bytedeco</groupId>-->
 <!--            <artifactId>cuda-platform-redist</artifactId>-->
 <!--            <version>12.1-8.9-1.5.9</version>-->
@@ -127,9 +129,40 @@
 <!--            <version>1.0.0-M2</version>-->
 <!--        </dependency>-->
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <!-- Redirect jackson to slf4j.  -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>openblas-platform</artifactId>
+            <version>0.3.23-1.5.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacpp</artifactId>
+            <version>1.5.9</version>
+        </dependency>
+        <dependency>
             <groupId>org.bytedeco</groupId>
             <artifactId>hdf5-platform</artifactId>
             <version>1.14.1-1.5.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>openblas</artifactId>
+            <version>0.3.23-1.5.9</version>
         </dependency>
 <!--        <dependency>-->
 <!--            <groupId>org.nd4j</groupId>-->

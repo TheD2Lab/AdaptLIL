@@ -223,11 +223,11 @@ public class OntoMapCsv {
         List<String> excludedParticipants = OntoMapCsv.discardedParticipantIds();
         Random random = new Random();
         for (int i = 0; i < numTestParticipants; ++i) {
-            int randomId = random.nextInt(1,81);
+            int randomId = random.nextInt(81) + 1;
             String randParticipantId = "P" + randomId;
             while (excludedParticipants.contains(randParticipantId) || testParticipants.contains(randParticipantId)
             || !mapParticipants.containsKey(randParticipantId) || mapParticipants.get(randParticipantId).getAnatomyAnswersFile().getName().toLowerCase().contains("matrix")) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
-                randParticipantId = "P" + random.nextInt(1, 81);
+                randParticipantId = "P" + random.nextInt(81) + 1;
             }
             testParticipants.add(randParticipantId);
         }

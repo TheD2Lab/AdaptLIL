@@ -43,6 +43,7 @@ def plotLines(lines, resultDir, unique_model_id):
     plt.title('TP% & TN% over cross fold of true unseen participants')
     plt.savefig(resultDir + '/' + unique_model_id + '.png')
     plt.show()
+
 def savePythonFile(resultDir):
     script_path = os.path.abspath(__file__)
     destination_path = resultDir + "/main.py"
@@ -205,7 +206,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adagrad(learning_rate=0.01, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.0015, name='Adagrad'),
         # tf.keras.optimizers.Adagrad(learning_rate=0.002, name='Adagrad'),
-        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=True),
+        tf.keras.optimizers.Adam(learning_rate=1.4e-3, use_ema=True),
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=True),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.53, use_ema=True),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.54, use_ema=True),
@@ -225,6 +226,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.6e-4, use_ema=False),  # control
         # tf.keras.optimizers.Adam(learning_rate=1.7e-4, use_ema=False),  # control
         # tf.keras.optimizers.Adam(learning_rate=1.3e-4, use_ema=False),  # control
+
         # tf.keras.optimizers.Adam(learning_rate=1.45e-3, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.38, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.39, use_ema=False),
@@ -232,7 +234,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.32, use_ema=False),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.6, use_ema=False),
         #
-        # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.8, use_ema=False, weight_decay=2e-4),
+        tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.8, use_ema=False, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.95, use_ema=False, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.85, use_ema=False, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.7, use_ema=False, weight_decay=2e-4),
@@ -246,13 +248,14 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.6e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.7e-3),
-        # tf.keras.optimizers.Adam(learning_rate=1.8e-3),
         # tf.keras.optimizers.Adam(learning_rate=1.9e-4),
+
         # tf.keras.optimizers.Adam(learning_rate=1e-1),
         # tf.keras.optimizers.Adam(learning_rate=2e-3),
         # tf.keras.optimizers.Adam(learning_rate=1e-2),
         tf.keras.optimizers.Nadam(learning_rate=1e-3),
         # tf.keras.optimizers.Nadam(learning_rate=1.5e-4),
+        tf.keras.optimizers.Nadam(learning_rate=1.5e-4),
         # tf.keras.optimizers.Nadam(learning_rate=2e-3),
         # tf.keras.optimizers.Nadam(learning_rate=1e-2),
         # tf.keras.optimizers.Nadam(learning_rate=1e-1),
@@ -267,10 +270,12 @@ def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
     x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads)(x,x)  # x,x i.e;. key, dim. (essentially output of layer norm is passed in as two separate inputs)
     # x = layers.Dropout(dropout)(x)
 
+
     res = layers.Add()([x, inputs]);
     # feed foward
     x = layers.BatchNormalization(epsilon=1e-3)(res)
     x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(x)  # Might need to put the activation layer as separate var for d4j
+
     # x = layers.Dropout(dropout)(x)
     x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
     return layers.Add()([x, res])
@@ -280,6 +285,7 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
                             mlp_dropout=0):
     inputs = tf.keras.Input(shape=input_shape)
     x = inputs
+    #pair inputs by two for x,y and place into 3 filters for 3 time sequences
     x = layers.Conv1D(3, 2, input_shape=input_shape)(x)
     x = layers.LSTM(100, return_sequences=True)(x)
     for _ in range(num_transformer_blocks):

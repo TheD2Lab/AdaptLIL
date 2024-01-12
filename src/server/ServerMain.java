@@ -14,8 +14,14 @@ import org.glassfish.grizzly.websockets.WebSocketEngine;
 import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
+import server.http.HttpRequestCore;
+import server.http.request.RequestLoadModel;
 
+import javax.ws.rs.core.UriBuilder;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Scanner;
 
 public class ServerMain {
@@ -23,6 +29,10 @@ public class ServerMain {
 //    public static ServerMain serverMain;
     public static final String url = "localhost";
     public static final int port = 8080;
+    public static String loadModelEndpoint = "loadModel";
+
+    public static final String pythonServerURL = "localhost";
+    public static final int pythonServerPort = 5000;
     public static float gazeWindowSizeInMilliseconds = 2000;
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
@@ -55,11 +65,22 @@ public class ServerMain {
 
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         try {
-            System.out.println("Loading Classification Model: " + modelName);
-            ComputationGraph model = loadKerasModel(modelConfigPath, modelName);
+
+            //Give adaptation mediator the keras endpoint
             System.out.println("Loaded keras model : " + modelName);
             System.out.println("Starting grizzly HTTP server");
             HttpServer server = initHttpServerAndWebSocketPort();
+
+            //TODO
+            //Start keras server from python script and wait for ACK from python that the server started.
+
+            System.out.println("Loading Classification Model: " + modelName);
+            KerasServerCore kerasServerCore = new KerasServerCore(pythonServerURL, pythonServerPort);
+
+            //Make POST request to keras endpoint
+            kerasServerCore.loadKerasModel(modelName);
+
+
             System.out.println("Initialized HTTP Server & WebSocket port");
             System.out.println("Starting gp3 socket");
             GP3Socket gp3Socket = initGP3Socket(simulateGazepointServer);
@@ -72,13 +93,15 @@ public class ServerMain {
             GazeWindow gazeWindow = initGazeWindow(gazeWindowSizeInMilliseconds);
             System.out.println("Initialized gaze window");
             System.out.println("Building AdaptationMediator");
-            AdaptationMediator adaptationMediator = initAdapationMediator(visualizationWebsocket, gp3Socket, model, gazeWindow);
+            AdaptationMediator adaptationMediator = initAdapationMediator(visualizationWebsocket, gp3Socket, kerasServerCore, gazeWindow);
             System.out.println("Constructed AdaptationMediator");
             System.out.println("Main thread access goes to adaptationMediator.");
             System.out.println("Sever stays alive by waiting for input so type anything to exit");
             boolean runAdaptations = true;
             adaptationMediator.start();
         } catch (IOException | CsvValidationException e) {
+            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
 
@@ -148,34 +171,13 @@ public class ServerMain {
 
     }
 
-    public static ComputationGraph loadKerasModel(String modelConfigPath, String modelName) {
-        //Uses resource directory below. Using hardcoding for now and will revisit when I clean this up.
-        //String simpleMlp = new ClassPathResource("simple_mlp.h5").getFile().getPath();
-        ComputationGraph classifier = null;
-        try {
-            KerasLayer.registerCustomLayer("TFOpLambda", KerasAddLayer.class);
-            InputStream modelByteStream = new BufferedInputStream(new FileInputStream(modelConfigPath + modelName));
-            classifier = KerasModelImport.importKerasModelAndWeights(modelByteStream, false);
-        } catch (IOException e) {
-            System.err.println("IOException when importing model (likely invalid path)");
-            throw new RuntimeException(e);
-        } catch (InvalidKerasConfigurationException e) {
-            System.err.println("KerasConfigIssue (model related)");
-            throw new RuntimeException(e);
-        } catch (UnsupportedKerasConfigurationException e) {
-            System.err.println("Keras Model not support (model related)");
-            throw new RuntimeException(e);
-        }
-
-        return classifier;
-    }
 
     public static GazeWindow initGazeWindow(float windowSizeInMilliseconds) {
         return new GazeWindow(false, windowSizeInMilliseconds);
     }
 
-    public static AdaptationMediator initAdapationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, ComputationGraph model, GazeWindow window) {
-        return new AdaptationMediator(websocket, gp3Socket, model, window, ServerMain.numSequencesForClassification);
+    public static AdaptationMediator initAdapationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, KerasServerCore kerasServerCore, GazeWindow window) {
+        return new AdaptationMediator(websocket, gp3Socket, kerasServerCore, window, ServerMain.numSequencesForClassification);
     }
 
 }

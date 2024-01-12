@@ -1,18 +1,13 @@
 package server;
 
 import adaptations.Adaptation;
-import adaptations.ColorAdaptation;
 import adaptations.DeemphasisAdaptation;
 import adaptations.HighlightingAdaptation;
-import analysis.ontomap.OntoMapCsv;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.MutableTriple;
 import org.deeplearning4j.nn.graph.ComputationGraph;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import server.gazepoint.api.recv.RecXmlObject;
-import server.request.AdaptationInvokeRequest;
+import server.websocket.request.AdaptationInvokeRequestModelWs;
 import weka.core.Instance;
 
 import java.util.*;
@@ -24,7 +19,7 @@ import java.util.*;
 public class AdaptationMediator extends Mediator {
     private VisualizationWebsocket websocket;
     private GP3Socket gp3Socket;
-    private ComputationGraph classifierModel;
+    private KerasServerCore kerasServerCore;
     private GazeWindow gazeWindow;
     private boolean isRunning;
     private double lastRiskScore;
@@ -42,10 +37,10 @@ public class AdaptationMediator extends Mediator {
     private double bigChangeThreshold = 0.30;
 
     private int numSequencesForClassification;
-    public AdaptationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, ComputationGraph classifierModel, GazeWindow gazeWindow, int numSequencesForClassification) {
+    public AdaptationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, KerasServerCore kerasServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
         this.websocket = websocket;
         this.gp3Socket = gp3Socket;
-        this.classifierModel = classifierModel;
+        this.kerasServerCore = kerasServerCore;
         this.gazeWindow = gazeWindow;
         this.isRunning = false;
         this.currentAdaptations = new HashMap<>();
@@ -103,7 +98,8 @@ public class AdaptationMediator extends Mediator {
                                     (int) gazeWindowINDArrays.get(0).shape()[0] //Num attributes per sequence
                             });
 
-                    Integer classificationResult = classifierModel.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
+                    Integer classificationResult = kerasServerCore.predict(classificationInput).getOutput().getDouble(0) >= 0.5 ? 1 : 0;
+                            //kerasServerCore.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
                     System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
                     classifications[classificationIndex++] = classificationResult;
                     Integer participantWrongOrRight = null;
@@ -158,14 +154,14 @@ public class AdaptationMediator extends Mediator {
             //We don't have a situation where this arises yet.
         //one adaptation running.
             //toggle off the current observed
-        this.websocket.invoke(new AdaptationInvokeRequest(this.observedAdaptation));
+        this.websocket.invoke(new AdaptationInvokeRequestModelWs(this.observedAdaptation));
         System.out.println("invoke new adaptation");
     }
 
     public void invokeAdaptationChange() {
         //Websocket
         //Send over adaptation and the new config style.
-        this.websocket.invoke(new AdaptationInvokeRequest(this.observedAdaptation));
+        this.websocket.invoke(new AdaptationInvokeRequestModelWs(this.observedAdaptation));
     }
 
     public void invokeAdaptation(double curRiskScore) {
@@ -245,8 +241,8 @@ public class AdaptationMediator extends Mediator {
         return gp3Socket;
     }
 
-    public ComputationGraph getClassifierModel() {
-        return classifierModel;
+    public KerasServerCore getClassifierModel() {
+        return kerasServerCore;
     }
 
     public GazeWindow getGazeWindow() {
@@ -261,8 +257,8 @@ public class AdaptationMediator extends Mediator {
         this.gp3Socket = gp3Socket;
     }
 
-    public void setClassifierModel(ComputationGraph classifierModel) {
-        this.classifierModel = classifierModel;
+    public void setClassifierModel(KerasServerCore kerasServerCore) {
+        this.kerasServerCore = kerasServerCore;
     }
 
     public void setGazeWindow(GazeWindow gazeWindow) {

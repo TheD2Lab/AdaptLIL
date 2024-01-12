@@ -8,16 +8,15 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import data_classes.DomElement;
 import data_classes.Fixation;
 import geometry.Cartesian2D;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.glassfish.grizzly.websockets.DataFrame;
 import org.glassfish.grizzly.websockets.WebSocket;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 import server.gazepoint.api.recv.RecXmlObject;
-import server.request.AdaptationInvokeRequest;
-import server.request.DataRequest;
-import server.request.InvokeRequest;
-import server.request.TooltipInvokeRequest;
-import server.response.*;
+import server.websocket.request.AdaptationInvokeRequestModelWs;
+import server.websocket.request.DataRequestModelWs;
+import server.websocket.request.InvokeRequestModelWs;
+import server.websocket.request.TooltipInvokeRequestModelWs;
+import server.websocket.response.*;
 
 
 import java.util.*;
@@ -99,7 +98,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
      */
     public void onMessage(WebSocket socket, String msg) {
         try {
-            DataResponse response = objectMapper.readValue(msg, DataResponse.class);
+            DataResponseModelWs response = objectMapper.readValue(msg, DataResponseModelWs.class);
             if (response.type.equals("data")) {
                 this.handleDataResponse(socket, response);
 
@@ -123,7 +122,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
 
     public void requestDataResponse(WebSocket socket, String requestName) {
         this.hasResponded = false;
-        DataRequest dataRequest = new DataRequest(requestName);
+        DataRequestModelWs dataRequest = new DataRequestModelWs(requestName);
         try {
             socket.send(this.objectMapper.writeValueAsString(dataRequest));
 
@@ -133,16 +132,16 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
 
     }
 
-    public void invoke(InvokeRequest invokeRequest) {
+    public void invoke(InvokeRequestModelWs invokeRequest) {
       try {
           if (invokeRequest.name.equals("adaptation"))
-            this.send(this.objectMapper.writeValueAsString((AdaptationInvokeRequest) invokeRequest));
+            this.send(this.objectMapper.writeValueAsString((AdaptationInvokeRequestModelWs) invokeRequest));
       } catch (JsonProcessingException e) {
           throw new RuntimeException(e);
       }
     }
 
-    public void invokeTooltip(WebSocket socket, TooltipInvokeRequest tooltipInvokeRequest) {
+    public void invokeTooltip(WebSocket socket, TooltipInvokeRequestModelWs tooltipInvokeRequest) {
         try {
             socket.send(this.objectMapper.writeValueAsString(tooltipInvokeRequest));
         } catch (JsonProcessingException e) {
@@ -153,20 +152,20 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
     public void sendGazeData(WebSocket socket, RecXmlObject recXmlObject) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         XmlMapper xmlMapper = new XmlMapper();
-        GazeResponse gazeResponse = new GazeResponse("gaze", xmlMapper.writeValueAsString(recXmlObject));
-        socket.send(objectMapper.writeValueAsString(gazeResponse));
+        GazeResponseModelWs gazeResponseModelWs = new GazeResponseModelWs("gaze", xmlMapper.writeValueAsString(recXmlObject));
+        socket.send(objectMapper.writeValueAsString(gazeResponseModelWs));
 
     }
 
-    public void handleDataResponse(WebSocket socket, DataResponse response) throws InterruptedException {
+    public void handleDataResponse(WebSocket socket, DataResponseModelWs response) throws InterruptedException {
         if (response.name.equals("cellCoordinates")) {
-            this.handleCellCoordinatesResponse(socket, (CellCoordinateDataResponse) response);
+            this.handleCellCoordinatesResponse(socket, (CellCoordinateDataResponseModelWs) response);
         } else if (response.name.equals("mapWorld")) {
-            this.handleMapWorldResponse(socket, (MapWorldDataResponse) response);
+            this.handleMapWorldResponse(socket, (MapWorldDataResponseModelWs) response);
         }
     }
 
-    public void handleCellCoordinatesResponse(WebSocket socket, CellCoordinateDataResponse response) throws InterruptedException {
+    public void handleCellCoordinatesResponse(WebSocket socket, CellCoordinateDataResponseModelWs response) throws InterruptedException {
         System.out.println("handling cellCoordinates");
         XmlMapper xmlMapper = new XmlMapper();
         Map<String, DomElement> domElementMap = MapWorld.getDomElements();
@@ -208,7 +207,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
             if (intersectionElement != null) {
                 System.out.println(intersectionElement.getId());
                 //Fixation intersected with element, invoke tooltip
-                TooltipInvokeRequest invokeRequest = new TooltipInvokeRequest(
+                TooltipInvokeRequestModelWs invokeRequest = new TooltipInvokeRequestModelWs(
                         new String[]{intersectionElement.getId()}
                 );
                 this.invokeTooltip(socket, invokeRequest);
@@ -218,7 +217,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
 
     }
 
-    public void handleMapWorldResponse(WebSocket socket, MapWorldDataResponse response) {
+    public void handleMapWorldResponse(WebSocket socket, MapWorldDataResponseModelWs response) {
         MapWorld.setScreenWidth(response.screenWidth);
         MapWorld.setScreenHeight(response.screenHeight);
         MapWorld.setVisMapShape(response.visMapShape);

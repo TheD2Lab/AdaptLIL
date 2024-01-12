@@ -12,5 +12,6 @@ public class BooleanToIntSerializer extends JsonSerializer<Boolean> {
     public void serialize(Boolean aBoolean, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         int intValue = aBoolean ? 1 : 0;
         jsonGenerator.writeNumber(intValue);
+
     }
 }

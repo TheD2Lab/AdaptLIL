@@ -92,9 +92,10 @@ function updateMappingPos(alignments) {
  * @param {*} g svg:g of baseline or matrix
  * @param {*} alignmentSet base_alignment or mtrx_alignment
  */
-function highlightAlignment(alignments, g, alignmentSet) {
+function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     if (!alignments) { return; }    //for undefined
     console.log('highlightAlignment()');
+
     //Mutes all mapping and nodes in the group
     g.selectAll('.node').classed('muted', true);
     g.selectAll('.mapping').classed('muted', true);
@@ -107,26 +108,57 @@ function highlightAlignment(alignments, g, alignmentSet) {
         allAlignments.concat(filtered);
     }
 
-    console.log(allAlignments);
     //Highlights mappings and their class nodes
     for (let almt of allAlignments.reverse()) {
         // console.log(`highlight: gMap #a${almt.id}, gTree1 #n${almt.e1.id} '${almt.e1.data.name}', gTree2 #n${almt.e2.id} '${almt.e2.data.name}'`);
 
-        //alignment
+        //USE ADAPTATION STRENGTH TO DETERMINE THE STYLING VALUES
+
+        /**
+         * .highlight.mapLine .mapLine-fg {
+         *   stroke: #0077ff;
+         *   stroke-width: 4px; --max is ~ 6pxc because of arrow size
+         * }
+         * .highlight.mapLine .mapLine-bg {
+         *   stroke-width: 7px; -- max value, maybe around 15-20px?, min is 1px
+         * }
+         *
+         * .map-to-hidden.mapLine.highlight .mapLine-fg {
+         *   stroke-width: 3px; - max is ~ 6px because view .mapline above
+         *   stroke-dasharray: 2 6;
+         * }
+         */
+        //alignment .mapping .mapline
         g.select("#gMap").select('#a'+almt.id)
             .style('opacity', 1)
             .classed('muted', false)
             .classed('highlight', true).raise();
-        //tree nodes
+        /**TODO, add transition,style timer (if it's easy)*/
+
+        /**
+         * .svgdiv text {
+         *   font-weight: 100
+         * }
+         *
+         * .highlight {
+         *   opacity: 1;
+         * }
+         * .highlight text {
+         *   font-weight: 900; -max
+         * }
+         */
+        //tree nodes .node .branch|.leaf (all nodes in the currently cliked mapping can be highlighted
         g.select("#gTree1").select('#n'+almt.e1.id)
             .classed('muted', false)
             .classed('highlight', true);
+        //tree nodes .node .branch|.leaf
+
         g.select("#gTree2").select('#n'+almt.e2.id)
             .classed('muted', false)
             .classed('highlight', true);
 
-        // g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', 1)
-        // g.select('#gTree2').select('#n'+almt.e2.id).
+        //When clicking down into the branches, this will keep the currently selected node highlighted.
+
         //keep traversing till we find an expanded parent node and highlight it.
         let leftAlignParent = almt.e1 != null ? almt.e1.parent : null;
         while (leftAlignParent != null) {
@@ -154,27 +186,31 @@ function highlightAlignment(alignments, g, alignmentSet) {
     });
 }
 
-function deemphasize(alignments, g, alignmentSet) {
+function deemphasize(alignments, g, alignmentSet, adaptation) {
     if (!alignments) { return; }    //for undefined
 
     alignments = Array.isArray(alignments) ? alignments : [alignments];
     console.log(alignments)
+
+    //Based on strength, determine values
     //Set all maplines to be transparent
-    g.selectAll('.mapping').style('opacity', 0.1)
-    g.selectAll('.node').style('opacity', 0.1)
+    const adaptive_opacity = 1 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
+
+    g.selectAll('.mapping').style('opacity', adaptive_opacity)
+    g.selectAll('.node').style('opacity', adaptive_opacity)
     //Only show the current map line as opaque
     for(let almt of alignments.reverse()) {
-        g.select('#gMap').select('#a'+almt.id)
-            .style('opacity', 1)
+        const emphasised_opacity = 1
+        g.select('#gMap').select('#a'+almt.id).style('opacity', emphasised_opacity)
+        g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', emphasised_opacity)
+        g.select('#gTree2').select('#n'+almt.e2.id).style('opacity', emphasised_opacity)
 
-        g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', 1)
-        g.select('#gTree2').select('#n'+almt.e2.id).style('opacity', 1)
         //keep traversing till we find an expanded parent node and highlight it.
         let leftAlignParent = almt.e1 != null ? almt.e1.parent : null;
         while (leftAlignParent != null) {
             const parentNode = g.select('#gTree1').select('#n'+leftAlignParent.id)
             if (!$(parentNode.node()).hasClass('expanded'))
-                parentNode.style('opacity', 1)
+                parentNode.style('opacity', emphasised_opacity)
             leftAlignParent = leftAlignParent.parent;
         }
 
@@ -182,7 +218,7 @@ function deemphasize(alignments, g, alignmentSet) {
         while (rightAlignParent != null) {
             const parentNode = g.select('#gTree2').select('#n'+rightAlignParent.id)
             if (!$(parentNode.node()).hasClass('expanded'))
-                parentNode.style('opacity', 1)
+                parentNode.style('opacity', emphasised_opacity)
             rightAlignParent = rightAlignParent.parent;
         }
 

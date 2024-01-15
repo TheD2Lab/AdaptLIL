@@ -98,25 +98,7 @@
   transform: rotate(25deg);
 }
 
-/* mappings */
-.mapLine {
-  fill: none;
-  opacity: 1;
-}
-.mapLine .mapLine-fg {
-  stroke: #0077ff;
-  stroke-width: 1px;
-  stroke-linecap: round;
-}
-.mapLine .mapLine-bg {
-  stroke: white;
-  stroke-width: 4.5px;
-}
-.mapLine .mapLine-select-helper {
-  /* stroke: yellow; */
-  stroke: transparent;
-  stroke-width: 10px;
-}
+
 
 .mapCell {
   fill: #0077ff;
@@ -162,9 +144,14 @@
 }
 
 /*# sourceMappingURL=style.css.map */
+
 /**
 BASELINE/DEFAULTS
  */
+
+.svgdiv text {
+  font-weight: 100
+}
 /* mappings */
 .mapLine {
   fill: none;
@@ -191,25 +178,22 @@ BASELINE/DEFAULTS
 Adaptation classes
  */
 
-.svgdiv text {
-  font-weight: 100
-}
 
 .highlight {
   opacity: 1;
 }
 .highlight text {
-  font-weight: 500;
+  font-weight: 900;
 }
 .highlight.mapLine .mapLine-fg {
   stroke: #0077ff;
-  stroke-width: 2px;
+  stroke-width: 4px;
 }
 .highlight.mapLine .mapLine-bg {
   stroke-width: 7px;
 }
 
 .map-to-hidden.mapLine.highlight .mapLine-fg {
-  stroke-width: 2px;
+  stroke-width: 3px;
   stroke-dasharray: 2 6;
 }

@@ -111,14 +111,14 @@ class BaselineMap {
                     const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
 
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                        deemphasize(mappings, g, base_alignments);
+                        deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation);
                         _this.resetOpacity = true;
                     }
 
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                         if (!_this.maplineClicked) {
                             if (mappings) {
-                                highlightAlignment(mappings, g, base_alignments);
+                                highlightAlignment(mappings, g, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
                             }
                         }
                     }
@@ -217,23 +217,23 @@ class BaselineMap {
                 _this.maplineClicked = true;
 
                 //Highlight Adaptation
-                if (_this.linkIndentedList.adaptations.highlightingEnabled) {
-                    highlightAlignment(almt, svg, base_alignments);
+                if (_this.linkIndentedList.adaptations.highlightAdaptation.state) {
+                    highlightAlignment(almt, svg, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
                 }
 
             })
             .on('mouseover', almt => {
 
                 //deemphasis adaptation
-                if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                    deemphasize(almt, svg, base_alignments);
+                if (_this.linkIndentedList.adaptations.deemphasisAdaptation.state) {
+                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation);
                     _this.resetOpacity = true;
                 }
 
                 //highlight adaptation
-                if (_this.linkIndentedList.adaptations.highlightingEnabled) {
+                if (_this.linkIndentedList.adaptations.highlightAdaptation.state) {
                     if (!_this.maplineClicked) {
-                        highlightAlignment(almt, svg, base_alignments);
+                        highlightAlignment(almt, svg, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
                     }
                 }
 

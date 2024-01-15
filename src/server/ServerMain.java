@@ -33,7 +33,7 @@ public class ServerMain {
 
     public static final String pythonServerURL = "localhost";
     public static final int pythonServerPort = 5000;
-    public static float gazeWindowSizeInMilliseconds = 2000;
+    public static float gazeWindowSizeInMilliseconds = 1000;
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
 
@@ -137,7 +137,7 @@ public class ServerMain {
         XmlMapper mapper = new XmlMapper();
         String gp3Hostname = "localhost";
         int gp3Port = 4242;
-        File gazeFile = new File("/home/notroot/Desktop/d2lab/iav/p1.LIL.Anatomy_all_gaze.csv");
+        File gazeFile = new File("C:\\Users\\LeaseCalcs\\Desktop\\d2 lab\\gp3 tracking\\p1.LIL.Anatomy_all_gaze.csv");
         if (simulateGazepointServer) {
             GazepointSimulationServer simulationServer = new GazepointSimulationServer(gp3Hostname, gp3Port, gazeFile, true);
             Thread serverSimThread = new Thread(simulationServer);

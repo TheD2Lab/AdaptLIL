@@ -107,7 +107,7 @@ public class AdaptationMediator extends Mediator {
                     //Calculate perilScore (risk score)
                     double curRiskScore = this.calculateRiskScore(classificationResult);
                     double lastRiskScore = this.getLastRiskScore();
-                    double riskScoreChange = curRiskScore - lastRiskScore;
+
                     if (classificationIndex == classifications.length) {
                         System.out.println("# of classifications to begin intervention has occured : " + classificationIndex);
 
@@ -119,8 +119,6 @@ public class AdaptationMediator extends Mediator {
                         System.out.println("# class of 1: " + numClassOne);
                         score = (double) numClassOne / classifications.length;
                         this.invokeAdaptation(score);
-                        this.observedAdaptation.setScore(curRiskScore);
-                        this.lastRiskScore = curRiskScore;
                         classificationIndex = 0;
                     }
                     gazeWindowINDArrays.clear();

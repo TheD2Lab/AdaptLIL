@@ -1,10 +1,16 @@
 import os
 import numpy as np
 import tensorflow as tf
+import base64
+import json
+import struct
+
+
 from flask import request
 from flask import Flask
 from markupsafe import escape
 from tensorflow import keras
+
 
 app = Flask(__name__)
 
@@ -46,23 +52,35 @@ RequestBody: {
 'shape': [] shape of data,
 'encoding': 'byte_array' ... todo}
 '''
-@app.route("/predict", methods=['GET', "POST"])
+@app.route("/predict", methods=["POST"])
 def predict():
     requestJson = request.get_json()
+    print(requestJson)
     data = requestJson['data']
     input_data = None
     if (requestJson['encoding'] == 'byte_array'):
+        # data = struct.pack('%sf' % len(data), *data)
         #np array to byte_array
-        input_data = np.frombuffer(data, dtype=np.double)
+        # data = base64.b64decode(data,validate=True)
+        print(data)
+        # print(data)
+
+        input_data = np.array(data)
         input_data = np.reshape(input_data, newshape=tuple(requestJson['shape']))
     else:
         pass
 
     output = deepLearningObj.predict(input_data)
-    return {
+    print(output)
+    somejson = {
         'resultCode': 1000,
-        'output' : output
+        'output': list(output.flatten('C').astype(np.double)),
+        'outputShape': list(output.shape)
     }
+    print(somejson)
+
+    print(json.dumps(somejson))
+    return somejson
 
 
 if __name__ == "__main__":

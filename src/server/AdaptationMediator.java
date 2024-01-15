@@ -211,8 +211,8 @@ public class AdaptationMediator extends Mediator {
 
     public List<Adaptation> listOfAdaptations() {
         ArrayList<Adaptation> adaptations = new ArrayList<>();
-        adaptations.add(new DeemphasisAdaptation(true, System.currentTimeMillis(), -1, -1, null));
-        adaptations.add(new HighlightingAdaptation(true, System.currentTimeMillis(), -1, -1, null));
+        adaptations.add(new DeemphasisAdaptation(true, System.currentTimeMillis(), -1, -1, null, 0));
+        adaptations.add(new HighlightingAdaptation(true, System.currentTimeMillis(), -1, -1, null, 0));
         return adaptations;
     }
 

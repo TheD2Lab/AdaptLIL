@@ -7,29 +7,18 @@ import struct
 
 import requests
 from flask import request
-from flask import Flask, Manager
+from flask import Flask
 from markupsafe import escape
 from tensorflow import keras
+from gevent.pywsgi import WSGIServer
 
-
+#Must be at start of the script
 app = Flask(__name__)
-manager = Manager(app)
-javaServerPort = 8080
-javaServerPath = "http://localhost:" + str(javaServerPort)
-print("Sending ACK")
-# Remeber to add the command to your Manager instance
-manager.add_command('runserver', ackJavaServer())
-manager.run()
 
-def ackJavaServer():
-    #MAKE POST REQUEST BACK TO JAVA BACKEND NOTIFYING IS ALIVE
-    response = requests.post(javaServerPath+"/init/ackKerasServer", json={"message": "Server is alive", "resultCode": 1000})
-    print(response)
-    print(str(response.resultCode) + ": response from JAVA Server: " + str(response.message))
 
 class DeepLearningClassifierEndpoint:
     def __init__(self):
-        self.modelDir = '../models'
+        self.modelDir = os.path.join('models')
         self.modelName = None
         pass
 
@@ -54,7 +43,7 @@ def loadModel():
     deepLearningObj.loadModel(modelName)
     return {
         'resultCode': 1000,
-        'message' : 'Loaded model: ' + deepLearningObj.modelName
+        'message': 'Loaded model: ' + deepLearningObj.modelName
     }
 
 
@@ -105,3 +94,24 @@ def close():
 
 
 
+
+def ackJavaServer():
+    print("Sending ACK")
+
+    javaServerPort = 8080
+    javaServerPath = "http://localhost:" + str(javaServerPort)
+    print("before making request")
+    #MAKE POST REQUEST BACK TO JAVA BACKEND NOTIFYING IS ALIVE
+    response = requests.post(javaServerPath+"/init/ackKerasServer", json={"message": "Server is alive", "resultCode": 1000})
+    print("made request")
+    print(response.json())
+    responseJson = response.json()
+    print(str(responseJson['resultCode']) + ": response from JAVA Server: " + str(responseJson['message']))
+
+# with app.app_context():
+http_server = WSGIServer(("localhost", 5000), app)
+print("wsgI server init")
+
+http_server.start()
+ackJavaServer()
+http_server.serve_forever()

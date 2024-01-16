@@ -194,7 +194,7 @@ function deemphasize(alignments, g, alignmentSet, adaptation) {
 
     //Based on strength, determine values
     //Set all maplines to be transparent
-    let adaptive_opacity = 1 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
+    let adaptive_opacity = 0.6 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
     if (adaptive_opacity < 0.1)
         adaptive_opacity = 0.1 //baseline
 

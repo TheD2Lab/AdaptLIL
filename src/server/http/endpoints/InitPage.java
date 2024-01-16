@@ -43,9 +43,13 @@ public class InitPage {
 
             if (request.getResultCode() == 1000) {
                 System.out.println(request.getMessage());
-
-                //Since
-                ServerMain.execKerasServerAck();
+                System.out.println("sync mainthreadlock");
+                synchronized (ServerMain.mainThreadLock) {
+                    System.out.println("notifying");
+                    ServerMain.hasKerasServerAckd = true;
+                    ServerMain.mainThreadLock.notifyAll();
+                }
+                System.out.println("returning");
                 return Response.status(200).entity(new ResponseModelHttp(1000, "received your ACK and have successfully started remaining components of IAV")).build();
             }
         } catch (JsonProcessingException e) {

@@ -1,4 +1,7 @@
 ECHO ON
 ECHO "Starting python server via batch script"
-python -m flask --app ../python/FlaskServer.py run
+CALL conda activate gaze_metrics
+ECHO "calling python"
+CALL python python/FlaskServer.py
 PAUSE
+ECHO "exiting script?"

@@ -1,0 +1,5 @@
+python -m pip install gevent
+python -m pip install flask
+python -m pip install flask_script
+python -m pip install numpy
+python -m pip install tensorflow

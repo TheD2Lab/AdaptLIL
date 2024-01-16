@@ -31,7 +31,7 @@ public class AdaptationMediator extends Mediator {
     //Thresholds & Constants
 
     private double thresholdForInvokation;
-    private double increaseStrengthThresh = 0.20;
+    private double increaseStrengthThresh = 0.41;
     private double remainThresh = 0.6;
     private double smallChangeThreshold = 0.20;
     private double bigChangeThreshold = 0.30;
@@ -163,8 +163,7 @@ public class AdaptationMediator extends Mediator {
     }
 
     public void invokeAdaptation(double curRiskScore) {
-        double stepAmount = 0.50;
-
+        double stepAmount = 0.25;
         //Case 0
         if (curRiskScore <= 0.0) {
             this.invokeNewAdaptation();
@@ -174,8 +173,10 @@ public class AdaptationMediator extends Mediator {
                 //Case 1
                 if (curRiskScore < this.increaseStrengthThresh) { //Adaptation Risk increased.
                     //Select new adaptation
-                    if (this.observedAdaptation.hasFlipped()) //Cannot increase/decrease strenth of adaptation, must select a new one (c2.a)
+                    if (this.observedAdaptation.hasFlipped()) { //Cannot increase/decrease strenth of adaptation, must select a new one (c2.a)
+                        this.observedAdaptation.flipDirection();
                         this.invokeNewAdaptation();
+                    }
                     else if (!this.observedAdaptation.hasFlipped()) //(c2.b)
                     {
                         this.observedAdaptation.flipDirection(); //Flip direction

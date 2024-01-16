@@ -32,7 +32,7 @@ public class AdaptationMediator extends Mediator {
 
     private double thresholdForInvokation;
     private double increaseStrengthThresh = 0.20;
-    private double remainThresh = 0.8;
+    private double remainThresh = 0.6;
     private double smallChangeThreshold = 0.20;
     private double bigChangeThreshold = 0.30;
 
@@ -163,7 +163,7 @@ public class AdaptationMediator extends Mediator {
     }
 
     public void invokeAdaptation(double curRiskScore) {
-        double stepAmount = 0.25;
+        double stepAmount = 0.50;
 
         //Case 0
         if (curRiskScore <= 0.0) {

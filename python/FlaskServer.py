@@ -5,15 +5,27 @@ import base64
 import json
 import struct
 
-
+import requests
 from flask import request
-from flask import Flask
+from flask import Flask, Manager
 from markupsafe import escape
 from tensorflow import keras
 
 
 app = Flask(__name__)
+manager = Manager(app)
+javaServerPort = 8080
+javaServerPath = "http://localhost:" + str(javaServerPort)
+print("Sending ACK")
+# Remeber to add the command to your Manager instance
+manager.add_command('runserver', ackJavaServer())
+manager.run()
 
+def ackJavaServer():
+    #MAKE POST REQUEST BACK TO JAVA BACKEND NOTIFYING IS ALIVE
+    response = requests.post(javaServerPath+"/init/ackKerasServer", json={"message": "Server is alive", "resultCode": 1000})
+    print(response)
+    print(str(response.resultCode) + ": response from JAVA Server: " + str(response.message))
 
 class DeepLearningClassifierEndpoint:
     def __init__(self):
@@ -82,6 +94,14 @@ def predict():
     print(json.dumps(somejson))
     return somejson
 
+@app.route("/close", methods=["POST"])
+def close():
+    requestJson = request.get_json()
+    pid = 1010
+    if (requestJson['pid'] == pid):
+        func = request.environ.get('werkzeug.server.shutdown')
+        exit()
 
-if __name__ == "__main__":
-    app.run(debug=True)
+
+
+

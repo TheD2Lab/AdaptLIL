@@ -10,7 +10,6 @@ function buildNewAlignments(sourceAlmts, ont1root, ont2root) {
     let id = 0;
     let e1Index = 0;
     let e2Index = 0;
-    console.log(sourceAlmts)
     sourceAlmts.forEach(almt => {
         e1matches = ont1root.descendants().filter(d => d.data.name === almt.entity1).sort(function(a,b){
             return d3.ascending(a.height, b.height) || d3.ascending(a.depth, b.depth)});
@@ -56,7 +55,6 @@ function getAllDescendantMappings(d) {
  * @param {*} alignments 
  */
 function updateMappingPos(alignments) {
-    console.log('updateMappingPos()');
     let index = 0;
 
 
@@ -110,7 +108,6 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
 
     //Highlights mappings and their class nodes
     for (let almt of allAlignments.reverse()) {
-        // console.log(`highlight: gMap #a${almt.id}, gTree1 #n${almt.e1.id} '${almt.e1.data.name}', gTree2 #n${almt.e2.id} '${almt.e2.data.name}'`);
 
         //USE ADAPTATION STRENGTH TO DETERMINE THE STYLING VALUES
 
@@ -187,10 +184,54 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
 }
 
 function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked) {
+    if (!alignments) { return; }
+    alignments = Array.isArray(alignments) ? alignments : [alignments];
+
+    //Based on strength, determine values
+    //Set all maplines to be transparent
+    let adaptive_opacity = 0.8 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
+    if (adaptive_opacity < 0.1)
+        adaptive_opacity = 0.1 //baseline
+
+    //Deepmhasize all map lines and node
+    g.selectAll('.mapping').style('opacity', adaptive_opacity);
+    g.selectAll('.node').style('opacity', adaptive_opacity);
+
+    //Restore opacity to clicked or currently hovered map lines and nodes
+
+    const alignmentsToRestore = alignments.concat(Object.values(maplinesClicked));
+
+    for (const align of Object.values(alignmentsToRestore)) {
+        const restoreOpacityVal = 1;
+        g.selectAll('#a'+ align.id).style('opacity', restoreOpacityVal);
+        g.select('#gTree1').selectAll('#n' + align.e1.id).style('opacity', restoreOpacityVal);
+        g.select('#gTree2').selectAll('#n' + align.e2.id).style('opacity', restoreOpacityVal);
+
+        let leftAlignParen = align.e1 != null ? align.e1.parent : null;
+        while (leftAlignParen != null) {
+
+            const curNode = g.select('#gTree1').select('#n'+leftAlignParen.id)
+
+            curNode.style('opacity', restoreOpacityVal)
+            leftAlignParen = leftAlignParen.parent;
+        }
+
+        let rightAlignParen = align.e2 != null ? align.e2.parent : null;
+
+        while(rightAlignParen != null) {
+            const curNode = g.select('#gTree2').select('#n'+rightAlignParen.id)
+
+            curNode.style('opacity', restoreOpacityVal)
+            rightAlignParen = rightAlignParen.parent;
+        }
+
+    }
+
+}
+function _deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked) {
     if (!alignments) { return; }    //for undefined
 
     alignments = Array.isArray(alignments) ? alignments : [alignments];
-    console.log(alignments)
 
     //Based on strength, determine values
     //Set all maplines to be transparent
@@ -213,9 +254,10 @@ function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked) {
         const emphasised_opacity = 1
 
         //Do not deepmahsize the nodes of clicked maplines
-        if (!alignments.includes(almt) || (maplinesClicked.length > 0 && !maplinesClicked.hasOwnProperty(almt.id)))
+        if (!alignments.includes(almt) && (maplinesClicked.length > 0 && !maplinesClicked.hasOwnProperty(almt.id)))
             continue;
 
+        g.selectAll('#a'+almt.id).style('opacity', emphasised_opacity)
         g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', adaptive_opacity)
         g.select('#gTree2').select('#n'+almt.e2.id).style('opacity', adaptive_opacity)
         viewd_nodes[almt.e1.id] = 1
@@ -243,9 +285,7 @@ function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked) {
 
     }
 
-    g.selectAll('.node').filter(function(d) {
-        return viewd_nodes.hasOwnProperty(d.id);
-    }).style('opacity', adaptive_opacity)
+
 
 
 }
@@ -253,7 +293,6 @@ function restoreOpacity(g, allAlignments, maplinesClicked={}) {
 
     //Only unhighlight non-clicked mappings
     g.selectAll('.mapping').filter(function (d) {
-        console.log(d);
         return maplinesClicked.length < 1 || !maplinesClicked.hasOwnProperty(d.id)
 
     }).style('opacity', 1)

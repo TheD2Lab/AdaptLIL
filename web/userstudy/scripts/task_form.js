@@ -149,7 +149,7 @@ class TaskForm {
             answerDiv.innerHTML = (`
         <input type=text id="inputText" name="taskClassName" class="form-control" onkeydown="return (event.keyCode!=13);" autocomplete="off">
     `);
-        } else if (this.task.atype == "pairs") {
+        } else if (task.atype == "pairs") {
             answerDiv.innerHTML = (`
             <input type=text id="inputText" name="taskClassName" class="form-control" style="width:200px" onkeydown="return (event.keyCode!=13);" autocomplete="off">
         `);

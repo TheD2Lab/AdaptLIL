@@ -186,7 +186,7 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     });
 }
 
-function deemphasize(alignments, g, alignmentSet, adaptation) {
+function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked) {
     if (!alignments) { return; }    //for undefined
 
     alignments = Array.isArray(alignments) ? alignments : [alignments];
@@ -194,42 +194,110 @@ function deemphasize(alignments, g, alignmentSet, adaptation) {
 
     //Based on strength, determine values
     //Set all maplines to be transparent
-    let adaptive_opacity = 0.6 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
+    let adaptive_opacity = 0.8 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
     if (adaptive_opacity < 0.1)
         adaptive_opacity = 0.1 //baseline
 
-    g.selectAll('.mapping').style('opacity', adaptive_opacity)
-    g.selectAll('.node').style('opacity', adaptive_opacity)
-    //Only show the current map line as opaque
-    for(let almt of alignments.reverse()) {
-        const emphasised_opacity = 1
-        g.select('#gMap').select('#a'+almt.id).style('opacity', emphasised_opacity)
-        g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', emphasised_opacity)
-        g.select('#gTree2').select('#n'+almt.e2.id).style('opacity', emphasised_opacity)
+    g.selectAll('.mapping').filter(function(d) {
+        return maplinesClicked.length < 1 || !maplinesClicked.hasOwnProperty(d.id);
+    }).style('opacity', adaptive_opacity);
 
+
+    //Only show the current map line as opaque
+
+
+    const viewd_nodes=[]
+    //Only handles the nodes of alignments.
+    //Only show the current map line as opaque
+    for(let almt of alignmentSet.reverse()) {
+        const emphasised_opacity = 1
+
+        //Do not deepmahsize the nodes of clicked maplines
+        if (!alignments.includes(almt) || (maplinesClicked.length > 0 && !maplinesClicked.hasOwnProperty(almt.id)))
+            continue;
+
+        g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', adaptive_opacity)
+        g.select('#gTree2').select('#n'+almt.e2.id).style('opacity', adaptive_opacity)
+        viewd_nodes[almt.e1.id] = 1
+        viewd_nodes[almt.e2.id] = 1
         //keep traversing till we find an expanded parent node and highlight it.
         let leftAlignParent = almt.e1 != null ? almt.e1.parent : null;
         while (leftAlignParent != null) {
+            viewd_nodes[leftAlignParent.id] = 1;
             const parentNode = g.select('#gTree1').select('#n'+leftAlignParent.id)
             if (!$(parentNode.node()).hasClass('expanded'))
-                parentNode.style('opacity', emphasised_opacity)
+                parentNode.style('opacity', adaptive_opacity)
             leftAlignParent = leftAlignParent.parent;
         }
 
         let rightAlignParent = almt.e2 != null ? almt.e2.parent : null;
         while (rightAlignParent != null) {
+            viewd_nodes[rightAlignParent.id] = 1;
+
             const parentNode = g.select('#gTree2').select('#n'+rightAlignParent.id)
+
             if (!$(parentNode.node()).hasClass('expanded'))
-                parentNode.style('opacity', emphasised_opacity)
+                parentNode.style('opacity', adaptive_opacity)
             rightAlignParent = rightAlignParent.parent;
         }
 
     }
 
+    g.selectAll('.node').filter(function(d) {
+        return viewd_nodes.hasOwnProperty(d.id);
+    }).style('opacity', adaptive_opacity)
+
 
 }
-function restoreOpacity(g) {
-    g.selectAll('*').style('opacity', 1)
+function restoreOpacity(g, allAlignments, maplinesClicked={}) {
+
+    //Only unhighlight non-clicked mappings
+    g.selectAll('.mapping').filter(function (d) {
+        console.log(d);
+        return maplinesClicked.length < 1 || !maplinesClicked.hasOwnProperty(d.id)
+
+    }).style('opacity', 1)
+
+    const viewd_nodes=[]
+    //Only handles the nodes of alignments.
+    //Only show the current map line as opaque
+    for(let almt of allAlignments.reverse()) {
+        const emphasised_opacity = 1
+
+        //Do not deepmahsize the nodes of clicked maplines
+        if (maplinesClicked.length > 0 && !maplinesClicked.hasOwnProperty(almt.id))
+            continue;
+
+        g.select('#gTree1').select('#n'+almt.e1.id).style('opacity', 1)
+        g.select('#gTree2').select('#n'+almt.e2.id).style('opacity', 1)
+        viewd_nodes[almt.e1.id] = 1
+        viewd_nodes[almt.e2.id] = 1
+        //keep traversing till we find an expanded parent node and highlight it.
+        let leftAlignParent = almt.e1 != null ? almt.e1.parent : null;
+        while (leftAlignParent != null) {
+            viewd_nodes[leftAlignParent.id] = 1;
+            const parentNode = g.select('#gTree1').select('#n'+leftAlignParent.id)
+            if (!$(parentNode.node()).hasClass('expanded'))
+                parentNode.style('opacity', 1)
+            leftAlignParent = leftAlignParent.parent;
+        }
+
+        let rightAlignParent = almt.e2 != null ? almt.e2.parent : null;
+        while (rightAlignParent != null) {
+            viewd_nodes[rightAlignParent.id] = 1;
+
+            const parentNode = g.select('#gTree2').select('#n'+rightAlignParent.id)
+
+            if (!$(parentNode.node()).hasClass('expanded'))
+                parentNode.style('opacity', 1)
+            rightAlignParent = rightAlignParent.parent;
+        }
+
+    }
+
+    g.selectAll('.node').filter(function(d) {
+        return viewd_nodes.hasOwnProperty(d.id);
+    }).style('opacity', 1)
 }
 function unhighlightAll(g) {
     g.selectAll("*")

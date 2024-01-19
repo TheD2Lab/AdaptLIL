@@ -16,6 +16,10 @@
     <script src="scripts/IndentedTree.js"></script>
     <script src="scripts/script-alignment.js"></script>
     <script src="scripts/BaselineMap.js"></script>
+    <script src="scripts/LinkIndentedList.js"></script>
+    <script src="scripts/VisualizationAdaptations.js"></script>
+    <script src="scripts/Adaptation.js"></script>
+
     <!-- data -->    
     <script src="data/tutorial_dataset/pizza.js"></script>
     <script src="data/tutorial_dataset/food.js"></script>
@@ -44,7 +48,8 @@
 </body>
 
 <script>
-    const baselineMap = new BaselineMap();
+    const linkIndentedList = new LinkIndentedList();
+    const baselineMap = new BaselineMap(linkIndentedList);
     const dataset1 = {
         domain: 'food',
         ont1: pizza,
@@ -52,5 +57,7 @@
         maps: mapping_pizza_food
     };
     baselineMap.setDataset(dataset1);
+    baselineMap.drawBaselineSvg();
+
 </script>
 </html>

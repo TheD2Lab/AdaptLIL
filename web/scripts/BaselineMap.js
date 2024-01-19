@@ -13,6 +13,7 @@ class BaselineMap {
         this.maplineClicked = false;
         this.maplines = undefined; // mapline is the line connecting the nodes.
         this.resetOpacity = false;
+        this.maplinesClicked = {}
     }
     /**
      * Creates baselineMapping and returns svg:g
@@ -111,8 +112,10 @@ class BaselineMap {
                     const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
 
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                        deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation);
-                        _this.resetOpacity = true;
+                        if (!_this.maplineClicked) {
+                            deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
+                            _this.resetOpacity = true;
+                        }
                     }
 
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
@@ -128,16 +131,17 @@ class BaselineMap {
 
                     //Deemphasis adaptation
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                        if (_this.resetOpacity) {
-                            restoreOpacity(g);
+                        if (_this.resetOpacity || _this.maplineClicked) {
+                            restoreOpacity(g, base_alignments, _this.maplinesClicked);
                             _this.resetOpacity = false;
                         }
                     }
 
                     //Highlight Adaptation
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
-                        if (!_this.maplineClicked)
+                        if (!_this.maplineClicked) {
                             unhighlightAll(g);
+                        }
                     }
 
                 });
@@ -154,13 +158,14 @@ class BaselineMap {
         document.getElementById('baseline-svg')
             .addEventListener('click', (e) => {
                 const isMapLineTargeted = d3.select(e.target.parentNode).classed('mapLine');
-                if (this.maplineClicked && !isMapLineTargeted) {
+                if (_this.maplineClicked && !isMapLineTargeted) {
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                         console.log('baseline svg clicked! Turning off the highlight.');
                         unhighlightAll(g);
                     }
-                    this.maplineClicked = false;
 
+                    _this.maplineClicked = false;
+                    _this.maplinesClicked = {};
                 }
             });
 
@@ -215,10 +220,16 @@ class BaselineMap {
             .on('click', almt => {
                 console.log('mapLine clicked!');
                 _this.maplineClicked = true;
-
+                console.log(almt);
+                _this.maplinesClicked[almt.id] = almt;
+                //we're going to need nodesOfClickedMapLines id by node id.
                 //Highlight Adaptation
                 if (_this.linkIndentedList.adaptations.highlightAdaptation.state) {
                     highlightAlignment(almt, svg, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
+                }
+
+                if (_this.linkIndentedList.adaptations.deemphasisAdaptation.state) {
+                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
                 }
 
             })
@@ -226,7 +237,8 @@ class BaselineMap {
 
                 //deemphasis adaptation
                 if (_this.linkIndentedList.adaptations.deemphasisAdaptation.state) {
-                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation);
+                    //Need to pass in currenty clicked
+                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
                     _this.resetOpacity = true;
                 }
 
@@ -243,7 +255,7 @@ class BaselineMap {
                 //Deemphasis adaptation
                 if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                     if (_this.resetOpacity) {
-                        restoreOpacity(svg);
+                        restoreOpacity(svg, base_alignments, _this.maplinesClicked);
                         _this.resetOpacity = false;
                     }
                 }

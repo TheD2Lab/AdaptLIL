@@ -112,10 +112,8 @@ class BaselineMap {
                     const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
 
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                        if (!_this.maplineClicked) {
-                            deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
-                            _this.resetOpacity = true;
-                        }
+                        deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
+                        _this.resetOpacity = true;
                     }
 
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
@@ -131,10 +129,9 @@ class BaselineMap {
 
                     //Deemphasis adaptation
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                        if (_this.resetOpacity || _this.maplineClicked) {
                             restoreOpacity(g, base_alignments, _this.maplinesClicked);
                             _this.resetOpacity = false;
-                        }
+
                     }
 
                     //Highlight Adaptation
@@ -157,7 +154,7 @@ class BaselineMap {
         //Turns off the highlight when clicked on other part in svg
         document.getElementById('baseline-svg')
             .addEventListener('click', (e) => {
-                const isMapLineTargeted = d3.select(e.target.parentNode).classed('mapLine');
+                const isMapLineTargeted = d3.select(e.target.parentNode).classed('mapLine') || d3.select(e.target.parentNode).classed('node');
                 if (_this.maplineClicked && !isMapLineTargeted) {
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                         console.log('baseline svg clicked! Turning off the highlight.');

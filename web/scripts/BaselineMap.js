@@ -120,6 +120,10 @@ class BaselineMap {
                         if (!_this.maplineClicked) {
                             if (mappings) {
                                 highlightAlignment(mappings, g, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
+                            } else {
+                                //Is gtree1 or gtree 2?
+                                //g in this case needs to be the closest tree
+                                highlightText(d3.select($(d).closest('.tree').first()), d, _this.linkIndentedList.adaptations.highlightAdaptation);
                             }
                         }
                     }

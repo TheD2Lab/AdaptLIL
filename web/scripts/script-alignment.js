@@ -85,6 +85,18 @@ function updateMappingPos(alignments) {
 }
 
 
+function highlightText(g, text, adaptation) {
+    let adaptiveFontWeight = Math.ceil(500 * adaptation.strength);
+    if (adaptiveFontWeight < 500)
+        adaptiveFontWeight = 500;
+
+    g.select('#n'+text.id)
+        .classed('muted', false)
+        .style('opacity', 1)
+        .select('text')
+        .style('font-weight', adaptiveFontWeight);
+
+}
 
 /**
  * Give 'highlight' class to the DOM elements of the list of alignments
@@ -111,20 +123,7 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     if (adaptiveHiddenMaplingFgStrokeWidth < 1)
         adaptiveHiddenMaplingFgStrokeWidth = 1;
 
-    /**
-     * .highlight.mapLine .mapLine-fg {
-     *   stroke: #0077ff;
-     *   stroke-width: 4px; --max is ~ 6pxc because of arrow size
-     * }
-     * .highlight.mapLine .mapLine-bg {
-     *   stroke-width: 7px; -- max value, maybe around 15-20px?, min is 1px
-     * }
-     *
-     * .map-to-hidden.mapLine.highlight .mapLine-fg {
-     *   stroke-width: 3px; - max is ~ 6px because view .mapline above
-     *   stroke-dasharray: 2 6;
-     * }
-     */
+
 
     //Mutes all mapping and nodes in the group
     g.selectAll('.node').classed('muted', true);
@@ -134,9 +133,10 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     const allAlignments = alignments;
     for(let almt of alignments) {
         //Adds additional redundant alignment except itself
-        filtered = alignmentSet.filter(d => (d.namePair === almt.namePair) && (d === almt));
+        const filtered = alignmentSet.filter(d => (d.namePair === almt.namePair) && (d === almt));
         allAlignments.concat(filtered);
     }
+
 
     //Highlights mappings and their class nodes
     for (let almt of allAlignments.reverse()) {
@@ -286,6 +286,7 @@ function unhighlightAll(g) {
     g.selectAll('.map-to-hidden.mapLine-fg').style('stroke-dasharray', '2 4')
     //Always place direct mappings on top.
     g.selectAll('.map-to-hidden').lower();
+    g.selectAll('.node>text').style('font-weight', 100)
 
 
     /**

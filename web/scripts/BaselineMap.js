@@ -113,25 +113,33 @@ class BaselineMap {
 
 
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
+
                         deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
+                        if (!mappings) {
+
+                            deemphasizeText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.deemphasisAdaptation)
+                        }
                         _this.resetOpacity = true;
                     }
 
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
-                        if (!_this.maplineClicked) {
-                            if (mappings) {
 
-                                highlightAlignment(mappings, g, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
-                            } else {
-                                //Is gtree1 or gtree 2?
-                                //g in this case needs to be the closest tree
-                                highlightText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.highlightAdaptation);
-                            }
+
+                        if (mappings) {
+
+                            highlightAlignment(mappings, g, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
+
+                        } else {
+                            // highlightText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.highlightAdaptation);
+
+                            //Is gtree1 or gtree 2?
+                            //g in this case needs to be the closest tree
                         }
                     }
 
                 })
-                .on('mouseout', () => {
+                .on('mouseout', function(d){
+                    const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
 
                     //Deemphasis adaptation
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
@@ -142,6 +150,9 @@ class BaselineMap {
 
                     //Highlight Adaptation
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
+                        //WE NEED A WAY TO GET ALIGNMENTS FROM NODE otherwise we cant have gTree highlighting working right because it will unhighlight
+                        //ones that are clicked.
+                        // unhighlightText(d3.select(this.parentElement.parentElement), d)
                         if (!_this.maplineClicked) {
                             unhighlightAll(g);
                         }
@@ -221,7 +232,7 @@ class BaselineMap {
         maplineEnter
             .on('click', almt => {
                 _this.maplineClicked = true;
-                
+
                 _this.maplinesClicked[almt.id] = almt;
                 //we're going to need nodesOfClickedMapLines id by node id.
                 //Highlight Adaptation

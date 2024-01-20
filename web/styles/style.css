@@ -191,6 +191,9 @@ BASELINE/DEFAULTS
 Adaptation classes
  */
 
+.node>text {
+  font-weight: 100;
+}
 .svgdiv text {
   font-weight: 100
 }

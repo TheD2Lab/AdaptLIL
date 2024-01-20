@@ -37,6 +37,9 @@ public class AdaptationMediator extends Mediator {
     private double bigChangeThreshold = 0.30;
 
     private int numSequencesForClassification;
+    private int newAdaptationStartSequenceIndex = 0;
+    private int curSequenceIndex = 0;
+    private double defaultStrength = 0.75;
     public AdaptationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, KerasServerCore kerasServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
         this.websocket = websocket;
         this.gp3Socket = gp3Socket;
@@ -88,7 +91,7 @@ public class AdaptationMediator extends Mediator {
                 INDArray gazeWindowInput = gazeWindow.toINDArray(false);
                 gazeWindowINDArrays.add(gazeWindowInput);
                 if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
-
+                    this.curSequenceIndex++;
                     System.out.println("Predicting...");
                     //Error (can only insert a scalar in to another scalar
                     //Find way to join
@@ -144,6 +147,7 @@ public class AdaptationMediator extends Mediator {
         this.observedAdaptation.setBeingObservedByMediator(true);
         this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
 
+        this.newAdaptationStartSequenceIndex = this.curSequenceIndex;
         //TODO
         //Websocket, invoke new adaptation through message.
         //TODO, figure out toggle to turn off other adaptations.
@@ -163,21 +167,25 @@ public class AdaptationMediator extends Mediator {
     }
 
     public void invokeAdaptation(double curRiskScore) {
-        double stepAmount = 0.25;
+        double stepAmount = 0.15;
+        int numSequencesSinceNewAdaptation = this.curSequenceIndex - this.newAdaptationStartSequenceIndex;
+        int gracePeriodByNumSequences = 5 * 12; //60 second grace period before invoking a new adaptation.
         //Case 0
-        if (curRiskScore <= 0.0) {
+        if (curRiskScore <= 0.0 && (this.currentAdaptations.isEmpty() || numSequencesSinceNewAdaptation > gracePeriodByNumSequences)) {
             this.invokeNewAdaptation();
             System.out.println("Added new adaptation because score was zero: " + this.observedAdaptation.getType());
         } else if (curRiskScore > 0.0){ //Has adaptations, review the currently observed one.
             if (!this.currentAdaptations.isEmpty()) {  //Has an adaptation, we can review it and compare to the base line (presumed that it's always classifcations: [0_0,0_1,...,0_n]
+
                 //Case 1
                 if (curRiskScore < this.increaseStrengthThresh) { //Adaptation Risk increased.
                     //Select new adaptation
-                    if (this.observedAdaptation.hasFlipped()) { //Cannot increase/decrease strenth of adaptation, must select a new one (c2.a)
+                    if (this.observedAdaptation.hasFlipped() && (this.observedAdaptation.getStrength() <= 0.0 || this.observedAdaptation.getStrength() >= 1.0)) { //Cannot increase/decrease strenth of adaptation, must select a new one (c2.a)
                         this.observedAdaptation.flipDirection();
+                        this.observedAdaptation.setStrength(defaultStrength);
                         this.invokeNewAdaptation();
                     }
-                    else if (!this.observedAdaptation.hasFlipped()) //(c2.b)
+                    else if (!this.observedAdaptation.hasFlipped() && (this.observedAdaptation.getStrength() <= 0.0 || this.observedAdaptation.getStrength() >= 1.0)) //(c2.b)
                     {
                         this.observedAdaptation.flipDirection(); //Flip direction
                         this.observedAdaptation.applyStyleChange(stepAmount);
@@ -188,7 +196,7 @@ public class AdaptationMediator extends Mediator {
 
                     //Check strength,
                     //If we can increase strength, do so in same direction
-                    if (this.observedAdaptation.getStrength() > 0.0 && this.observedAdaptation.getStrength() < 1.0) { //Not at max, increase adaptation strength (c2.a)
+                    if (this.observedAdaptation.getStrength() > 0.0 && this.observedAdaptation.getStrength() <= 1.0) { //Not at max, increase adaptation strength (c2.a)
                         this.observedAdaptation.applyStyleChange(stepAmount);
                         this.invokeAdaptationChange();
                     } else { //(c2.b)
@@ -212,8 +220,8 @@ public class AdaptationMediator extends Mediator {
 
     public List<Adaptation> listOfAdaptations() {
         ArrayList<Adaptation> adaptations = new ArrayList<>();
-        adaptations.add(new DeemphasisAdaptation(true, System.currentTimeMillis(), -1, -1, null, 0));
-        adaptations.add(new HighlightingAdaptation(true, System.currentTimeMillis(), -1, -1, null, 0));
+        adaptations.add(new DeemphasisAdaptation(true, System.currentTimeMillis(), -1, -1, null, defaultStrength));
+        adaptations.add(new HighlightingAdaptation(true, System.currentTimeMillis(), -1, -1, null, defaultStrength));
         return adaptations;
     }
 

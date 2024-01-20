@@ -85,8 +85,30 @@ function updateMappingPos(alignments) {
 }
 
 
+function deemphasizeText(g, text, adaptation) {
+    //Based on strength, determine values
+    //Set all maplines to be transparent
+    let adaptive_opacity = 0.8 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
+    if (adaptive_opacity < 0.1)
+        adaptive_opacity = 0.1 //baseline
+
+    //Deepmhasize all map lines and node
+    d3.selectAll('.mapping').style('opacity', adaptive_opacity);
+    d3.selectAll('.node').style('opacity', adaptive_opacity);
+
+    g.select('#n'+text.id)
+        .style('opacity', 1)
+        .select('text')
+}
+
+function unhighlightText(g, text) {
+    g.select('#n'+text.id)
+        .style('opacity', 1)
+        .select('text')
+        .style('font-weight', 100);
+}
 function highlightText(g, text, adaptation) {
-    let adaptiveFontWeight = Math.ceil(500 * adaptation.strength);
+    let adaptiveFontWeight = Math.ceil(900 * adaptation.strength);
     if (adaptiveFontWeight < 500)
         adaptiveFontWeight = 500;
 
@@ -108,7 +130,7 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     if (!alignments) { return; }    //for undefined
     console.log('highlightAlignment()');
 
-    let adaptiveFontWeight = Math.ceil(500 * adaptation.strength);
+    let adaptiveFontWeight = Math.ceil(900 * adaptation.strength);
     if (adaptiveFontWeight < 500)
         adaptiveFontWeight = 500;
 
@@ -222,7 +244,7 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     });
 }
 
-function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked) {
+function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, node=undefined) {
     if (!alignments) { return; }
     alignments = Array.isArray(alignments) ? alignments : [alignments];
 
@@ -266,6 +288,8 @@ function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked) {
 
     }
 
+
+
 }
 function restoreOpacity(g, allAlignments, maplinesClicked={}) {
 
@@ -278,6 +302,21 @@ function restoreOpacity(g, allAlignments, maplinesClicked={}) {
 
 }
 function unhighlightAll(g) {
+
+    /**
+     * .highlight.mapLine .mapLine-fg {
+     *   stroke: #0077ff;
+     *   stroke-width: 4px; --max is ~ 6pxc because of arrow size
+     * }
+     * .highlight.mapLine .mapLine-bg {
+     *   stroke-width: 7px; -- max value, maybe around 15-20px?, min is 1px
+     * }
+     *
+     * .map-to-hidden.mapLine.highlight .mapLine-fg {
+     *   stroke-width: 3px; - max is ~ 6px because view .mapline above
+     *   stroke-dasharray: 2 6;
+     * }
+     */
     g.selectAll("*")
         .classed('highlight', false)
         .classed('muted', false);
@@ -286,7 +325,7 @@ function unhighlightAll(g) {
     g.selectAll('.map-to-hidden.mapLine-fg').style('stroke-dasharray', '2 4')
     //Always place direct mappings on top.
     g.selectAll('.map-to-hidden').lower();
-    g.selectAll('.node>text').style('font-weight', 100)
+    g.selectAll('text').style('font-weight', 100)
 
 
     /**
@@ -305,10 +344,9 @@ function unhighlightAll(g) {
      *   stroke-dasharray: 2 6;
      * }
      */
-    g.selectAll('.mapLine .mapLine-fg')
 }
 
 function restoreToBaselineAdaptations(svg) {
     restoreOpacity(svg);
-    unhighlightAll(svg)
+    unhighlightAll(svg);
 }

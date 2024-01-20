@@ -65,7 +65,10 @@
             const mapWorld = new MapWorld(baselineMap, indentedTree);
             let websocketConnected = false;
 
+
+
             const websocket = new Websocket(indentedTree);
+            taskForm.setWebsocket(websocket);
             websocket.openConnection();
             websocketConnected = true;
             websocket.listenForMessages();

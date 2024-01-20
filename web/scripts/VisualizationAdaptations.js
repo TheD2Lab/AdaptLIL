@@ -3,8 +3,8 @@ class VisualizationAdaptations {
     constructor(visualization, baselineMap) {
         this.visualization = visualization;
         this.baselineMap = baselineMap;
-        this.deemphasisAdaptation = new Adaptation('deemphaasis', false, {}, 1);
-        this.highlightAdaptation = new Adaptation('highlight', true, {}, 1);
+        this.deemphasisAdaptation = new Adaptation('deemphaasis', false, {}, 0);
+        this.highlightAdaptation = new Adaptation('highlight', false, {}, 0);
         this.colorSchemeAdaptation= new Adaptation('colorScheme', false, {
             'map_to_hidden_color': '#FF0000',
             'map_to_not_hidden_color' : '#00FFFF',
@@ -17,8 +17,10 @@ class VisualizationAdaptations {
      * @param adaptationType
      * @param state
      * @param styleConfig
+     * @param strength
      */
-    toggleAdaptation(adaptationType, state, styleConfig) {
+    toggleAdaptation(adaptationType, state, styleConfig, strength) {
+
         const _this = this;
         _this.deemphasisAdaptation.state = false;
         _this.highlightAdaptation.state = false;
@@ -27,9 +29,11 @@ class VisualizationAdaptations {
         if (adaptationType === 'deemphasis') {
             _this.deemphasisAdaptation.state = state;
             _this.deemphasisAdaptation.styleConfig = styleConfig;
+            _this.deemphasisAdaptation.strength = strength;
         } else if (adaptationType === 'highlighting') {
             _this.highlightAdaptation.state = state;
             _this.highlightAdaptation.styleConfig = styleConfig;
+            _this.highlightAdaptation.strength = strength;
         } else if (adaptationType === 'colorScheme') { //I am moving to having a 'automated' selection color scheme. Looking for academic papers.
             //Could also have depth based colorschemeing
             _this.colorSchemeAdaptation.state = state;

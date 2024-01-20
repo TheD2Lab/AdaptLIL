@@ -43,6 +43,10 @@ class TaskForm {
         this.selectedDomain = domain;
     }
 
+    setWebsocket(websocket) {
+        this.websocket = websocket;
+    }
+
 
     getDomain() {
         const queryString = window.location.search;
@@ -95,8 +99,14 @@ class TaskForm {
             console.log("Task", this.tasknum, "submission timestamp:", this.timeData[this.tasknum])
             this.saveData();
             if (this.tasknum == this.taskset.tasks.length) {
-                // downloading data
-                window.open('data:text/csv;charset=utf-8' + this.csvData.join(','));
+                // downloading datavar encodedUri =csvContent);
+                var link = document.createElement("a");
+                link.setAttribute("href",  encodeURI('data:text/csv;charset=utf-8' + this.csvData.join(',')));
+                link.setAttribute("download", "qa_data.csv");
+                document.body.appendChild(link); // Required for FF
+
+                link.click(); // This will download the data file named "my_data.csv".
+                // window.open('data:text/csv;charset=utf-8' + this.websocket.adaptationData(e => e.join(",")).join('\n'))
                 document.getElementById("submit").type = "submit";
                 document.getElementById("taskForm").action = "closing_form.html";
                 return valid;
@@ -278,5 +288,7 @@ class TaskForm {
         this.csvData[c] += "\n";
 
         console.log('Data added successfully');
+
+
     }
 }

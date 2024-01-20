@@ -10,7 +10,7 @@ Eye Tracker compatabile with gazepoint
 Java 11 or greater
 Python 3.X
     - Flask
-    - WSGDI
+    - gevent
     - TensorFlow
 
 # Setup

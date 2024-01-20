@@ -36,7 +36,7 @@ public class ServerMain {
     public static final int pythonServerPort = 5000;
     public static float gazeWindowSizeInMilliseconds = 1000;
     public static int numSequencesForClassification = 2;
-    static boolean simulateGazepointServer = true;
+    static boolean simulateGazepointServer = false;
     public static final String condaEnv = "gaze_metrics";
     public static final boolean useConda = true;
 
@@ -239,20 +239,6 @@ public class ServerMain {
         System.out.println("Connected to GP3");
         System.out.println("Starting Data Stream via thread");
         gp3Socket.startGazeDataStream();
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_FIX, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_PUPIL_LEFT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_EYE_LEFT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_PUPIL_RIGHT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_EYE_RIGHT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_PUPILMM, true))));
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_BLINK, true))));
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_COUNTER, true))));
-        //
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_DIAL, true))));
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_HR, true))));
-        //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_TIME_TICK, true));
-        //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_TIME, true));
-
 
         //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_CURSOR, true));
         return gp3Socket;

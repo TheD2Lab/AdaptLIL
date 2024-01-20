@@ -88,6 +88,7 @@ public class GP3Socket implements Component {
      */
     public void startGazeDataStream() throws IOException {
         SetEnableSendCommand setEnableSendCommand = new SetEnableSendCommand("ENABLE_SEND_DATA", true);
+        this.write((xmlMapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true))));
 
         output.println(xmlMapper.writeValueAsString(setEnableSendCommand));
 

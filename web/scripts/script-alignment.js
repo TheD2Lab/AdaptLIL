@@ -90,8 +90,8 @@ function highlightText(g, text, adaptation) {
     if (adaptiveFontWeight < 500)
         adaptiveFontWeight = 500;
 
+    console.log(text);
     g.select('#n'+text.id)
-        .classed('muted', false)
         .style('opacity', 1)
         .select('text')
         .style('font-weight', adaptiveFontWeight);

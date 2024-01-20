@@ -108,8 +108,9 @@ class BaselineMap {
             //Highlights alignments for mouse events on tree nodes
             g.selectAll('.node')
                 .filter(d => d.mappingsOfDescendants)
-                .on('mouseover', d => {
+                .on('mouseover', function(d) {
                     const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
+
 
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                         deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
@@ -119,11 +120,12 @@ class BaselineMap {
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                         if (!_this.maplineClicked) {
                             if (mappings) {
+
                                 highlightAlignment(mappings, g, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
                             } else {
                                 //Is gtree1 or gtree 2?
                                 //g in this case needs to be the closest tree
-                                highlightText(d3.select($(d).closest('.tree').first()), d, _this.linkIndentedList.adaptations.highlightAdaptation);
+                                highlightText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.highlightAdaptation);
                             }
                         }
                     }
@@ -161,7 +163,6 @@ class BaselineMap {
                 const isMapLineTargeted = d3.select(e.target.parentNode).classed('mapLine') || d3.select(e.target.parentNode).classed('node');
                 if (_this.maplineClicked && !isMapLineTargeted) {
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
-                        console.log('baseline svg clicked! Turning off the highlight.');
                         unhighlightAll(g);
                     }
 
@@ -219,9 +220,8 @@ class BaselineMap {
 
         maplineEnter
             .on('click', almt => {
-                console.log('mapLine clicked!');
                 _this.maplineClicked = true;
-                console.log(almt);
+                
                 _this.maplinesClicked[almt.id] = almt;
                 //we're going to need nodesOfClickedMapLines id by node id.
                 //Highlight Adaptation

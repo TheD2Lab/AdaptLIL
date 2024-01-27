@@ -10,6 +10,7 @@ class Websocket {
                     viewportWidth: 500,
                     viewportHeight: 600
         };
+        this.adaptationData = [['type','state','strength', 'timestamp']];
     }
 
     openConnection() {
@@ -65,8 +66,8 @@ class Websocket {
         const _this = this;
 
         if (response.name === 'adaptation') {
-            this.visualizationMap.adaptations.toggleAdaptation(response.adaptation.type, response.adaptation.state, response.adaptation.styleConfig);
-
+            this.visualizationMap.adaptations.toggleAdaptation(response.adaptation.type, response.adaptation.state, response.adaptation.styleConfig, response.adaptation.strength);
+            this.adaptationData.push([response.adaptation.type, response.adaptation.state, response.adaptation.strength, Date.now()]);
         }
         if (response.name === "tooltip") {
           

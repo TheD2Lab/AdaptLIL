@@ -1,30 +1,31 @@
 package server;
-import analysis.ScanPath;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.opencsv.exceptions.CsvValidationException;
-import org.deeplearning4j.nn.conf.graph.ElementWiseVertex;
-import org.deeplearning4j.nn.graph.ComputationGraph;
-import org.deeplearning4j.nn.modelimport.keras.*;
-import org.deeplearning4j.nn.modelimport.keras.exceptions.*;
-import org.deeplearning4j.nn.modelimport.keras.layers.core.KerasMerge;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import jakarta.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.websockets.WebSocketAddOn;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
+import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
-import server.http.HttpRequestCore;
-import server.http.request.RequestLoadModel;
 
-import javax.ws.rs.core.UriBuilder;
+
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ServerMain {
+    public static ServerMain serverMain; //Singleton, keeps server alive
 
 //    public static ServerMain serverMain;
     public static final String url = "localhost";
@@ -33,15 +34,23 @@ public class ServerMain {
 
     public static final String pythonServerURL = "localhost";
     public static final int pythonServerPort = 5000;
-    public static float gazeWindowSizeInMilliseconds = 2000;
+    public static float gazeWindowSizeInMilliseconds = 1000;
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
+    public static final String condaEnv = "gaze_metrics";
+    public static final boolean useConda = true;
 
+    public static boolean hasKerasServerAckd = false;
 //    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
 //    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
 
     public static String modelConfigPath = "/home/notroot/Desktop/d2lab/iav/models/";
     public static String modelName = "transformer_model_channels.h5";
+
+    public static HttpServer javaServer;
+
+    //Used to block main thread from making a keras server load_modal before receiving an ACK
+    public static final ReentrantLock mainThreadLock = new ReentrantLock();
     public static void serializationTest() {
         XmlMapper mapper = new XmlMapper();
         String serialString = "<REC CNT=\"34\"/>";
@@ -60,22 +69,53 @@ public class ServerMain {
 
 
     public static void main(String[] args) {
-        System.setProperty("org.bytedeco.javacpp.logger.debug","true");
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
+        serverMain = new ServerMain();
+        //Give adaptation mediator the keras endpoint
+        System.out.println("Loaded keras model : " + modelName);
+        System.out.println("Starting grizzly HTTP server");
+        serverMain.initHttpServerAndWebSocketPort();
+
+        System.out.println("returned back to main thread after init http --- locking thread");
+        try {
+            //Throw onto new thread
+            Runnable runnable = ()-> {
+                long pid = 0;
+                try {
+                    System.out.println("starting keras server....");
+                    pid = startKerasServer();
+                    System.out.println("pid: " + pid);
+                    Runtime.getRuntime().addShutdownHook(new KillPidThread(pid));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            };
+            Thread cmdKerasThread = new Thread(runnable);
+            cmdKerasThread.start();
+            //Block main thread acess until /init/kerasAckServer is called.
+            synchronized (ServerMain.mainThreadLock) {
+                while (!ServerMain.hasKerasServerAckd) {
+                    ServerMain.mainThreadLock.wait();
+                }
+                System.out.println("retained access");
+                execKerasServerAck();
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void execKerasServerAck() {
+
         try {
 
-            //Give adaptation mediator the keras endpoint
-            System.out.println("Loaded keras model : " + modelName);
-            System.out.println("Starting grizzly HTTP server");
-            HttpServer server = initHttpServerAndWebSocketPort();
-
-            //TODO
-            //Start keras server from python script and wait for ACK from python that the server started.
-
+            System.out.println("Started python server.");
             System.out.println("Loading Classification Model: " + modelName);
             KerasServerCore kerasServerCore = new KerasServerCore(pythonServerURL, pythonServerPort);
+
 
             //Make POST request to keras endpoint
             kerasServerCore.loadKerasModel(modelName);
@@ -104,15 +144,61 @@ public class ServerMain {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    public List<String> readProcessOutput(Process p) throws IOException { return readProcessOutput(p, false);}
+    public static List<String> readProcessOutput(Process p, boolean debug) throws IOException {
+        ArrayList<String> resultStrings = new ArrayList<>();
+        BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        System.out.println("hi");
+        String line = "";
+        while (true) {
+            line = r.readLine();
+            resultStrings.add(line);
+            if (line == null) { break; }
+            System.out.println(line);
+        }
+        return resultStrings;
+    }
+
+
+
+    public static long startKerasServer() throws IOException {
+        //TODO
+        //Start keras server from python script and wait for ACK from python that the server started.
+        System.out.println("Starting python server..");
+        Path curPath = Paths.get("");
+        System.out.println(curPath.toAbsolutePath().toString());
+        List<String> activateCondaEnvStrs = Arrays.stream(new String[]{"conda", "activate", condaEnv}).toList();
+
+
+        //Start conda if it is to be used
+        ProcessBuilder initPythonPBuilder = new ProcessBuilder( "scripts/start_flask.bat");
+
+        //initPythonPBuilder.command().addAll(Arrays.stream(new String[]{"python", "\""+curPath.toAbsolutePath().toString()+"/python/FlaskServer.py\""}).toList());
+
+        initPythonPBuilder.redirectErrorStream(true);
+        //String flaskServerExecCommand = "scripts/start_flask.bat"; //Might need to use current dir
+        //Process p = Runtime.getRuntime().exec(new String[]{flaskServerExecCommand});
+        Process p = initPythonPBuilder.start();
+        List<String> consumeOutput = serverMain.readProcessOutput(p);
+        return p.pid();
     }
 
     /**
      * https://javaee.github.io/grizzly/websockets.html
      */
     public static HttpServer initHttpServerAndWebSocketPort() {
-        final HttpServer server = HttpServer.createSimpleServer("/var/www", port);
+        URI uri = UriBuilder.fromUri("http://" + url).port(port).build();
+
+        ResourceConfig rc = new ResourceConfig().packages("server.http.endpoints");
+        rc.register(JacksonFeature.class);
+
+        HttpServer server = GrizzlyHttpServerFactory.createHttpServer(uri, rc, false);
+
         final WebSocketAddOn addon = new WebSocketAddOn();
+
+
         server.getListener("grizzly").registerAddOn(addon);
 
         try {
@@ -137,7 +223,9 @@ public class ServerMain {
         XmlMapper mapper = new XmlMapper();
         String gp3Hostname = "localhost";
         int gp3Port = 4242;
-        File gazeFile = new File("/home/notroot/Desktop/d2lab/iav/p1.LIL.Anatomy_all_gaze.csv");
+        Path curPath = Paths.get("");
+
+        File gazeFile = new File(curPath.resolve("p1.LIL.Anatomy_all_gaze.csv").toAbsolutePath().toString());
         if (simulateGazepointServer) {
             GazepointSimulationServer simulationServer = new GazepointSimulationServer(gp3Hostname, gp3Port, gazeFile, true);
             Thread serverSimThread = new Thread(simulationServer);

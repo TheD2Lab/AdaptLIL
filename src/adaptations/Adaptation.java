@@ -20,7 +20,7 @@ public abstract class Adaptation {
 
     private MutableTriple<String, Integer, Double> lastStyleChangePair;
 
-    public Adaptation(String type, boolean state, double timeStarted, double timeModified, double timeStopped, Map<String, String> styleConfig) {
+    public Adaptation(String type, boolean state, double timeStarted, double timeModified, double timeStopped, Map<String, String> styleConfig, double strength) {
         this.type = type;
         this.state = state;
         this.timeStarted = timeStarted;
@@ -32,6 +32,7 @@ public abstract class Adaptation {
             this.styleConfig = styleConfig;
         this.score = 0;
         this.lastStyleChangePair = new MutableTriple<>();
+        this.strength = strength;
     }
 
     public void setBeingObservedByMediator(boolean beingObservedByMediator) {
@@ -126,11 +127,13 @@ public abstract class Adaptation {
         return styleConfig;
     }
 
-    public abstract void applyStyleChange(double stepAmount);
-
+    @JsonProperty("strength")
     public double getStrength() {
         return strength;
     }
+
+//    public abstract void applyStyleChange(double stepAmount);
+
 
     public void setStrength(double strength) {
         this.strength = strength;
@@ -146,5 +149,8 @@ public abstract class Adaptation {
 
     public void flipDirection() {
         this.hasFlipped = !this.hasFlipped;
+    }
+    public void applyStyleChange(double stepAmount) {
+        this.setStrength(this.getStrength() + stepAmount);
     }
 }

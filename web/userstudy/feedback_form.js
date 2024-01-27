@@ -179,7 +179,12 @@ function saveResponse() {
         csvData[c] = words.at(i);
         c++;
     }
-    window.open('data:text/csv;charset=utf-8' + csvData.join(','));
+    var link = document.createElement("a");
+    link.setAttribute("href", 'data:text/csv;charset=utf-8' + csvData.join(','));
+    link.setAttribute("download", "reaction_data.csv");
+    document.body.appendChild(link); // Required for FF
+
+    link.click(); // This will download the data file named "my_data.csv".
     //window.close();
 }
 

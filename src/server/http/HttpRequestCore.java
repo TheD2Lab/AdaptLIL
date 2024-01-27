@@ -3,9 +3,9 @@ package server.http;
 import com.fasterxml.jackson.core.util.JacksonFeature;
 import server.http.request.RequestModelHttp;
 
-import javax.ws.rs.client.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 public class HttpRequestCore {
     public static <T> Response POST(String url, Entity<T> body) {

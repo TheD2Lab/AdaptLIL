@@ -149,7 +149,7 @@ public class OntoMapCsv {
     }
     public static void main(String[] args) {
 
-        String baseDir = "/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/DataVisStudy/Participant Data/";
+        String baseDir = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/DataVisStudy/Participant Data/";
 
         //open all participants
         //Filter for baseline (matrix shouldnt be used b/c it's a different chart)
@@ -221,13 +221,14 @@ public class OntoMapCsv {
     private static List<String> getRandomTestParticipantsIds(int numTestParticipants, HashMap<String, Participant> mapParticipants) {
         List<String> testParticipants = new ArrayList<>();
         List<String> excludedParticipants = OntoMapCsv.discardedParticipantIds();
+        System.out.println("get random participants");
         Random random = new Random();
         for (int i = 0; i < numTestParticipants; ++i) {
-            int randomId = random.nextInt(81) + 1;
+            int randomId = random.nextInt(80) + 1;
             String randParticipantId = "P" + randomId;
             while (excludedParticipants.contains(randParticipantId) || testParticipants.contains(randParticipantId)
             || !mapParticipants.containsKey(randParticipantId) || mapParticipants.get(randParticipantId).getAnatomyAnswersFile().getName().toLowerCase().contains("matrix")) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
-                randParticipantId = "P" + random.nextInt(81) + 1;
+                randParticipantId = "P" + (random.nextInt(80) + 1);
             }
             testParticipants.add(randParticipantId);
         }
@@ -252,7 +253,7 @@ public class OntoMapCsv {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
-        float windowSizeInMilliseconds = 1000;
+        float windowSizeInMilliseconds = 5000;
         int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.2); // 20% split
         Map<String, List<Instance>> participantTrainingInstances = new HashMap<>();
         Map<String, List<Instance>> participantTestInstances = new HashMap<>();
@@ -261,10 +262,13 @@ public class OntoMapCsv {
         Instances trainDataInstances = null;
         Instances testDataInstances = null;
         List<String> nominalValues = new ArrayList<>(Arrays.asList("1", "0"));
+        System.out.println();
         HashMap<String, Participant> participantById = OntoMapCsv.mapParticipantsToId(participants);
         List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData, participantById);
 
-        File outputDir = new File("/home/notroot/Desktop/d2lab/gazepoint/train_test_data_output/" + LocalDateTime.now().toString().replace(':', ';'));
+        System.out.println("before making file");
+        File outputDir = new File("/home/notroot/Desktop/d2lab/iav/train_test_data_output/" + LocalDateTime.now().toString().replace(':', ';'));
+        System.out.println("hello world");
         outputDir.mkdirs();
         OntoMapCsv.logTestParticipants(outputDir, participantIdsForTestDataset);
         for (Participant p : participants) {
@@ -360,7 +364,7 @@ public class OntoMapCsv {
 
 
                     //control window size and add to taskwindows once size is too large.
-                    if (participantWindow.isFull() && numWindowsAdded < (15000/windowSizeInMilliseconds)) {
+                    if (participantWindow.isFull() && numWindowsAdded < (120000/windowSizeInMilliseconds)) {
                         //preprocess data before sending it to instances
                         if (currentQuestionIndex >= questionToStartAt && currentQuestionIndex <= qidToEndTrainingAt) {
                             participantWindow.interpolateMissingValues();

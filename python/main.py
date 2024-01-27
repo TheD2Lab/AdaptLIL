@@ -42,7 +42,7 @@ def plotLines(lines, resultDir, unique_model_id):
     plt.legend()
     plt.title('TP% & TN% over cross fold of true unseen participants')
     plt.savefig(resultDir + '/' + unique_model_id + '.png')
-    plt.show()
+    # plt.show()
 
 def savePythonFile(resultDir):
     script_path = os.path.abspath(__file__)
@@ -189,12 +189,12 @@ def get_metrics_for_model():
 
 def get_optimizers():
     return [
-        # tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
+        tf.keras.optimizers.Adagrad(learning_rate=0.008, name='Adagrad'),
         #     "adam"
         #     tf.keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.98),
         # tf.keras.optimizers.Adam(learning_rate=1e-9, beta_1=0.9, beta_2=0.98),
 
-        # tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
+        tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9),
         # tf.keras.optimizers.SGD(learning_rate=0.008),
         # tf.keras.optimizers.SGD(learning_rate=0.04),
         # tf.keras.optimizers.SGD(learning_rate=0.08),
@@ -240,7 +240,7 @@ def get_optimizers():
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.7, use_ema=False, weight_decay=2e-4),
         # tf.keras.optimizers.Adam(learning_rate=1.4e-3, beta_1=0.6, use_ema=False, weight_decay=2e-4),
 
-        # tf.keras.optimizers.SGD(learning_rate=0.01),
+        tf.keras.optimizers.SGD(learning_rate=0.01),
         # tf.keras.optimizers.SGD(learning_rate=0.012),
         # tf.keras.optimizers.SGD(learning_rate=0.015),
         # tf.keras.optimizers.Adam(learning_rate=1.1e-3),
@@ -268,7 +268,7 @@ def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
     # Norm and Attention
     x = layers.BatchNormalization(epsilon=1e-3)(inputs)  # What does passing inputs do to x?
     x = layers.MultiHeadAttention(key_dim=head_size, num_heads=num_heads)(x,x)  # x,x i.e;. key, dim. (essentially output of layer norm is passed in as two separate inputs)
-    # x = layers.Dropout(dropout)(x)
+    x = layers.Dropout(dropout)(x)
 
 
     res = layers.Add()([x, inputs]);
@@ -276,7 +276,7 @@ def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
     x = layers.BatchNormalization(epsilon=1e-3)(res)
     x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation='relu')(x)  # Might need to put the activation layer as separate var for d4j
 
-    # x = layers.Dropout(dropout)(x)
+    x = layers.Dropout(dropout)(x)
     x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
     return layers.Add()([x, res])
 
@@ -304,7 +304,7 @@ def getModelConfig(timeSequences, attributes, windowSize):
     input_shape = (timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=int(timeSequences), num_heads=2, ff_dim=int(timeSequences),
+    transformer_model = build_transformer_model(input_shape, head_size=300, num_heads=1, ff_dim=int(timeSequences),
                                                 num_transformer_blocks=1, mlp_units=[attributes], mlp_dropout=0.15,
                                                 dropout=0.1)
 
@@ -413,13 +413,13 @@ def getMinMax(data):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     savePythonFile(resultDir)
-    timeSequences = 2
-    numAttributes = 150 * 2
+    timeSequences = 3
+    numAttributes = 150 * 2 * 5
     numMetaAttrs = 0
-    windowSize = 150#75
+    windowSize = 150 * 5#75
     # TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
-    epochs = 15 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
-    numFolds = 95;
+    epochs = 20 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    numFolds = 14;
     shuffle = False
     useLoo = False
     kfold = StratifiedKFold(n_splits=numFolds, shuffle=True)
@@ -439,7 +439,7 @@ if __name__ == '__main__':
 
 
     targetColumn = "correct"
-    baseDirForTrainData = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/onetorulethemall/"
+    baseDirForTrainData = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/1minwindow/"
 
     models = getModelConfig(timeSequences, numAttributes, windowSize)
     all_models_by_tp_and_tn = {};
@@ -585,7 +585,7 @@ if __name__ == '__main__':
                             # class_weight=None if useLoo else weights,
                             shuffle=shuffle,
                             # batch_size=1,
-                            callbacks=[callback]
+                            # callbacks=[callback]
                         )
                         scores = model.evaluate(x_part[test], y_part[test], verbose=0)
                         print_both(

@@ -169,7 +169,7 @@ public class ServerMain {
         System.out.println("Starting python server..");
         Path curPath = Paths.get("");
         System.out.println(curPath.toAbsolutePath().toString());
-        List<String> activateCondaEnvStrs = Arrays.stream(new String[]{"conda", "activate", condaEnv}).toList();
+//        List<String> activateCondaEnvStrs = Arrays.stream(new String[]{"conda", "activate", condaEnv}).toList();
 
 
         //Start conda if it is to be used

@@ -27,8 +27,7 @@ public class OntoMapCsv {
      * @return
      */
     private static List<String> discardedParticipantIds() {
-        return List.of(new String[]{
-                "P9",
+        return List.of("P9",
                 "P18",
                 "P21",
                 "P28",
@@ -38,6 +37,7 @@ public class OntoMapCsv {
                 "P44",
                 "P57",
                 "P75",
+                "P66"
 //                "P43", //4 min on conf, 8 on anat
 //                "P51", //Spent 10 min in total
 //                "P63", //very poor eval score.
@@ -52,7 +52,7 @@ public class OntoMapCsv {
 //                "P13",
 //                "P37",
 //                "P35"
-        });
+        );
     }
 
     private static List<String> participantIdsForTestDataSet() {
@@ -88,7 +88,7 @@ public class OntoMapCsv {
                 if (isGazePointFolder) {
                     String participantName = fileOrDir.getName();
 
-                    if (discardedParticipantIds.contains(participantName.toUpperCase()))
+                    if (listContainsStr(discardedParticipantIds, participantName.toUpperCase()))
                         continue;
                     //look through files
                     for (File gpFileORDir : fileOrDir.listFiles()) {
@@ -115,7 +115,7 @@ public class OntoMapCsv {
                     String participantName = participiantNameMatcher.group(0);
 
                     //Ignore discarded participants.
-                    if (discardedParticipantIds.contains(participantName.toUpperCase()))
+                    if (listContainsStr(discardedParticipantIds, participantName.toUpperCase()))
                         continue;
 
                     //look through files of raw data
@@ -218,16 +218,30 @@ public class OntoMapCsv {
 
     }
 
+    /**
+     * Iterate through list of strings and return true if the needle matches.
+     * @param haystack
+     * @param needle
+     * @return
+     */
+    private static boolean listContainsStr(List<String> haystack, String needle) {
+        for(String hay : haystack) {
+            if (hay.equals(needle))
+                return true;
+        }
+
+        return false;
+    }
     private static List<String> getRandomTestParticipantsIds(int numTestParticipants, HashMap<String, Participant> mapParticipants) {
         List<String> testParticipants = new ArrayList<>();
         List<String> excludedParticipants = OntoMapCsv.discardedParticipantIds();
         System.out.println("get random participants");
-        Random random = new Random();
+        Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < numTestParticipants; ++i) {
             int randomId = random.nextInt(80) + 1;
             String randParticipantId = "P" + randomId;
-            while (excludedParticipants.contains(randParticipantId) || testParticipants.contains(randParticipantId)
-            || !mapParticipants.containsKey(randParticipantId) || mapParticipants.get(randParticipantId).getAnatomyAnswersFile().getName().toLowerCase().contains("matrix")) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
+            while (listContainsStr(excludedParticipants, randParticipantId) || listContainsStr(testParticipants, randParticipantId)
+            || !mapParticipants.containsKey(randParticipantId) || mapParticipants.get(randParticipantId).getAnatomyAnswersFile().getName().toLowerCase().contains("matrix") || randParticipantId.equals("P66")) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
                 randParticipantId = "P" + (random.nextInt(80) + 1);
             }
             testParticipants.add(randParticipantId);
@@ -254,6 +268,7 @@ public class OntoMapCsv {
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
         float windowSizeInMilliseconds = 5000;
+        float observablePeriod = 60000;
         int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.2); // 20% split
         Map<String, List<Instance>> participantTrainingInstances = new HashMap<>();
         Map<String, List<Instance>> participantTestInstances = new HashMap<>();
@@ -265,7 +280,8 @@ public class OntoMapCsv {
         System.out.println();
         HashMap<String, Participant> participantById = OntoMapCsv.mapParticipantsToId(participants);
         List<String> participantIdsForTestDataset = OntoMapCsv.getRandomTestParticipantsIds(numParticipantsForTestData, participantById);
-
+        int numPacketsDiscarded = 0;
+        int totalNumPackets = 0;
         System.out.println("before making file");
         File outputDir = new File("/home/notroot/Desktop/d2lab/iav/train_test_data_output/" + LocalDateTime.now().toString().replace(':', ';'));
         System.out.println("hello world");
@@ -343,11 +359,32 @@ public class OntoMapCsv {
                     //read fixation data up to the timecutoff
                     last=cells;
                     float timeCutoff = Float.parseFloat(timeCutoffs.get(currentQuestionIndex));
+                    float questionDuration = currentQuestionIndex == 0 ? timeCutoff : timeCutoff - Float.parseFloat(timeCutoffs.get(currentQuestionIndex - 1));
+
+
                     boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
-
+//                    System.out.println("timeCutOff: " + timeCutoff);
                     RecXmlObject recXmlObject = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
+                    ++totalNumPackets;
                     //If we have any invalid flags, should we discard?
+                    if (questionDuration < observablePeriod) {
+                        ++numPacketsDiscarded;
 
+                        if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
+
+                            System.out.println("question discarded because it is shorter than the observablePeriod: qid: " + currentQuestionIndex);
+                            if (rightOrWrongs.get(currentQuestionIndex))
+                                numCorrect--;
+                            else
+                                numWrong--;
+                            currentQuestionIndex++;
+
+                            numWindowsAdded = 0;
+                            participantWindow.flush();
+
+                        }
+                            continue;
+                    }
                     if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
                         System.out.println("going to next task: pwindow size: " + participantWindow.getInternalIndex());
                         //User now on other task
@@ -364,7 +401,7 @@ public class OntoMapCsv {
 
 
                     //control window size and add to taskwindows once size is too large.
-                    if (participantWindow.isFull() && numWindowsAdded < (120000/windowSizeInMilliseconds)) {
+                    if (participantWindow.isFull() && numWindowsAdded < (observablePeriod/windowSizeInMilliseconds)) {
                         //preprocess data before sending it to instances
                         if (currentQuestionIndex >= questionToStartAt && currentQuestionIndex <= qidToEndTrainingAt) {
                             participantWindow.interpolateMissingValues();
@@ -472,6 +509,7 @@ public class OntoMapCsv {
             System.out.println("processed: " + p.getId());
 
         }
+        System.out.println("discarded packets: " + numPacketsDiscarded + " total packets: " + totalNumPackets);
         OntoMapCsv.saveTestAndTrainingToOneFile(trainInstanceList, testInstanceList, nominalValues, outputDir);
         //Readd saving as one whole file (and do some c ross fold validation)
         //

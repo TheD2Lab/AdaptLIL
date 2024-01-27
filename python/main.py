@@ -287,6 +287,7 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
     x = inputs
     #pair inputs by two for x,y and place into 3 filters for 3 time sequences
     x = layers.Conv1D(3, 2, input_shape=input_shape)(x)
+    #WHERE's THE POOLING?
     x = layers.LSTM(100, return_sequences=True)(x)
     for _ in range(num_transformer_blocks):
         x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
@@ -418,11 +419,11 @@ if __name__ == '__main__':
     numMetaAttrs = 0
     windowSize = 150 * 5#75
     # TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
-    epochs = 20 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    epochs = 30 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     numFolds = 14;
     shuffle = False
     useLoo = False
-    kfold = StratifiedKFold(n_splits=numFolds, shuffle=True)
+    kfold = StratifiedKFold(n_splits=numFolds, shuffle=False)
 
     if useLoo:
         print_both("using Leave one out")
@@ -501,16 +502,9 @@ if __name__ == '__main__':
 
     # with strategy.scope():
     for model_name, model_uncloned in models.items():
-        model = tf.keras.models.clone_model(model_uncloned)
         optimizers = get_optimizers()
 
-        print_both("*****************************************")
-        print_both(model_name)
 
-        sys.stdout = outputFile
-        model.summary()
-        sys.stdout = consoleOut  # set stdout back to console output
-        model.summary()
 
         print_both("*****************************************")
         histories = []
@@ -519,27 +513,9 @@ if __name__ == '__main__':
 
         stats_by_participant = {}
         max_ratio = 0
-        for optimizer in optimizers:
-            if type(optimizer) != type(""):
-                unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
-                    tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
-            else:
-                unique_model_id = model_name + "-"
-            if hasattr(optimizer, 'beta_1'):
-                unique_model_id += " b1: " + str(optimizer.beta_1)
-            if hasattr(optimizer, 'weight_decay'):
-                unique_model_id += " wdecay: " + str(optimizer.weight_decay)
-            if hasattr(optimizer, 'use_ema'):
-                unique_model_id += " ema:" + str(optimizer.use_ema)
-            print_both("-------------------------------")
-            print_both("unique model id: " + unique_model_id)
-            if (type(optimizer) != type("")):
-                print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
-            else:
-                print_both("optimizer: " + optimizer)
-            print_both("-------------------------------")
-            model.compile(optimizer=optimizer, loss=tf.keras.losses.BinaryCrossentropy(),
-                          metrics=get_metrics_for_model())
+        for opt in optimizers:
+            optimizer = opt
+
             tp_rates = []
             tn_rates = []
             unseen_acc = []
@@ -571,6 +547,36 @@ if __name__ == '__main__':
                     # have a representation of that person
                     # then we retrain on the next person, so on and so forth.
                     for train, test in split_enumerator:
+                        model = getModelConfig(timeSequences, numAttributes, windowSize)['transformer_model']
+                        model.compile(optimizer='adam', loss=tf.keras.losses.BinaryCrossentropy(),
+                                      metrics=get_metrics_for_model())
+
+                        print_both("*****************************************")
+                        print_both(model_name)
+
+                        sys.stdout = outputFile
+                        model.summary()
+                        sys.stdout = consoleOut  # set stdout back to console output
+                        model.summary()
+                        if type(optimizer) != type(""):
+                            unique_model_id = model_name + "-" + str(type(optimizer).__name__) + str(
+                                tf.keras.backend.eval(optimizer.lr)).replace(".", ",")
+                        else:
+                            unique_model_id = model_name + "-"
+                        if hasattr(optimizer, 'beta_1'):
+                            unique_model_id += " b1: " + str(optimizer.beta_1)
+                        if hasattr(optimizer, 'weight_decay'):
+                            unique_model_id += " wdecay: " + str(optimizer.weight_decay)
+                        if hasattr(optimizer, 'use_ema'):
+                            unique_model_id += " ema:" + str(optimizer.use_ema)
+                        print_both("-------------------------------")
+                        print_both("unique model id: " + unique_model_id)
+                        if (type(optimizer) != type("")):
+                            print_both("optimizer: " + str(optimizer.name) + str(optimizer.learning_rate))
+                        else:
+                            print_both("optimizer: " + optimizer)
+                        print_both("-------------------------------")
+
                         if not useLoo:
                             weights = get_weight_bias(y_part[train])
                             pass
@@ -598,29 +604,23 @@ if __name__ == '__main__':
                         '''
                         Test on each fold.
                         '''
-                        for testPInd in range(0, len(testDataParticipants)):
-                            testP = testDataParticipants[testPInd]
-                            print_both('Testing on : ' + str(testP['fileName']))
-                            xTest = testP['x']
-                            yTest = testP['y']
-                            y_hat = model.predict(xTest)
-                            # results = model.evlauate(xVal, yTest)
-                            # print(y_hat)
-                            y_hat = [(1.0 if y_pred >= 0.50 else 0.0) for y_pred in y_hat]
-                            conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
-                            true_pos = conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])
-                            true_neg = conf_matrix[1][1] / (conf_matrix[1][0] + conf_matrix[1][1])
-                            acc_rate = (conf_matrix[0][0] + conf_matrix[1][1]) / (conf_matrix[0][0] + conf_matrix[0][1] + conf_matrix[1][0] + conf_matrix[1][1])
-                            print_both(conf_matrix)
-                            curRatio = (true_pos + true_neg) / 2
-                            if (curRatio > max_ratio):
-                                max_ratio = curRatio
-                            cur_tp_tn += ((true_pos + true_neg) / 2) / len(testDataParticipants)
-                            print_both("Acc: " + str(acc_rate) + ", " + str(testPInd) + "tp: %: " + str(true_pos) + " tn: %: " + str(true_neg))
-                            tp_rates.append(true_pos)
-                            tn_rates.append(true_neg)
-                            unseen_acc.append(acc_rate)
-                                # print_both(conf_matrix)
+                        y_hat = model.predict(x_part[test])
+
+                        y_hat = [(1.0 if y_pred >= 0.50 else 0.0) for y_pred in y_hat]
+                        conf_matrix = sklearn.metrics.confusion_matrix(y_part[test], y_hat, labels=[1.0, 0.0])
+                        true_pos = conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])
+                        true_neg = conf_matrix[1][1] / (conf_matrix[1][0] + conf_matrix[1][1])
+                        acc_rate = (conf_matrix[0][0] + conf_matrix[1][1]) / (conf_matrix[0][0] + conf_matrix[0][1] + conf_matrix[1][0] + conf_matrix[1][1])
+                        print_both(conf_matrix)
+                        curRatio = (true_pos + true_neg) / 2
+                        if (curRatio > max_ratio):
+                            max_ratio = curRatio
+                        cur_tp_tn += ((true_pos + true_neg) / 2) / len(testDataParticipants)
+                        print_both("Acc: " + str(acc_rate) + ", " + str(fold_no) + "tp: %: " + str(true_pos) + " tn: %: " + str(true_neg))
+                        tp_rates.append(true_pos)
+                        tn_rates.append(true_neg)
+                        unseen_acc.append(acc_rate)
+                            # print_both(conf_matrix)
                         if (np.average(hist.history['accuracy'][-20:]) < 0.50):
                             if (participants[i] not in stats_by_participant):
                                 stats_by_participant[participants[i]] = []
@@ -629,26 +629,30 @@ if __name__ == '__main__':
                                                                           'accuracy': np.average(
                                                                               hist.history['accuracy'][-20:])})
                             print_both("Participant reached > 0.8 val_acc: " + participants[i])
-            '''
-            Done fitting on multiple participants, time for real world data testing
-            '''
-            print_both("************************************")
-            print_both("--------FINISHED FITTING MODEL------")
-            print_both("************************************")
-            for testPInd in range(0, len(testDataParticipants)):
-                testP = testDataParticipants[testPInd]
-                print_both('Testing on : ' + str(testP['fileName']))
-                xTest = testP['x']
-                yTest = testP['y']
-                y_hat = model.predict(xTest)
-                # results = model.evlauate(xVal, yTest)
-                y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
-                conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
-                print_both(conf_matrix)
+
+                        '''
+                        Done fitting on multiple participants, time for real world data testing
+                        '''
+                        print_both("************************************")
+                        print_both("--------FINISHED FITTING MODEL------")
+                        print_both("************************************")
+                        for testPInd in range(0, len(testDataParticipants)):
+                            testP = testDataParticipants[testPInd]
+                            print_both('Testing on : ' + str(testP['fileName']))
+                            xTest = testP['x']
+                            yTest = testP['y']
+                            y_hat = model.predict(xTest)
+                            # results = model.evlauate(xVal, yTest)
+                            y_hat = [(1.0 if y_pred >= 0.5 else 0.0) for y_pred in y_hat]
+                            conf_matrix = sklearn.metrics.confusion_matrix(yTest, y_hat, labels=[1.0, 0.0])
+                            print_both(conf_matrix)
+                        model.reset_states()
+                        tf.compat.v1.reset_default_graph()
+                        # tf.keras.backend.clear_session()
 
                 '''
-                    Metrics
-                    '''
+                Metrics
+                '''
 
                 hist_str = ''
                 print_both(str(histories))
@@ -669,31 +673,6 @@ if __name__ == '__main__':
                     # now we have cross -> [key : [e1,e3]/avg,...]
                     histories_of_all_cross.append(total_histories_of_cross)
 
-                # Don't use
-                # now we can go by key of total_histories_of_all_cross and calculate metrics
-                # avg_history_by_epoch = []
-                # for key in histories[0].history.keys():
-                #     #generate a 0 value for each epoch in the metric
-                #    avg_history_by_epoch[key]=[0 for i in range(len(histories[0].history[key]))]
-                #     #then for each of the cross folds metrics, calculate the averages
-                #    for h in histories:
-                # calculate the average metric value per epoch
-                #        for i in range(h.history[key]):
-                #            avg_history_by_epoch['history'][key][i] += h.history[key][i]
-                #
-                #        for i in range(h.history[key]):
-                #            avg_history_by_epoch['history'][key][i] /= len(h.history[key])
-                #
-
-                # hist_str = ''
-                # for key in histories_of_all_cross[0].keys():
-                #     hist_str += str(key) + " : " + str(
-                #         sum(sum(his[key]) for his in histories_of_all_cross) / len(histories_of_all_cross)) + "\n"
-                #     #finally, we now have the avg history of each metric per each epoch and per each model
-
-                # print_both(hist_str)
-
-                print_both('putting in conf matrix')
                 all_models_by_tp_and_tn[unique_model_id] = conf_matrix
 
                 # Saving breaks the rest of the trianings and corrupts the rest of the configurations!
@@ -702,7 +681,11 @@ if __name__ == '__main__':
 
             plotLines({'tp%': tp_rates, 'tn%': tn_rates, 'acc%': unseen_acc, 'val fold acc%': fold_scores}, resultDir, unique_model_id)
 
-            model.save(resultDir + "/" + unique_model_id + ".h5", save_format='h5')
+            # model.save(resultDir + "/" + unique_model_id + ".h5", save_format='h5')
+            # model.reset_states()
+            # tf.compat.v1.reset_default_graph()
+            # tf.keras.backend.clear_session()
+            # del model
             #
             #    all_models_stats.append({
             #        'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,

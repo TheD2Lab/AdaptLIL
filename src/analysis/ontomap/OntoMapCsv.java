@@ -263,6 +263,7 @@ public class OntoMapCsv {
             map.put(participants[i].getId(), participants[i]);
         return map;
     }
+
     public static void testParticipantInstances(Participant[] participants) throws Exception {
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
@@ -284,12 +285,39 @@ public class OntoMapCsv {
         int totalNumPackets = 0;
         System.out.println("before making file");
         File outputDir = new File("/home/notroot/Desktop/d2lab/iav/train_test_data_output/" + LocalDateTime.now().toString().replace(':', ';'));
+        File trainOutputDir = new File(outputDir.getAbsolutePath() + "/train");
+        File testOutputDir = new File(outputDir.getAbsolutePath() + "/test");
         System.out.println("hello world");
+
         outputDir.mkdirs();
+        trainOutputDir.mkdirs();
+        testOutputDir.mkdirs();
         OntoMapCsv.logTestParticipants(outputDir, participantIdsForTestDataset);
+        Random random = new Random();
         for (Participant p : participants) {
             System.out.println(p.getId());
+
             boolean useParticipantForTrainingData = !participantIdsForTestDataset.contains(p.getId().toUpperCase());
+            File pOutputDir = null;
+            if( useParticipantForTrainingData) {
+                pOutputDir = new File(trainOutputDir.getAbsolutePath() + "/" + p.getId());
+                new File(pOutputDir.getAbsolutePath() + "/train").mkdirs();
+                new File(pOutputDir.getAbsolutePath() + "/validation").mkdirs();
+            }
+            else {
+                pOutputDir = new File(testOutputDir.getAbsolutePath() + "/" + p.getId());
+                new File(pOutputDir.getAbsolutePath() + "/retrain").mkdirs();
+                new File(pOutputDir.getAbsolutePath() + "/test").mkdirs();
+            }
+
+            pOutputDir.mkdirs();
+            if (useParticipantForTrainingData) {
+                new File(pOutputDir.getAbsolutePath() + "/train").mkdirs();
+                new File(pOutputDir.getAbsolutePath() + "/validation").mkdirs();
+            } else {
+                new File(pOutputDir.getAbsolutePath() + "/retrain").mkdirs();
+                new File(pOutputDir.getAbsolutePath() + "/test").mkdirs();
+            }
             GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
 
 
@@ -302,11 +330,13 @@ public class OntoMapCsv {
             for (File answerFile : answersFiles){
                 List<String> timeCutoffs = new ArrayList<>();
                 List<Boolean> rightOrWrongs = new ArrayList<>();
+                List<Instance> questionInstanceList = new ArrayList<>();
                 System.out.println("Answers file: " + answerFile.getName());
                 String[] cells = null;
                 FileReader answersFileReader = new FileReader(answerFile);
                 CSVReader answersCsvReader = new CSVReader(answersFileReader);
 
+                List<Integer> questionsForValid = Arrays.asList(random.nextInt(5),random.nextInt(5)+5, random.nextInt(4)+10);
 
                 int numCorrect = 0; //used for validation
                 int numWrong = 0; // used for validation
@@ -325,6 +355,7 @@ public class OntoMapCsv {
                 System.out.println("time to completE: " + timeToComplete);
                 if (timeToComplete < 14)
                     continue;
+
                 while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() <= qidToEndTrainingAt) {
                     String timeCutoff = cells[timeStampIndex];
                     Boolean rightOrWrong = cells[correctIndex] != null && cells[correctIndex].trim().contains("1");
@@ -383,6 +414,7 @@ public class OntoMapCsv {
                             participantWindow.flush();
 
                         }
+                        questionInstanceList.clear();
                             continue;
                     }
                     if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
@@ -422,22 +454,10 @@ public class OntoMapCsv {
                             windowInstance.setDataset(dataset);
                             windowInstance.setValue(windowInstance.numAttributes() - 1, rightOrWrongs.get(currentQuestionIndex) ? "1" : "0");
 
-                            if (useParticipantForTrainingData) {
 
-                                //TODO, here we will add the trainInstance List to belong only to
-                                //the current participant,
-                                if (!participantTrainingInstances.containsKey(p.getId()))
-                                    participantTrainingInstances.put(p.getId(), new ArrayList<Instance>());
+                            questionInstanceList.add(windowInstance);
 
-                                participantTrainingInstances.get(p.getId()).add(windowInstance);
-                                trainInstanceList.add(windowInstance);
-                            } else if (answerFile.getName().toLowerCase().contains("conf")) {
-                                if (!participantTestInstances.containsKey(p.getId()))
-                                    participantTestInstances.put(p.getId(), new ArrayList<Instance>());
 
-                                participantTestInstances.get(p.getId()).add(windowInstance);
-                                testInstanceList.add(windowInstance);
-                            }
                             numWindowsAdded += 1;
 
                         }
@@ -454,8 +474,19 @@ public class OntoMapCsv {
                             numCorrect--;
                         else
                             numWrong--;
-                        currentQuestionIndex++;
 
+                        Instances instancesForFile = OntoMapCsv.listInstanceToInstances(questionInstanceList, nominalValues);
+                        if (useParticipantForTrainingData) {
+                            String validOrTestSwitch = questionsForValid.contains(currentQuestionIndex) ? "/validation/" : "/train/";
+                            OntoMapCsv.saveInstancesToFile(instancesForFile, pOutputDir.getAbsolutePath() + validOrTestSwitch + "/gaze_qid_" + currentQuestionIndex);
+                        } else { //Forst test
+                            //Switch up 80-20 rule, 20% for prediction and 80% for test.
+                            String validOrTestSwitch = questionsForValid.contains(currentQuestionIndex) ? "/retrain/" : "/test/";
+                            OntoMapCsv.saveInstancesToFile(instancesForFile, pOutputDir.getAbsolutePath() + validOrTestSwitch + "/gaze_qid_" + currentQuestionIndex);
+                        }
+                        questionInstanceList.clear();
+
+                        currentQuestionIndex++;
                         numWindowsAdded = 0;
                     }
 
@@ -513,6 +544,19 @@ public class OntoMapCsv {
         OntoMapCsv.saveTestAndTrainingToOneFile(trainInstanceList, testInstanceList, nominalValues, outputDir);
         //Readd saving as one whole file (and do some c ross fold validation)
         //
+    }
+
+    public static Instances listInstanceToInstances(List<Instance> instanceList, List<String> targetValues) {
+        ArrayList<Attribute> attributeList = Collections.list(instanceList.get(0).enumerateAttributes());
+        attributeList.add(new Attribute("correct", targetValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
+
+        Instances instances = new Instances("OntoMapTrainGaze", attributeList, instanceList.get(0).numAttributes());
+        instances.setClassIndex(instances.numAttributes() - 1);
+
+        for (int i = 0; i < instanceList.size(); ++i) {
+            instances.add(instanceList.get(i));
+        }
+        return instances;
     }
 
     /**

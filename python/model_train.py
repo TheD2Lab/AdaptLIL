@@ -115,7 +115,7 @@ if __name__ == '__main__':
     trainDataByParticipant = getTrainingDataNewFormat(os.path.join(baseDataDir,'train'), shape=(0,numAttributes+1), timeSequences=timeSequences)
     testDataByParticipant = getTestingDataNewFormat(os.path.join(baseDataDir, 'test'), shape=(0,numAttributes+1), timeSequences=timeSequences)
     transformer = model_conf.getModelConfig(timeSequences, numAttributes, windowSize)['transformer_model']
-    transformer.compile(optimizer=tf.keras.optimizers.Nadam(learning_rate=1e-4), loss=tf.keras.losses.BinaryCrossentropy(),
+    transformer.compile(optimizer=tf.keras.optimizers.Nadam(learning_rate=1e-6), loss=tf.keras.losses.BinaryCrossentropy(),
                   metrics=model_conf.get_metrics_for_model())
 
     hist_averages = {'accuracy': [], 'val_accuracy': []}

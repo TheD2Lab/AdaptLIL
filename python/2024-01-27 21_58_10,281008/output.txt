@@ -1,0 +1,5 @@
+epochs: 2
+Shuffle on compile: False
+train
+test
+test_participants.txt

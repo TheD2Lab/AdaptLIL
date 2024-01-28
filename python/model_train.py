@@ -29,11 +29,9 @@ def getTrainingDataNewFormat(dir, timeSequences, shape):
     participants = {}
     for pDirName in os.listdir(dir):
         pDir = os.path.join(dir, pDirName)
-        print(str(pDir))
         if (os.path.isdir(pDir)):
             participantData = {}
 
-            print(str(pDir))
             trainDir = os.path.join(pDir, "train")
             validDir = os.path.join(pDir, "validation")
             for trainFileName in os.listdir(trainDir):
@@ -44,13 +42,13 @@ def getTrainingDataNewFormat(dir, timeSequences, shape):
             for validationFileName in os.listdir(validDir):
                 validationFile = os.path.join(validDir, validationFileName)
                 data = model_helper.convertArffToDataFrame(validationFile)
-                print(str(data.shape))
                 validData = np.append(validData, data, axis=0)
 
-            participants[pDirName] = {
-                'training': model_helper.convertDataToLTSMFormat(trainData,timeSequences=timeSequences),
-                'validation': model_helper.convertDataToLTSMFormat(validData,timeSequences=timeSequences)
-            }
+            if (np.all(validData) != None and np.all(trainData) != None):
+                participants[pDirName] = {
+                    'training': model_helper.convertDataToLTSMFormat(trainData,timeSequences=timeSequences),
+                    'validation': model_helper.convertDataToLTSMFormat(validData,timeSequences=timeSequences)
+                }
 
     return participants
 
@@ -61,7 +59,7 @@ def getTestingDataNewFormat(dir, timeSequences, shape):
     participants = {}
     for pDirName in os.listdir(dir):
         pDir = os.path.join(dir, pDirName)
-        if (os.path.isdir(pDir)):
+        if (os.path.isdir(pDir) and len(os.listdir(pDir)) > 0):
             participantData = {}
             # p1, p2...
             retrainDir = os.path.join(pDir, "retrain")
@@ -77,10 +75,11 @@ def getTestingDataNewFormat(dir, timeSequences, shape):
                 testData = np.append(testData, data, axis=0)
 
 
-            participants[pDirName] = {
-                'retrain': model_helper.convertDataToLTSMFormat(retrainData,timeSequences=timeSequences),
-                'test': model_helper.convertDataToLTSMFormat(testData,timeSequences=timeSequences)
-            }
+            if (np.all(testData) != None and np.all(retrainData) != None):
+                participants[pDirName] = {
+                    'retrain': model_helper.convertDataToLTSMFormat(retrainData,timeSequences=timeSequences),
+                    'test': model_helper.convertDataToLTSMFormat(testData,timeSequences=timeSequences)
+                }
 
     return participants
 
@@ -93,12 +92,12 @@ if __name__ == '__main__':
 
     outputFile = open(os.path.join(resultDir, "output.txt"), 'wt')
     model_helper.savePythonFile(resultDir)
-    timeSequences = 3
-    numAttributes = 150 * 2 * 5
+    timeSequences = 6
+    numAttributes = 150
     numMetaAttrs = 0
-    windowSize = 150 * 5#75
+    windowSize = 75 #75
     # TODO, if after the current test run, it moves more towards 50%/50%, lower epochs
-    epochs = 1 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
+    epochs = 2 # 20 epochs is pretty good, will train with 24 next as 3x is a good rule of thumb.
     numFolds = 14;
     shuffle = False
 
@@ -112,18 +111,23 @@ if __name__ == '__main__':
     consoleOut = sys.stdout  # assign console output to a variable
 
     targetColumn = "correct"
-    baseDataDir = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/newformat/"
+    baseDataDir = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/all41/"
     trainDataByParticipant = getTrainingDataNewFormat(os.path.join(baseDataDir,'train'), shape=(0,numAttributes+1), timeSequences=timeSequences)
     testDataByParticipant = getTestingDataNewFormat(os.path.join(baseDataDir, 'test'), shape=(0,numAttributes+1), timeSequences=timeSequences)
     transformer = model_conf.getModelConfig(timeSequences, numAttributes, windowSize)['transformer_model']
-    transformer.compile(optimizer='adam', loss=tf.keras.losses.BinaryCrossentropy(),
+    transformer.compile(optimizer=tf.keras.optimizers.Nadam(learning_rate=1e-4), loss=tf.keras.losses.BinaryCrossentropy(),
                   metrics=model_conf.get_metrics_for_model())
 
     hist_averages = {'accuracy': [], 'val_accuracy': []}
     for p, pData in trainDataByParticipant.items():
+        print(p)
         #train for one p, plot
         x_train, y_train = pData['training']
+        if (not x_train.any() or not y_train.any()):
+            continue
         x_val, y_val = pData['validation']
+        if (not x_val.any() or not y_val.any()):
+            continue
         hist = transformer.fit(
             x_train,
             y_train,
@@ -134,11 +138,40 @@ if __name__ == '__main__':
             # batch_size=1,
             # callbacks=[callback]
         )
-        hist_averages['accuracy'].append(np.average(hist.history['accuracy']))
-        hist_averages['val_accuracy'].append(np.average(hist.history['val_accuracy']))
+        hist_averages['accuracy'].append(hist.history['accuracy'][-1])
+        hist_averages['val_accuracy'].append(hist.history['val_accuracy'][-1])
+        transformer.reset_states()
+    transformer.save(resultDir + "/" + "transformer_ult" + ".keras", save_format='keras')
+
     model_helper.plotLines({'Acc %': hist_averages['accuracy'], 'Val Acc %' : hist_averages['val_accuracy']}, resultDir, "mymodel", show_plot=True)
 
+    retrain_hist_avg = {'accuracy': [], 'val_accuracy': []}
+    for p, pData in testDataByParticipant.items():
+        cloned_transformer = tf.keras.models.load_model(resultDir + "/" + "transformer_ult" + ".keras")
+        print(p)
 
+        # train for one p, plot
+        x_train, y_train = pData['retrain']
+        if (not x_train.any() or not y_train.any()):
+            continue
+        x_val, y_val = pData['test']
+        if (not x_val.any() or not y_val.any()):
+            continue
+        hist = cloned_transformer.fit(
+            x_train,
+            y_train,
+            validation_data=(x_val, y_val),
+            epochs=epochs,
+            # class_weight=None if useLoo else weights,
+            shuffle=shuffle,
+            # batch_size=1,
+            # callbacks=[callback]
+        )
+        retrain_hist_avg['accuracy'].append(hist.history['accuracy'][-1])
+        retrain_hist_avg['val_accuracy'].append(hist.history['val_accuracy'][-1])
+        model_helper.clear_model(cloned_transformer)
+
+    model_helper.plotLines({'Acc %': retrain_hist_avg['accuracy'], 'Val Acc %' : retrain_hist_avg['val_accuracy']}, resultDir, "mymodel", show_plot=True)
 
 
     all_models_by_tp_and_tn = {}

@@ -137,9 +137,9 @@ def build_transformer_model(input_shape, head_size, num_heads, ff_dim, num_trans
     inputs = tf.keras.Input(shape=input_shape)
     x = inputs
     #pair inputs by two for x,y and place into 3 filters for 3 time sequences
-    # x = layers.Conv1D(3, 2, input_shape=input_shape)(x)
+    x = layers.Conv1D(3, 2, input_shape=input_shape)(x)
     #WHERE's THE POOLING?
-    # x = layers.LSTM(100, return_sequences=True)(x)
+    x = layers.LSTM(100, return_sequences=True)(x)
     for _ in range(num_transformer_blocks):
         x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
 
@@ -156,8 +156,8 @@ def getModelConfig(timeSequences, attributes, windowSize):
     input_shape = (timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=1, num_heads=1, ff_dim=1,
-                                                num_transformer_blocks=1, mlp_units=[attributes], mlp_dropout=0.15,
+    transformer_model = build_transformer_model(input_shape, head_size=4, num_heads=1, ff_dim=4,
+                                                num_transformer_blocks=2, mlp_units=[20,10], mlp_dropout=0.15,
                                                 dropout=0.1)
 
     stacked_lstm = Sequential()
@@ -192,7 +192,7 @@ def getModelConfig(timeSequences, attributes, windowSize):
     Using pure point of gaze, applying convolution to a dense layer, some dropout and max pooling, and then the lstm followed by another dense layer and the prediction
     Based on paper "Toward a deep convolutional LSTM for eye gaze spatiotemporal data sequence classification
     '''
-    kernelSize = 2  # filters is the num windows, and 2 b/c (x,y)
+    kernelSize = 3  # filters is the num windows, and 2 b/c (x,y)
     filterSize = int(windowSize/2)
 
     conv_stacked_lstm.add(
@@ -202,16 +202,14 @@ def getModelConfig(timeSequences, attributes, windowSize):
     conv_stacked_lstm.add(
         MaxPooling1D(pool_size=1)
     )
-    conv_stacked_lstm.add(Dropout(0.10))
-    conv_stacked_lstm.add(LSTM(int(attributes / kernelSize), dropout=0.2, return_sequences=True))
-    conv_stacked_lstm.add(LSTM(int(attributes / kernelSize), dropout=0.2 ))
+
+    conv_stacked_lstm.add(LSTM(100, dropout=0.05))
     # stacked_lstm.add(LSTM(128, return_sequences=True))
     #    conv_stacked_lstm.add(LSTM(1200, return_sequences=True, go_backwards=True, dropout=0.15, recurrent_dropout=0.2))
     # stacked_lstm_v2.add(LSTM(600, return_sequences=True,dropout=0.15))
     #    conv_stacked_lstm.add(LSTM(1200, dropout=0.15, go_backwards=True))
     # stacked_lstm.add(LSTM(64)))
-    conv_stacked_lstm.add(Dropout(0.20))
-    conv_stacked_lstm.add(Dense(int(attributes / kernelSize)))
+    conv_stacked_lstm.add(Dense(500))
     conv_stacked_lstm.add(LeakyReLU())
     conv_stacked_lstm.add(Dense(1, activation='sigmoid'))
 
@@ -239,6 +237,7 @@ def getModelConfig(timeSequences, attributes, windowSize):
 
 
     models['transformer_model'] = transformer_model
+    models['conv_stacked_lstm'] = conv_stacked_lstm
     # models['stacked_lstm'] = stacked_lstm;
     # models['conv_stacked_lstm'] = conv_stacked_lstm
 

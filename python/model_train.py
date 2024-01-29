@@ -111,11 +111,11 @@ if __name__ == '__main__':
     consoleOut = sys.stdout  # assign console output to a variable
 
     targetColumn = "correct"
-    baseDataDir = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/all41/"
+    baseDataDir = "/home/notroot/Desktop/d2lab/iav/train_test_data_output/lessval/" #try lesspicky and newformat_17sec
     trainDataByParticipant = getTrainingDataNewFormat(os.path.join(baseDataDir,'train'), shape=(0,numAttributes+1), timeSequences=timeSequences)
     testDataByParticipant = getTestingDataNewFormat(os.path.join(baseDataDir, 'test'), shape=(0,numAttributes+1), timeSequences=timeSequences)
     transformer = model_conf.getModelConfig(timeSequences, numAttributes, windowSize)['transformer_model']
-    transformer.compile(optimizer=tf.keras.optimizers.Nadam(learning_rate=1e-6), loss=tf.keras.losses.BinaryCrossentropy(),
+    transformer.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3), loss=tf.keras.losses.BinaryCrossentropy(),
                   metrics=model_conf.get_metrics_for_model())
 
     hist_averages = {'accuracy': [], 'val_accuracy': []}
@@ -133,17 +133,19 @@ if __name__ == '__main__':
             y_train,
             validation_data=(x_val, y_val),
             epochs=epochs,
-            # class_weight=None if useLoo else weights,
+            # class_weight=model_helper
             shuffle=shuffle,
             # batch_size=1,
             # callbacks=[callback]
         )
         hist_averages['accuracy'].append(hist.history['accuracy'][-1])
         hist_averages['val_accuracy'].append(hist.history['val_accuracy'][-1])
-        transformer.reset_states()
+        # transformer.reset_states()
+        # tf.keras.backend.clear_session()
+
     transformer.save(resultDir + "/" + "transformer_ult" + ".keras", save_format='keras')
 
-    model_helper.plotLines({'Acc %': hist_averages['accuracy'], 'Val Acc %' : hist_averages['val_accuracy']}, resultDir, "mymodel", show_plot=True)
+    model_helper.plotLines({'Acc %': hist_averages['accuracy'], 'Val Acc %' : hist_averages['val_accuracy']}, resultDir, "mymodel_train", show_plot=True)
 
     retrain_hist_avg = {'accuracy': [], 'val_accuracy': []}
     for p, pData in testDataByParticipant.items():
@@ -171,7 +173,7 @@ if __name__ == '__main__':
         retrain_hist_avg['val_accuracy'].append(hist.history['val_accuracy'][-1])
         model_helper.clear_model(cloned_transformer)
 
-    model_helper.plotLines({'Acc %': retrain_hist_avg['accuracy'], 'Val Acc %' : retrain_hist_avg['val_accuracy']}, resultDir, "mymodel", show_plot=True)
+    model_helper.plotLines({'Acc %': retrain_hist_avg['accuracy'], 'Val Acc %' : retrain_hist_avg['val_accuracy']}, resultDir, "mymodel_test", show_plot=True)
 
 
     all_models_by_tp_and_tn = {}

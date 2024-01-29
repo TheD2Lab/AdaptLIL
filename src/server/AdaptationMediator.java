@@ -52,6 +52,10 @@ public class AdaptationMediator extends Mediator {
         this.numSequencesForClassification = numSequencesForClassification;
     }
 
+    /**
+     * Runs a infinite loop that closes when runAdaptations is false
+     * Similar to a game/window render update, enables a live system
+     */
     public void start() {
         this.websocket.setMediator(this);
         this.gp3Socket.setMediator(this);
@@ -63,9 +67,14 @@ public class AdaptationMediator extends Mediator {
         //Does this also need to run async? I think so.
         //This will work as the synchronization between all objects as well.
         List<INDArray> gazeWindowINDArrays = new ArrayList<>(this.numSequencesForClassification);
+        List<INDArray> gazeDataForTraining = new ArrayList<>();
+        List<Integer> trainingDataLabels = new ArrayList<>();
         System.out.println("mediator started");
         int[] classifications = new int[5];
         int classificationIndex = 0;
+        int currentQuestionId = 0;
+        int numWrong = 0;
+        int numRight = 0;
         while (runAdapations) {
 
             //No websockets connected, do not begin reading from gaze buffer. (Note, we may need to flush buffer once we connect for the first time)
@@ -74,8 +83,8 @@ public class AdaptationMediator extends Mediator {
 
             RecXmlObject recXmlObject = this.gp3Socket.readGazeDataFromBuffer();
 
-                //Add to windows for task
-                this.gazeWindow.add(recXmlObject);
+            //Add to windows for task
+            this.gazeWindow.add(recXmlObject);
 
 
             if (gazeWindow.isFull()) { //Likely change to a time series roll
@@ -87,11 +96,13 @@ public class AdaptationMediator extends Mediator {
                 //Request if Participant has finished a question and get their answer
                 //Must be recent and contained within the current window.
                 //Get last time used and current time.
-                Float cognitiveLoadScore = gazeWindow.getCognitiveLoadScore();
+
+
                 INDArray gazeWindowInput = gazeWindow.toINDArray(false);
                 gazeWindowINDArrays.add(gazeWindowInput);
                 if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
                     this.curSequenceIndex++;
+
                     System.out.println("Predicting...");
                     //Error (can only insert a scalar in to another scalar
                     //Find way to join
@@ -101,29 +112,55 @@ public class AdaptationMediator extends Mediator {
                                     (int) gazeWindowINDArrays.get(0).shape()[0] //Num attributes per sequence
                             });
 
-                    Integer classificationResult = kerasServerCore.predict(classificationInput).getOutput().getDouble(0) >= 0.5 ? 1 : 0;
-                            //kerasServerCore.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
-                    System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
-                    classifications[classificationIndex++] = classificationResult;
-                    Integer participantWrongOrRight = null;
-                    Float taskCompletionTime = null; //grab from websocket
-                    //Calculate perilScore (risk score)
-                    double curRiskScore = this.calculateRiskScore(classificationResult);
-                    double lastRiskScore = this.getLastRiskScore();
+                    if (getWebsocket().isStartRecordingGazeForTraining()) {
+                        //Use gaze data for training
+                        gazeDataForTraining.add(classificationInput);
 
-                    if (classificationIndex == classifications.length) {
-                        System.out.println("# of classifications to begin intervention has occured : " + classificationIndex);
+                        //If the questionId now exists in the websockets questionanswer score, we can finally create a label
+                        if (getWebsocket().getQuestionAnswerScore().containsKey(currentQuestionId)) {
+                            Integer currentQuestionWrongOrRight = getWebsocket().getQuestionAnswerScore().get(currentQuestionId);
+                            if (currentQuestionWrongOrRight == 0)
+                                numWrong++;
+                            else if (currentQuestionWrongOrRight == 1)
+                                numRight++;
+                            trainingDataLabels.add(currentQuestionWrongOrRight);
+                            ++currentQuestionId;
+                        }
 
-                        double score = 0.0;
-                        int numClassOne = 0;
-                        for (int i = 0; i < classifications.length; ++i)
-                            if (classifications[i] == 1)
-                                numClassOne++;
-                        System.out.println("# class of 1: " + numClassOne);
-                        score = (double) numClassOne / classifications.length;
-                        this.invokeAdaptation(score);
-                        classificationIndex = 0;
+                        //Ready to begin training
+                        //Want them to get At least 1 wrong
+                        if (numWrong > 0 && numRight > 0) {
+//                            KerasServerCore.trainOnData(gazeDataForTraining, trainingDataLabels);
+                        }
+
+                    } else {
+                        //Gaze data is for inference and thus we do the adaptations
+                        Integer classificationResult = kerasServerCore.predict(classificationInput).getOutput().getDouble(0) >= 0.5 ? 1 : 0;
+                        //kerasServerCore.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
+                        System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
+                        classifications[classificationIndex++] = classificationResult;
+                        Integer participantWrongOrRight = null;
+                        Float taskCompletionTime = null; //grab from websocket
+                        //Calculate perilScore (risk score)
+                        double curRiskScore = this.calculateRiskScore(classificationResult);
+                        double lastRiskScore = this.getLastRiskScore();
+
+                        if (classificationIndex == classifications.length) {
+                            System.out.println("# of classifications to begin intervention has occured : " + classificationIndex);
+
+                            double score = 0.0;
+                            int numClassOne = 0;
+                            for (int i = 0; i < classifications.length; ++i)
+                                if (classifications[i] == 1)
+                                    numClassOne++;
+                            System.out.println("# class of 1: " + numClassOne);
+                            score = (double) numClassOne / classifications.length;
+                            this.invokeAdaptation(score);
+                            classificationIndex = 0;
+                        }
                     }
+
+
                     gazeWindowINDArrays.clear();
                 }
                 gazeWindow.flush();

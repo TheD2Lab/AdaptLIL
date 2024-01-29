@@ -35,6 +35,10 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
 
     private AdaptationMediator mediator;
 
+    private Map<Integer, Integer> questionAnswerScore;
+
+    private boolean startRecordingGazeForTraining;
+
 
     public VisualizationWebsocket(GP3Socket gp3Socket) {
         this.gp3Socket = gp3Socket;
@@ -98,10 +102,12 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
      */
     public void onMessage(WebSocket socket, String msg) {
         try {
-            DataResponseModelWs response = objectMapper.readValue(msg, DataResponseModelWs.class);
+            ResponseModelWs response = objectMapper.readValue(msg, ResponseModelWs.class);
             if (response.type.equals("data")) {
-                this.handleDataResponse(socket, response);
+                this.handleDataResponse(socket, (DataResponseModelWs) response);
 
+            } else if (response.type.equals("command")) {
+                this.handleCommandResponse(socket, (CommandResponseModelWs) response);
             }
         } catch (JsonMappingException e) {
             System.out.println("JSON MAPPING EXCEPTION");
@@ -164,6 +170,28 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
             this.handleMapWorldResponse(socket, (MapWorldDataResponseModelWs) response);
         }
     }
+
+    public void handleCommandResponse(WebSocket socket, CommandResponseModelWs response) {
+        if (response.getName().equals("record")) {
+            if (response.getAction().equals("on"))
+                this.startRecordingGazeForTraining = true;
+            else if (response.getAction().equals("off"))
+                this.startRecordingGazeForTraining = false;
+        }
+    }
+
+    public void handleQuestionScoreResponse(WebSocket socket, QuestionScoreResponseModelWs response) {
+        /**
+         *     'name' : 'score',
+         *             'time': (new Date()).getMilliseconds(),
+         *             'questionId': questionId,
+         *             'score': score
+         */
+        if (response.getName().equals("score")) {
+            this.questionAnswerScore.put(response.getQuestionId(), response.getScore());
+        }
+    }
+
 
     public void handleCellCoordinatesResponse(WebSocket socket, CellCoordinateDataResponseModelWs response) throws InterruptedException {
         System.out.println("handling cellCoordinates");
@@ -266,5 +294,13 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
     @Override
     public void setMediator(Mediator mediator) {
         this.mediator = (AdaptationMediator) mediator;
+    }
+
+    public Map<Integer, Integer> getQuestionAnswerScore() {
+        return questionAnswerScore;
+    }
+
+    public boolean isStartRecordingGazeForTraining() {
+        return startRecordingGazeForTraining;
     }
 }

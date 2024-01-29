@@ -128,8 +128,8 @@ public class OntoMapCsv {
                         //check if it has .LIL.
 
                         if (taskFileOrDir.getName().toLowerCase().contains("list") || taskFileOrDir.getName().toLowerCase().contains("matrix")) {
-                            if (filter.equals("matrix") && taskFileOrDir.getName().contains("matrix"))
-                                continue;
+//                            if (filter.equals("matrix") && taskFileOrDir.getName().contains("matrix"))
+//                                continue;
                             if (!filteredFiles.containsKey(participantName))
                                 filteredFiles.put(participantName, new ArrayList<>());
 
@@ -241,7 +241,7 @@ public class OntoMapCsv {
             int randomId = random.nextInt(80) + 1;
             String randParticipantId = "P" + randomId;
             while (listContainsStr(excludedParticipants, randParticipantId) || listContainsStr(testParticipants, randParticipantId)
-            || !mapParticipants.containsKey(randParticipantId) || mapParticipants.get(randParticipantId).getAnatomyAnswersFile().getName().toLowerCase().contains("matrix") || randParticipantId.equals("P66")) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
+            || !mapParticipants.containsKey(randParticipantId) || randParticipantId.equals("P66")) { //also has to bein the appropriate domain!!! so only check the participants that are selected due to previous criteria of domain
                 randParticipantId = "P" + (random.nextInt(80) + 1);
             }
             testParticipants.add(randParticipantId);
@@ -265,11 +265,12 @@ public class OntoMapCsv {
     }
 
     public static void testParticipantInstances(Participant[] participants) throws Exception {
+        boolean useAdditionalGazeMetrics = true;
         //Use DenseInstance to create on the fly instances.
         //https://weka.sourceforge.io/doc.dev/weka/core/DenseInstance.html
         //foreach participant
-        float windowSizeInMilliseconds = 5000;
-        float observablePeriod = 60000;
+        float windowSizeInMilliseconds = 500;
+        float observablePeriod = 15000;
         int numParticipantsForTestData = (int) Math.ceil(participants.length * 0.2); // 20% split
         Map<String, List<Instance>> participantTrainingInstances = new HashMap<>();
         Map<String, List<Instance>> participantTestInstances = new HashMap<>();
@@ -294,6 +295,7 @@ public class OntoMapCsv {
         testOutputDir.mkdirs();
         OntoMapCsv.logTestParticipants(outputDir, participantIdsForTestDataset);
         Random random = new Random();
+
         for (Participant p : participants) {
             System.out.println(p.getId());
 
@@ -336,7 +338,10 @@ public class OntoMapCsv {
                 FileReader answersFileReader = new FileReader(answerFile);
                 CSVReader answersCsvReader = new CSVReader(answersFileReader);
 
-                List<Integer> questionsForValid = Arrays.asList(random.nextInt(5),random.nextInt(5)+5, random.nextInt(4)+10);
+                Set<Integer> questionsForValid = new HashSet<>();
+                while (questionsForValid.size() < 1) {
+                    questionsForValid.add(random.nextInt(14));
+                }
 
                 int numCorrect = 0; //used for validation
                 int numWrong = 0; // used for validation
@@ -353,7 +358,7 @@ public class OntoMapCsv {
                 answersCsvReader = new CSVReader(answersFileReader);
                 answersCsvReader.readNext(); //Skip first line.
                 System.out.println("time to completE: " + timeToComplete);
-                if (timeToComplete < 14)
+                if (timeToComplete < 10)
                     continue;
 
                 while ((cells = answersCsvReader.readNext()) != null && timeCutoffs.size() <= qidToEndTrainingAt) {
@@ -442,9 +447,9 @@ public class OntoMapCsv {
                             //any window where the user got it wrong, is grouped into the bad section -> 0
                             //Hopefully we can then compute a probability that they will get it right
                             //given the current gaze data.
-                            Instance windowInstance = participantWindow.toDenseInstance(false, false);
+                            Instance windowInstance = participantWindow.toDenseInstance(false, useAdditionalGazeMetrics);
 
-                            Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false, false), 1);
+                            Instances dataset = new Instances("GazeWindowDataset", participantWindow.getAttributeList(false, useAdditionalGazeMetrics), 1);
                             Attribute correctAttribute = new Attribute("correct", nominalValues);
                             dataset.insertAttributeAt(correctAttribute, dataset.numAttributes());
                             windowInstance.insertAttributeAt(windowInstance.numAttributes()); //Insert a slot for the correct attribute for the window instance

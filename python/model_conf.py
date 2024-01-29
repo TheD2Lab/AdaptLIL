@@ -12,13 +12,13 @@ import random
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from csv import DictWriter
-from keras.callbacks import CSVLogger
+from keras.callbacks import CSVLogger,  ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from scipy.io import arff
 from sklearn import model_selection
 from sklearn.model_selection import StratifiedKFold, LeavePOut, KFold
 from tensorflow.keras import Sequential
 from tensorflow.keras import layers
-from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout, MaxPooling1D, Conv1D
+from tensorflow.keras.layers import Dense, LSTM, LeakyReLU, Dropout, MaxPooling1D, Conv1D, Input, multiply, concatenate, Activation, Masking, Reshape, BatchNormalization, GlobalAveragePooling1D, Permute, Dropout
 
 def get_metrics_for_model():
     return [
@@ -29,7 +29,7 @@ def get_metrics_for_model():
         tf.keras.metrics.TruePositives(name='tp'),
         # tf.keras.metrics.FalsePositives(name='fp'),
         tf.keras.metrics.TrueNegatives(name='tn'),
-        # tf.keras.metrics.FalseNegatives(name='fn'),
+        tf.keras.metrics.FalseNegatives(name='fn'),
         tf.keras.metrics.Precision(name='precision'),
         # tf.keras.metrics.Recall(name='recall'),
         # tf.keras.metrics.AUC(name='auc'),
@@ -114,6 +114,58 @@ def get_optimizers():
         # tf.keras.optimizers.RMSprop
     ]
 
+def build_mlstm(input_shape, nb_classes):
+    ip = Input(shape=input_shape)
+
+    x = Masking()(ip)
+    x = LSTM(4)(x)
+    x = Dropout(0.8)(x)
+
+    y = Permute((2, 1))(ip)
+    y = Conv1D(128, 8, padding='same', kernel_initializer='he_uniform')(y)
+    y = BatchNormalization()(y)
+    y = Activation('relu')(y)
+    y = squeeze_excite_block(y)
+
+    y = Conv1D(256, 5, padding='same', kernel_initializer='he_uniform')(y)
+    y = BatchNormalization()(y)
+    y = Activation('relu')(y)
+    y = squeeze_excite_block(y)
+
+    y = Conv1D(128, 3, padding='same', kernel_initializer='he_uniform')(y)
+    y = BatchNormalization()(y)
+    y = Activation('relu')(y)
+
+    y = GlobalAveragePooling1D()(y)
+
+    x = concatenate([x, y])
+
+    out = Dense(nb_classes, activation='softmax')(x)
+
+    model = tf.keras.Model(ip, out)
+    model.summary()
+
+    # add load model code here to fine-tune
+
+    return model
+def squeeze_excite_block(input):
+    ''' Create a squeeze-excite block
+    Args:
+        input: input tensor
+        filters: number of output filters
+        k: width factor
+
+    Returns: a keras tensor
+    '''
+    filters = input.shape[-1] # channel_axis = -1 for TF
+
+    se = GlobalAveragePooling1D()(input)
+    se = Reshape((1, filters))(se)
+    se = Dense(filters // 16,  activation='relu', kernel_initializer='he_normal', use_bias=False)(se)
+    se = Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(se)
+    se = multiply([input, se])
+
+    return se
 
 def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
     # Norm and Attention
@@ -156,7 +208,7 @@ def getModelConfig(timeSequences, attributes, windowSize):
     input_shape = (timeSequences, attributes)
     models = {}
     '''Bigger moddels are showing higher returns for transformers. Continue running bigger transformers'''
-    transformer_model = build_transformer_model(input_shape, head_size=4, num_heads=1, ff_dim=4,
+    transformer_model = build_transformer_model(input_shape, head_size=4, num_heads=2, ff_dim=4,
                                                 num_transformer_blocks=2, mlp_units=[20,10], mlp_dropout=0.15,
                                                 dropout=0.1)
 
@@ -236,7 +288,7 @@ def getModelConfig(timeSequences, attributes, windowSize):
 
 
 
-    models['transformer_model'] = transformer_model
+    models['transformer_model'] = build_mlstm(input_shape, 1)
     models['conv_stacked_lstm'] = conv_stacked_lstm
     # models['stacked_lstm'] = stacked_lstm;
     # models['conv_stacked_lstm'] = conv_stacked_lstm

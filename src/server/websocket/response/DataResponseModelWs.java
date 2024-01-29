@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION) @JsonSubTypes({
+        @JsonSubTypes.Type(value = QuestionScoreResponseModelWs.class, name = "QuestionScoreResponse"),
         @JsonSubTypes.Type(value = MapWorldDataResponseModelWs.class, name = "mapWorldDataResponse"),
         @JsonSubTypes.Type(value = CellCoordinateDataResponseModelWs.class, name = "cellCoordinateResponse")
 })

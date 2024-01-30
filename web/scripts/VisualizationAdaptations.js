@@ -26,6 +26,7 @@ class VisualizationAdaptations {
         _this.highlightAdaptation.state = false;
         _this.colorSchemeAdaptation.state = false;
         restoreToBaselineAdaptations(d3.select('#baseline-svg'));
+        $('#adaptationModalNotification').modal('show');
         if (adaptationType === 'deemphasis') {
             _this.deemphasisAdaptation.state = state;
             _this.deemphasisAdaptation.styleConfig = styleConfig;

@@ -22,20 +22,15 @@
         window.onload = function() {
             var queryString = window.location.search;
             var urlParams = new URLSearchParams(queryString);
-            var visualizationPage = urlParams.get('visualization');
+            var visualizationType = urlParams.get('visualization');
             var domain = urlParams.get('domain');
             var participantID = urlParams.get('participantID');
 
             // Visualization
-            document.getElementById("initForm").action = visualizationPage;
-            if (visualizationPage == "list_task.html") 
-            {
-                document.getElementById("vis").value = "Indented List";
-            }
-            else if (visualizationPage == "mat_task.html")
-            {
-                document.getElementById("vis").value= "Matrix";
-            }
+            document.getElementById("initForm").action = "list_task.html";
+
+            document.getElementById("vis").value = "Indented List";
+            document.getElementById("is-adaptive").value = visualizationType == 'adaptive' ? 'Adaptive' : 'Baseline';
             // Domain
             if (domain == 0) 
             {
@@ -58,7 +53,8 @@
             <h2 class="my-3">Begin Task</h2>
             <form id="initForm">
                 <input name="domain" id="domain" class="btn btn-info"></input>
-                <input mame="vis" id="vis" class="btn btn-info"></input>
+                <input name="vis" id="vis" class="btn btn-info"></input>
+                <input name="is-adaptive" id="is-adaptive" class="btn btn-info"></input>
                 <input name="participantID" id="participantID" class="btn btn-info"></input>
                 <br><br>
                 <p>Click the button below when you are ready to begin your tasks</p>

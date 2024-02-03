@@ -120,6 +120,8 @@ class BaselineMap {
                             deemphasizeText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.deemphasisAdaptation)
                         }
                         _this.resetOpacity = true;
+                    } else {
+                        restoreOpacity(g);
                     }
 
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
@@ -135,6 +137,8 @@ class BaselineMap {
                             //Is gtree1 or gtree 2?
                             //g in this case needs to be the closest tree
                         }
+                    } else {
+                        unhighlightAll(g);
                     }
 
                 })
@@ -143,9 +147,11 @@ class BaselineMap {
 
                     //Deemphasis adaptation
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                            restoreOpacity(g, base_alignments, _this.maplinesClicked);
+                            restoreOpacity(g, _this.maplinesClicked);
                             _this.resetOpacity = false;
 
+                    } else {
+                        restoreOpacity(g);
                     }
 
                     //Highlight Adaptation
@@ -156,6 +162,8 @@ class BaselineMap {
                         if (!_this.maplineClicked) {
                             unhighlightAll(g);
                         }
+                    } else {
+                        unhighlightAll(g);
                     }
 
                 });
@@ -252,6 +260,8 @@ class BaselineMap {
                     //Need to pass in currenty clicked
                     deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
                     _this.resetOpacity = true;
+                } else {
+                    restoreOpacity(svg);
                 }
 
                 //highlight adaptation
@@ -259,6 +269,8 @@ class BaselineMap {
                     if (!_this.maplineClicked) {
                         highlightAlignment(almt, svg, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
                     }
+                } else {
+                    unhighlightAll(svg);
                 }
 
             })
@@ -267,15 +279,19 @@ class BaselineMap {
                 //Deemphasis adaptation
                 if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                     if (_this.resetOpacity) {
-                        restoreOpacity(svg, base_alignments, _this.maplinesClicked);
+                        restoreOpacity(svg, _this.maplinesClicked);
                         _this.resetOpacity = false;
                     }
+                } else {
+                    restoreOpacity(svg);
                 }
 
                 //Highlight Adaptation
                 if (_this.linkIndentedList.adaptations.highlightingEnabled) {
                     if (!_this.maplineClicked)
                         unhighlightAll(svg);
+                } else {
+                    unhighlightAll(svg);
                 }
 
             });

@@ -24,7 +24,7 @@ class LinkIndentedList {
         const hierarchiesByIndex = {};
         //Sort nodes alphabetically
         console.log('sort nodes in ascending order.');
-        root.sort((a, b) => d3.ascending(a.data.name, b.data.name));
+        root.sort((a, b) => d3.ascending(a.data.name, b.data.name));    
 
         //Sets the root position
         root.dx = 10;  //??: seems not necessary??

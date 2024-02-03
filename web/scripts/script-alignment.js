@@ -291,7 +291,7 @@ function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, n
 
 
 }
-function restoreOpacity(g, allAlignments, maplinesClicked={}) {
+function restoreOpacity(g, maplinesClicked={}) {
 
     //Only unhighlight non-clicked mappings
     g.selectAll('.mapping').filter(function (d) {
@@ -299,8 +299,9 @@ function restoreOpacity(g, allAlignments, maplinesClicked={}) {
 
     }).style('opacity', 1)
     g.selectAll('.node').style('opacity', 1)
-
 }
+
+
 function unhighlightAll(g) {
 
     /**
@@ -323,6 +324,7 @@ function unhighlightAll(g) {
     g.selectAll('.mapLine-fg').style('stroke-width', '1px');
     g.selectAll('.mapLine-bg').style('stroke-width', '4.5px');
     g.selectAll('.map-to-hidden.mapLine-fg').style('stroke-dasharray', '2 4')
+    g.selectAll('.node>text').style('font-weight', 100)
     //Always place direct mappings on top.
     g.selectAll('.map-to-hidden').lower();
     g.selectAll('text').style('font-weight', 100)

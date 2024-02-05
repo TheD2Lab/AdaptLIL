@@ -10,6 +10,7 @@ import server.gazepoint.api.recv.RecXmlObject;
 import server.websocket.request.AdaptationInvokeRequestModelWs;
 import weka.core.Instance;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -39,7 +40,7 @@ public class AdaptationMediator extends Mediator {
     private int numSequencesForClassification;
     private int newAdaptationStartSequenceIndex = 0;
     private int curSequenceIndex = 0;
-    private double defaultStrength = 0.75;
+    private double defaultStrength = 0.50;
     public AdaptationMediator(VisualizationWebsocket websocket, GP3Socket gp3Socket, KerasServerCore kerasServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
         this.websocket = websocket;
         this.gp3Socket = gp3Socket;
@@ -55,6 +56,9 @@ public class AdaptationMediator extends Mediator {
     public void start() {
         this.websocket.setMediator(this);
         this.gp3Socket.setMediator(this);
+
+        //Flush the gaze queue to make sure data is fresh!
+        this.gp3Socket.getGazeDataQueue().flush();
         //this.classifierModel.setMediator(this);
         this.gazeWindow.setMediator(this);
         boolean runAdapations = true;
@@ -97,12 +101,14 @@ public class AdaptationMediator extends Mediator {
                     //Find way to join
                     INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1)).reshape(
                             new int[]{1, //Only feed 1 block of sequences at a time.
-                                    this.numSequencesForClassification, // Num sequences to feed
-                                    (int) gazeWindowINDArrays.get(0).shape()[0] //Num attributes per sequence
+                                    (int) gazeWindowINDArrays.get(0).shape()[0], //Num attributes per sequence
+                                    this.numSequencesForClassification // Num sequences to feed
                             });
 
-                    Integer classificationResult = kerasServerCore.predict(classificationInput).getOutput().getDouble(0) >= 0.5 ? 1 : 0;
+                    Double probability = kerasServerCore.predict(classificationInput).getOutput().getDouble(0);
+                    Integer classificationResult = probability >= 0.5 ? 1 : 0;
                             //kerasServerCore.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
+                    ServerMain.logFile.logLine("Prediction," +probability + "," +classificationResult+","+ System.currentTimeMillis());
                     System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
                     classifications[classificationIndex++] = classificationResult;
                     Integer participantWrongOrRight = null;
@@ -120,6 +126,8 @@ public class AdaptationMediator extends Mediator {
                             if (classifications[i] == 1)
                                 numClassOne++;
                         System.out.println("# class of 1: " + numClassOne);
+                        ServerMain.logFile.logLine("#Classifications," +numClassOne + "/5,"+ System.currentTimeMillis());
+
                         score = (double) numClassOne / classifications.length;
                         this.invokeAdaptation(score);
                         classificationIndex = 0;

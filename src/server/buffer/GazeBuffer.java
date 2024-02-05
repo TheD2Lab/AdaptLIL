@@ -45,6 +45,18 @@ public class GazeBuffer extends AsyncBuffer {
         return recXmlObject;
     }
 
+    /**
+     * Flush the queue
+     */
+    public void flush() {
+        synchronized(this.gazeDataQueue) {
+            this.reentrantLock.lock();
+
+            gazeDataQueue.clear();
+            this.reentrantLock.lock();
+        }
+    }
+
     public int size() {
         return this.gazeDataQueue.size();
     }

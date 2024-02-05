@@ -18,10 +18,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ServerMain {
@@ -36,9 +34,10 @@ public class ServerMain {
     public static final int pythonServerPort = 5000;
     public static float gazeWindowSizeInMilliseconds = 1000;
     public static int numSequencesForClassification = 2;
-    static boolean simulateGazepointServer = true;
+    static boolean simulateGazepointServer = false;
     public static final String condaEnv = "gaze_metrics";
     public static final boolean useConda = true;
+    public static SimpleLogger logFile = new SimpleLogger(new File("" +System.currentTimeMillis()+".txt"));
 
     public static boolean hasKerasServerAckd = false;
 //    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
@@ -70,7 +69,7 @@ public class ServerMain {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
+        logFile.logLine("App Ran at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         serverMain = new ServerMain();
         //Give adaptation mediator the keras endpoint
@@ -127,6 +126,7 @@ public class ServerMain {
             System.out.println("Initializing VisualizationWebsocket");
             VisualizationWebsocket visualizationWebsocket = initVisualizationWebsocket(gp3Socket);
             System.out.println(" initialized VisualizationWebsocket");
+            logFile.logLine("Websocket Connected at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
 
 
             System.out.println("Starting gaze window");
@@ -134,6 +134,8 @@ public class ServerMain {
             System.out.println("Initialized gaze window");
             System.out.println("Building AdaptationMediator");
             AdaptationMediator adaptationMediator = initAdapationMediator(visualizationWebsocket, gp3Socket, kerasServerCore, gazeWindow);
+            logFile.logLine("Mediator started at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
+
             System.out.println("Constructed AdaptationMediator");
             System.out.println("Main thread access goes to adaptationMediator.");
             System.out.println("Sever stays alive by waiting for input so type anything to exit");
@@ -239,22 +241,8 @@ public class ServerMain {
         System.out.println("Connected to GP3");
         System.out.println("Starting Data Stream via thread");
         gp3Socket.startGazeDataStream();
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_FIX, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_PUPIL_LEFT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_EYE_LEFT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_PUPIL_RIGHT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_EYE_RIGHT, true))));
-        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_PUPILMM, true))));
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_BLINK, true))));
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_COUNTER, true))));
-        //
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_DIAL, true))));
-        //gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_HR, true))));
-        //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_TIME_TICK, true));
-        //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_TIME, true));
+        gp3Socket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true))));
 
-
-        //gp3Socket.writeSetCommand(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_CURSOR, true));
         return gp3Socket;
 
     }

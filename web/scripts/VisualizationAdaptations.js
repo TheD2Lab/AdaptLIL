@@ -3,8 +3,8 @@ class VisualizationAdaptations {
     constructor(visualization, baselineMap) {
         this.visualization = visualization;
         this.baselineMap = baselineMap;
-        this.deemphasisAdaptation = new Adaptation('deemphaasis', false, {}, 0.0);
-        this.highlightAdaptation = new Adaptation('highlight', false, {}, 0.0);
+        this.deemphasisAdaptation = new Adaptation('deemphaasis', false, {}, 0.5);
+        this.highlightAdaptation = new Adaptation('highlight', false, {}, 0.5);
         this.colorSchemeAdaptation= new Adaptation('colorScheme', false, {
             'map_to_hidden_color': '#FF0000',
             'map_to_not_hidden_color' : '#00FFFF',

@@ -15,6 +15,10 @@ public class GazeBuffer extends AsyncBuffer {
         this.reentrantLock = new ReentrantLock();
     }
 
+    /**
+     * Thread safe, write/pushes the xmlObject param to the back of the queue.
+     * @param xmlObject
+     */
     public void write(RecXmlObject xmlObject) {
         synchronized (gazeDataQueue) {
             this.reentrantLock.lock();
@@ -24,6 +28,10 @@ public class GazeBuffer extends AsyncBuffer {
         }
     }
 
+    /**
+     * Thread safe read, removes the top of queue
+     * @return
+     */
     public RecXmlObject read() {
         RecXmlObject recXmlObject = null;
         try {
@@ -51,13 +59,17 @@ public class GazeBuffer extends AsyncBuffer {
     public void flush() {
         synchronized(this.gazeDataQueue) {
             this.reentrantLock.lock();
-
             gazeDataQueue.clear();
-            this.reentrantLock.lock();
+            this.reentrantLock.unlock();
         }
     }
 
     public int size() {
-        return this.gazeDataQueue.size();
+        synchronized (this.gazeDataQueue) {
+            this.reentrantLock.lock();
+            int size = this.gazeDataQueue.size();
+            this.reentrantLock.unlock();
+            return size;
+        }
     }
 }

@@ -57,13 +57,11 @@ public class AdaptationMediator extends Mediator {
         this.websocket.setMediator(this);
         this.gp3Socket.setMediator(this);
 
-        //Flush the gaze queue to make sure data is fresh!
-        this.gp3Socket.getGazeDataQueue().flush();
         //this.classifierModel.setMediator(this);
         this.gazeWindow.setMediator(this);
         boolean runAdapations = true;
         int numAttributes = 8;
-
+        int frameCount = 0;
         //Does this also need to run async? I think so.
         //This will work as the synchronization between all objects as well.
         List<INDArray> gazeWindowINDArrays = new ArrayList<>(this.numSequencesForClassification);
@@ -76,10 +74,16 @@ public class AdaptationMediator extends Mediator {
             if (this.websocket.getWebSockets().isEmpty())
                 continue;
 
+            if (frameCount == 0) {
+
+                //Flush the gaze queue to make sure data is fresh!
+                this.gp3Socket.getGazeDataQueue().flush();
+            }
+
             RecXmlObject recXmlObject = this.gp3Socket.readGazeDataFromBuffer();
 
-                //Add to windows for task
-                this.gazeWindow.add(recXmlObject);
+            //Add to windows for task
+            this.gazeWindow.add(recXmlObject);
 
 
             if (gazeWindow.isFull()) { //Likely change to a time series roll
@@ -101,8 +105,10 @@ public class AdaptationMediator extends Mediator {
                     //Find way to join
                     INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1)).reshape(
                             new int[]{1, //Only feed 1 block of sequences at a time.
+                                    this.numSequencesForClassification, // Num sequences to feed\
+
                                     (int) gazeWindowINDArrays.get(0).shape()[0], //Num attributes per sequence
-                                    this.numSequencesForClassification // Num sequences to feed
+
                             });
 
                     Double probability = kerasServerCore.predict(classificationInput).getOutput().getDouble(0);
@@ -138,6 +144,7 @@ public class AdaptationMediator extends Mediator {
             } else { //Do nothing, loopback
                 continue;
             }
+            frameCount++;
         }
 
     }
@@ -200,7 +207,7 @@ public class AdaptationMediator extends Mediator {
                         this.invokeAdaptationChange();
                     }
                     //or iterate over current adaptation
-                } else if (curRiskScore >= this.increaseStrengthThresh && curRiskScore < this.remainThresh) { //Case 2
+                } else if (curRiskScore >= this.increaseStrengthThresh && curRiskScore <= this.remainThresh) { //Case 2
 
                     //Check strength,
                     //If we can increase strength, do so in same direction

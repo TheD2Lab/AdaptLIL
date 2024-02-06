@@ -37,6 +37,7 @@ public class GP3Socket implements Component {
 
     private final XmlMapper xmlMapper;
 
+    private Thread gazeBufferThread;
 
 
     /**
@@ -58,6 +59,7 @@ public class GP3Socket implements Component {
         gazeDataBuffer = new GazeBuffer();
         ackBuffer = new AckBuffer();
         xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.gazeBufferThread = new Thread(new DataStreamRunnable(this));
 
     }
 
@@ -92,8 +94,7 @@ public class GP3Socket implements Component {
         output.println(xmlMapper.writeValueAsString(setEnableSendCommand));
 
         //Gaze is now sending data in form of REC, begin write runnable
-        Thread gazeBufferThread = new Thread(new DataStreamRunnable(this));
-        gazeBufferThread.start();
+        this.gazeBufferThread.start();
 
     }
 

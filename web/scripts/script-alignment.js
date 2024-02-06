@@ -84,8 +84,39 @@ function updateMappingPos(alignments) {
     });
 }
 
+/**
+ * Restore opacity in the svg for the specified alignments
+ * @param svg
+ * @param alignments
+ */
+function restoreOpacityForAlignments(svg, alignments) {
+    for (const align of Object.values(alignments)) {
+        const restoreOpacityVal = 1;
+        svg.selectAll('#a'+ align.id).style('opacity', restoreOpacityVal);
+        svg.select('#gTree1').selectAll('#n' + align.e1.id).style('opacity', restoreOpacityVal);
+        svg.select('#gTree2').selectAll('#n' + align.e2.id).style('opacity', restoreOpacityVal);
 
-function deemphasizeText(g, text, adaptation) {
+        let leftAlignParen = align.e1 != null ? align.e1.parent : null;
+        // while (leftAlignParen != null) {
+        //
+        //     const curNode = svg.select('#gTree1').select('#n'+leftAlignParen.id)
+        //
+        //     curNode.style('opacity', restoreOpacityVal)
+        //     leftAlignParen = leftAlignParen.parent;
+        // }
+        //
+        // let rightAlignParen = align.e2 != null ? align.e2.parent : null;
+        //
+        // while(rightAlignParen != null) {
+        //     const curNode = svg.select('#gTree2').select('#n'+rightAlignParen.id)
+        //
+        //     curNode.style('opacity', restoreOpacityVal)
+        //     rightAlignParen = rightAlignParen.parent;
+        // }
+    }
+}
+
+function deemphasizeText(svg, tree, node, clickedMaplines, adaptation) {
     //Based on strength, determine values
     //Set all maplines to be transparent
     let adaptive_opacity = 0.8 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
@@ -96,9 +127,10 @@ function deemphasizeText(g, text, adaptation) {
     d3.selectAll('.mapping').style('opacity', adaptive_opacity);
     d3.selectAll('.node').style('opacity', adaptive_opacity);
 
-    g.select('#n'+text.id)
+    restoreOpacityForAlignments(svg, clickedMaplines);
+
+    tree.select('#n'+node.id)
         .style('opacity', 1)
-        .select('text')
 }
 
 function unhighlightNode(g, node) {
@@ -252,10 +284,10 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
 
 }
 
-function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, node=undefined) {
+function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, tree=undefined, node=undefined) {
+
     if (!alignments) { return; }
     alignments = Array.isArray(alignments) ? alignments : [alignments];
-
     //Based on strength, determine values
     //Set all maplines to be transparent
     let adaptive_opacity = 0.8 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
@@ -267,37 +299,12 @@ function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, n
     g.selectAll('.node').style('opacity', adaptive_opacity);
 
     //Restore opacity to clicked or currently hovered map lines and nodes
-
     const alignmentsToRestore = alignments.concat(Object.values(maplinesClicked));
-
-    for (const align of Object.values(alignmentsToRestore)) {
-        const restoreOpacityVal = 1;
-        g.selectAll('#a'+ align.id).style('opacity', restoreOpacityVal);
-        g.select('#gTree1').selectAll('#n' + align.e1.id).style('opacity', restoreOpacityVal);
-        g.select('#gTree2').selectAll('#n' + align.e2.id).style('opacity', restoreOpacityVal);
-
-        let leftAlignParen = align.e1 != null ? align.e1.parent : null;
-        while (leftAlignParen != null) {
-
-            const curNode = g.select('#gTree1').select('#n'+leftAlignParen.id)
-
-            curNode.style('opacity', restoreOpacityVal)
-            leftAlignParen = leftAlignParen.parent;
-        }
-
-        let rightAlignParen = align.e2 != null ? align.e2.parent : null;
-
-        while(rightAlignParen != null) {
-            const curNode = g.select('#gTree2').select('#n'+rightAlignParen.id)
-
-            curNode.style('opacity', restoreOpacityVal)
-            rightAlignParen = rightAlignParen.parent;
-        }
-
+    restoreOpacityForAlignments(g, alignmentsToRestore);
+    if (tree !== undefined && node !== undefined) {
+        tree.select('#n'+node.id)
+            .style('opacity', 1)
     }
-
-
-
 }
 function restoreOpacity(g, maplinesClicked={}) {
 

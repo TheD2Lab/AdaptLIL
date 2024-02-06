@@ -8,9 +8,11 @@ import org.glassfish.grizzly.websockets.WebSocketEngine;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.nd4j.linalg.factory.Nd4j;
 import server.gazepoint.api.XmlObject;
 import server.gazepoint.api.recv.RecXmlObject;
 import server.gazepoint.api.set.SetEnableSendCommand;
+import org.nd4j.linalg.api.ndarray.INDArray; //Unused import but needed to initialize he backend on launch
 
 
 import java.io.*;
@@ -37,7 +39,7 @@ public class ServerMain {
     static boolean simulateGazepointServer = false;
     public static final String condaEnv = "gaze_metrics";
     public static final boolean useConda = true;
-    public static SimpleLogger logFile = new SimpleLogger(new File("" +System.currentTimeMillis()+".txt"));
+    public static SimpleLogger logFile = new SimpleLogger(new File("AdaptationOutput_" +System.currentTimeMillis()+".txt"));
 
     public static boolean hasKerasServerAckd = false;
 //    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
@@ -67,8 +69,12 @@ public class ServerMain {
 
 
 
+
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        preloadND4J();
+        Thread printingHook = new Thread(() -> ServerMain.ShutDownFunction());
+        Runtime.getRuntime().addShutdownHook(printingHook);
+
         logFile.logLine("App Ran at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         serverMain = new ServerMain();
@@ -94,6 +100,7 @@ public class ServerMain {
             };
             Thread cmdKerasThread = new Thread(runnable);
             cmdKerasThread.start();
+
             //Block main thread acess until /init/kerasAckServer is called.
             synchronized (ServerMain.mainThreadLock) {
                 while (!ServerMain.hasKerasServerAckd) {
@@ -114,7 +121,6 @@ public class ServerMain {
             System.out.println("Started python server.");
             System.out.println("Loading Classification Model: " + modelName);
             KerasServerCore kerasServerCore = new KerasServerCore(pythonServerURL, pythonServerPort);
-
 
             //Make POST request to keras endpoint
             kerasServerCore.loadKerasModel(modelName);
@@ -164,24 +170,20 @@ public class ServerMain {
     }
 
 
-
+    /**
+     * Starts the keras server via a batch script.
+     * @return
+     * @throws IOException
+     */
     public static long startKerasServer() throws IOException {
-        //TODO
         //Start keras server from python script and wait for ACK from python that the server started.
         System.out.println("Starting python server..");
-        Path curPath = Paths.get("");
-        System.out.println(curPath.toAbsolutePath().toString());
-//        List<String> activateCondaEnvStrs = Arrays.stream(new String[]{"conda", "activate", condaEnv}).toList();
 
-
-        //Start conda if it is to be used
+        //Launch batch script to start Python server.
         ProcessBuilder initPythonPBuilder = new ProcessBuilder( "scripts/start_flask.bat");
 
-        //initPythonPBuilder.command().addAll(Arrays.stream(new String[]{"python", "\""+curPath.toAbsolutePath().toString()+"/python/FlaskServer.py\""}).toList());
-
         initPythonPBuilder.redirectErrorStream(true);
-        //String flaskServerExecCommand = "scripts/start_flask.bat"; //Might need to use current dir
-        //Process p = Runtime.getRuntime().exec(new String[]{flaskServerExecCommand});
+
         Process p = initPythonPBuilder.start();
         List<String> consumeOutput = serverMain.readProcessOutput(p);
         return p.pid();
@@ -256,4 +258,15 @@ public class ServerMain {
         return new AdaptationMediator(websocket, gp3Socket, kerasServerCore, window, ServerMain.numSequencesForClassification);
     }
 
+    /**
+     * Makes a simple call to create a 1,1 nd4j array to preload libs.
+     */
+    public static void preloadND4J() {
+        Nd4j.create(1,1); //Used to preload ND4j backend and prevent inference delay
+
+    }
+
+    public static void ShutDownFunction() {
+
+    }
 }

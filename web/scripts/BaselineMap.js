@@ -3,8 +3,6 @@ let base_ont1root;
 let base_ont2root;
 let base_alignments;
 
-
-
 class BaselineMap {
 
     constructor(linkIndentedList) {
@@ -109,15 +107,19 @@ class BaselineMap {
             g.selectAll('.node')
                 .filter(d => d.mappingsOfDescendants)
                 .on('mouseover', function(d) {
+                    const tree = d3.select('#'+$(this).closest('.tree')[0].id);
+
                     const mappings = d.collapsed ? d.mappingsOfDescendants : d.mappings;
 
 
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
 
-                        deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.clickedMaplines);
-                        if (!mappings) {
-
-                            deemphasizeText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.deemphasisAdaptation)
+                        if (mappings) {
+                            deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.clickedMaplines, tree, d);
+                        }
+                        else {
+                            //TODO, fix deemphasize text also deemphasizing relevant mappings
+                            deemphasizeText(g, tree, d, _this.clickedMaplines, _this.linkIndentedList.adaptations.deemphasisAdaptation)
                         }
                         _this.resetOpacity = true;
                     } else {
@@ -125,6 +127,7 @@ class BaselineMap {
                     }
 
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
+                        highlightNode(tree, d, _this.linkIndentedList.adaptations.highlightAdaptation);
 
 
                         if (mappings) {
@@ -132,11 +135,6 @@ class BaselineMap {
                             highlightAlignment(mappings, g, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
 
                         } else {
-                            const tree = d3.select('#'+$(this).closest('.tree')[0].id);
-                            // highlightText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.highlightAdaptation);
-                            // highlightNode(tree, d, _this.linkIndentedList.adaptations.highlightAdaptation);
-                            //Is gtree1 or gtree 2?
-                            //g in this case needs to be the closest tree
                         }
                     } else {
                         unhighlightAll(g);
@@ -148,8 +146,8 @@ class BaselineMap {
 
                     //Deemphasis adaptation
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                            restoreOpacity(g, _this.clickedMaplines);
-                            _this.resetOpacity = false;
+                        restoreOpacity(g, _this.clickedMaplines);
+                        _this.resetOpacity = false;
 
                     } else {
                         restoreOpacity(g);
@@ -335,6 +333,29 @@ class BaselineMap {
             .attr('class', 'mapLine-select-helper')
 
 
+        //Fix for node of subclass not being bold if parent class is expanded and it was clicked on.
+        _this.maplines.merge(maplineEnter).each(function(d) {
+            if (!d.mapToHidden) {
+                d3.select('#a'+d.id).select('.mapLine-fg').style('stroke-dasharray', '0 0')
+
+            } else {
+                d3.select('#a'+d.id).select('.mapLine-fg').style('stroke-dasharray', '2 6')
+
+            }
+            if (_this.linkIndentedList.adaptations.highlightAdaptation.state) {
+                if (!d.mapToHidden) {
+                    if (_this.clickedMaplines) {
+                        if (_this.clickedMaplines.hasOwnProperty(d.id)) {
+                            highlightNode(d3.select('#gTree1'), d.e1, _this.linkIndentedList.adaptations.highlightAdaptation)
+                            highlightNode(d3.select('#gTree2'), d.e2, _this.linkIndentedList.adaptations.highlightAdaptation)
+                            // highlightAlignment(d, svg, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation)
+                        }
+                    }
+                } else {
+                    // d3.select(this).style('stroke-dasharray', '2 4')
+                }
+            }
+        })
         const maplineUpdate = _this.maplines.merge(maplineEnter)
             .classed('map-to-hidden', d => d.mapToHidden)
             .transition(t)
@@ -342,9 +363,11 @@ class BaselineMap {
                 d3.select(n[i]).selectAll('path')
                     .attr('d', () => _this.calcMapLinePath(d, i));
             });
-        d3.selectAll('*:not(.map-to-hidden)>.mapLine-fg').style('stroke-dasharray', '0 0')
 
-            //Always place direct mappings on top.
+
+        // d3.selectAll('*:not(.map-to-hidden)>.mapLine-fg').style('stroke-dasharray', '0 0')
+
+        //Always place direct mappings on top.
         svgMap.selectAll('.map-to-hidden').lower();
         _this.refreshMapLineColors();
         const maplineExit = _this.maplines.exit().transition(t).remove();

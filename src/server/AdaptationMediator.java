@@ -175,9 +175,9 @@ public class AdaptationMediator extends Mediator {
     }
 
     public void invokeAdaptation(double curRiskScore) {
-        double stepAmount = 0.15;
+        double stepAmount = 0.25;
         int numSequencesSinceNewAdaptation = this.curSequenceIndex - this.newAdaptationStartSequenceIndex;
-        int gracePeriodByNumSequences = 5 * 12; //60 second grace period before invoking a new adaptation.
+        int gracePeriodByNumSequences = 5 * 24; //120 second grace period before invoking a new adaptation.
         //Case 0
         if (curRiskScore <= 0.0 && (this.currentAdaptations.isEmpty() || numSequencesSinceNewAdaptation > gracePeriodByNumSequences)) {
             this.invokeNewAdaptation();

@@ -115,7 +115,7 @@ class TaskForm {
                 link.click(); // This will download the data file named "my_data.csv".
                 // window.open('data:text/csv;charset=utf-8' + this.websocket.adaptationData(e => e.join(",")).join('\n'))
                 document.getElementById("submit").type = "submit";
-                document.getElementById("taskForm").action = "survey_form.html";
+                document.getElementById("taskForm").action = "closing_form.html";
                 return valid;
             } else if (this.tasknum == this.taskset.tasks.length - 1) {
                 document.getElementById("submit").value = "Finish";

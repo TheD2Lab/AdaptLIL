@@ -13,7 +13,7 @@ class BaselineMap {
         this.maplineClicked = false;
         this.maplines = undefined; // mapline is the line connecting the nodes.
         this.resetOpacity = false;
-        this.maplinesClicked = {}
+        this.clickedMaplines = {}
     }
     /**
      * Creates baselineMapping and returns svg:g
@@ -114,7 +114,7 @@ class BaselineMap {
 
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
 
-                        deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
+                        deemphasize(mappings, g, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.clickedMaplines);
                         if (!mappings) {
 
                             deemphasizeText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.deemphasisAdaptation)
@@ -128,12 +128,13 @@ class BaselineMap {
 
 
                         if (mappings) {
-
+                            //TODO, Need to make sure we are highlighting ALL alignemnts
                             highlightAlignment(mappings, g, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
 
                         } else {
+                            const tree = d3.select('#'+$(this).closest('.tree')[0].id);
                             // highlightText(d3.select(this.parentElement.parentElement), d, _this.linkIndentedList.adaptations.highlightAdaptation);
-
+                            // highlightNode(tree, d, _this.linkIndentedList.adaptations.highlightAdaptation);
                             //Is gtree1 or gtree 2?
                             //g in this case needs to be the closest tree
                         }
@@ -147,7 +148,7 @@ class BaselineMap {
 
                     //Deemphasis adaptation
                     if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
-                            restoreOpacity(g, _this.maplinesClicked);
+                            restoreOpacity(g, _this.clickedMaplines);
                             _this.resetOpacity = false;
 
                     } else {
@@ -156,6 +157,23 @@ class BaselineMap {
 
                     //Highlight Adaptation
                     if (_this.linkIndentedList.adaptations.highlightingEnabled) {
+                        console.log(d);
+
+                        if (!_this.doesClassHaveConnectedMapping(d, _this.clickedMaplines)) {
+                            const tree = d3.select('#'+$(this).closest('.tree')[0].id)
+                            unhighlightNode(tree, d);
+                            if (d.hasOwnProperty('mappingsOfDescendants')) {
+                                for (const mapline of d.mappingsOfDescendants) {
+                                    if (!_this.clickedMaplines.hasOwnProperty(mapline.id))
+                                        unhighlightMapline(mapline.id);
+                                }
+                            }
+                            if (d.hasOwnProperty('mappings')) {
+                                for (const mapline of d.mappings)
+                                    unhighlightMapline(mapline.id);
+                            }
+                        }
+                        //TODOz
                         //WE NEED A WAY TO GET ALIGNMENTS FROM NODE otherwise we cant have gTree highlighting working right because it will unhighlight
                         //ones that are clicked.
                         // unhighlightText(d3.select(this.parentElement.parentElement), d)
@@ -186,7 +204,7 @@ class BaselineMap {
                     }
 
                     _this.maplineClicked = false;
-                    _this.maplinesClicked = {};
+                    _this.clickedMaplines = {};
                 }
             });
 
@@ -237,11 +255,12 @@ class BaselineMap {
             .attr('id', d => `a${d.id}`)
             .classed('mapping', true).classed('mapLine', true);
 
-        maplineEnter
+
+            maplineEnter
             .on('click', almt => {
                 _this.maplineClicked = true;
 
-                _this.maplinesClicked[almt.id] = almt;
+                _this.clickedMaplines[almt.id] = almt;
                 //we're going to need nodesOfClickedMapLines id by node id.
                 //Highlight Adaptation
                 if (_this.linkIndentedList.adaptations.highlightAdaptation.state) {
@@ -249,7 +268,7 @@ class BaselineMap {
                 }
 
                 if (_this.linkIndentedList.adaptations.deemphasisAdaptation.state) {
-                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
+                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.clickedMaplines);
                 }
 
             })
@@ -258,7 +277,7 @@ class BaselineMap {
                 //deemphasis adaptation
                 if (_this.linkIndentedList.adaptations.deemphasisAdaptation.state) {
                     //Need to pass in currenty clicked
-                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.maplinesClicked);
+                    deemphasize(almt, svg, base_alignments, _this.linkIndentedList.adaptations.deemphasisAdaptation, _this.clickedMaplines);
                     _this.resetOpacity = true;
                 } else {
                     restoreOpacity(svg);
@@ -266,9 +285,8 @@ class BaselineMap {
 
                 //highlight adaptation
                 if (_this.linkIndentedList.adaptations.highlightAdaptation.state) {
-                    if (!_this.maplineClicked) {
-                        highlightAlignment(almt, svg, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
-                    }
+
+                    highlightAlignment(almt, svg, base_alignments, _this.linkIndentedList.adaptations.highlightAdaptation);
                 } else {
                     unhighlightAll(svg);
                 }
@@ -279,7 +297,7 @@ class BaselineMap {
                 //Deemphasis adaptation
                 if (_this.linkIndentedList.adaptations.deemphasisEnabled) {
                     if (_this.resetOpacity) {
-                        restoreOpacity(svg, _this.maplinesClicked);
+                        restoreOpacity(svg, _this.clickedMaplines);
                         _this.resetOpacity = false;
                     }
                 } else {
@@ -288,6 +306,17 @@ class BaselineMap {
 
                 //Highlight Adaptation
                 if (_this.linkIndentedList.adaptations.highlightingEnabled) {
+
+                    //TODO, we need to check if map line is clicked
+                    if (_this.maplineClicked && !_this.clickedMaplines.hasOwnProperty(almt.id)) {
+                        unhighlightMapline(almt.id);
+                        console.log(almt);
+                        const gTree1 = d3.select('#gTree1');
+                        unhighlightNode(gTree1, almt.e1);
+                        const gTree2 = d3.select('#gTree2');
+                        unhighlightNode(gTree2, almt.e2);
+
+                    }
                     if (!_this.maplineClicked)
                         unhighlightAll(svg);
                 } else {
@@ -305,6 +334,7 @@ class BaselineMap {
             .clone(true).lower() //path select helper
             .attr('class', 'mapLine-select-helper')
 
+
         const maplineUpdate = _this.maplines.merge(maplineEnter)
             .classed('map-to-hidden', d => d.mapToHidden)
             .transition(t)
@@ -312,7 +342,9 @@ class BaselineMap {
                 d3.select(n[i]).selectAll('path')
                     .attr('d', () => _this.calcMapLinePath(d, i));
             });
-        //Always place direct mappings on top.
+        d3.selectAll('*:not(.map-to-hidden)>.mapLine-fg').style('stroke-dasharray', '0 0')
+
+            //Always place direct mappings on top.
         svgMap.selectAll('.map-to-hidden').lower();
         _this.refreshMapLineColors();
         const maplineExit = _this.maplines.exit().transition(t).remove();
@@ -365,6 +397,24 @@ class BaselineMap {
         });
         console.log(json)
         return json;
+    }
+
+    /**
+     * Check a node.mappings and see if the mappings 2nd param contains the id.
+     * @param node
+     * @param mappings
+     * @returns {boolean}
+     */
+    doesClassHaveConnectedMapping(node, mappings) {
+
+        if (!node.hasOwnProperty('mappings'))
+            return false;
+        for (const mapline of node.mappings) {
+            if (mappings.hasOwnProperty(mapline.id))
+                return true;
+        }
+
+        return false;
     }
 
 }

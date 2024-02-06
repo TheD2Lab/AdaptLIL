@@ -60,6 +60,10 @@
             window.open('https://forms.gle/tvFBd3e1U5ghNszQ7')
         });
 
+        $('button[name="survey3"]').on('click', function () {
+            $('button[name="finishedSurvey"]').attr('disabled', false);
+            window.open('https://forms.gle/tvFBd3e1U5ghNszQ7')
+        });
        $('button[name="finishedSurvey"]').on('click', function () {
           window.location.href = 'closing_form.html';
        });

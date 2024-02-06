@@ -54,6 +54,7 @@
         const indentedTree = new LinkIndentedList();
         window.indentedTree = indentedTree;
         const baselineMap = new BaselineMap(indentedTree);
+        window.baselinemap = baselineMap;
         const taskForm = new TaskForm(baselineMap);
         taskForm.setVis("baseline");
 

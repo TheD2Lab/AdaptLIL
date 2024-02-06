@@ -134,8 +134,11 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
 
     public void invoke(InvokeRequestModelWs invokeRequest) {
       try {
-          if (invokeRequest.name.equals("adaptation"))
-            this.send(this.objectMapper.writeValueAsString((AdaptationInvokeRequestModelWs) invokeRequest));
+          if (invokeRequest.name.equals("adaptation")) {
+              AdaptationInvokeRequestModelWs adaptationInvokeRequest = (AdaptationInvokeRequestModelWs) invokeRequest;
+              ServerMain.logFile.logLine("adaptation invoke," +adaptationInvokeRequest.adaptation.getType()+ "," + adaptationInvokeRequest.adaptation.getStrength()+","+ System.currentTimeMillis());
+              this.send(this.objectMapper.writeValueAsString(adaptationInvokeRequest));
+          }
       } catch (JsonProcessingException e) {
           throw new RuntimeException(e);
       }

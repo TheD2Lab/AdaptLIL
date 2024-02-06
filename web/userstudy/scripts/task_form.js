@@ -15,6 +15,7 @@ class TaskForm {
         this.selectedDomain = this.getDomain();
         this.initCSV(this.csvData);
         this.tasknum = 0;
+
         //Data
         this.taskset = this.getTaskset(this.selectedDomain);
         if (this.selectedDomain == 0) {
@@ -97,12 +98,18 @@ class TaskForm {
             // task submission timestamp
             this.timeData[this.tasknum] = new Date().getTime() - this.startTime;
             console.log("Task", this.tasknum, "submission timestamp:", this.timeData[this.tasknum])
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const is_adaptive = urlParams.get('is-adaptive');
+            const pid = urlParams.get("participantID")
+            const domain = urlParams.get("domain");
+            const file_name = pid + "_"+domain+"_"+is_adaptive+"_answers.csv";
             this.saveData();
             if (this.tasknum == this.taskset.tasks.length) {
                 // downloading datavar encodedUri =csvContent);
                 var link = document.createElement("a");
                 link.setAttribute("href",  encodeURI('data:text/csv;charset=utf-8' + this.csvData.join(',')));
-                link.setAttribute("download", "qa_data.csv");
+                link.setAttribute("download", file_name);
                 document.body.appendChild(link); // Required for FF
 
                 link.click(); // This will download the data file named "my_data.csv".

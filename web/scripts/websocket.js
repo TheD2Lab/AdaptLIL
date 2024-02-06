@@ -131,6 +131,37 @@ class Websocket {
         }
     }
 
+    /**
+     *
+     * @param timeStart
+     * @param questionId
+     */
+    sendRecordGazeRequestForQuestion(timeStart, questionId, action='on') {
+        const jsonBody = {
+            'type': 'command',
+            'name': 'record',
+            'time': (new Date()).getMilliseconds(),
+            'questionId': questionId,
+            'action': action
+        }
+        console.log('sendingggg...')
+        console.log(jsonBody);
+        this.websocket.send(JSON.stringify(jsonBody));
+    }
+
+    sendScoreForQuestion(questionId, score) {
+        const jsonBody = {
+            'type': 'data',
+            'name' : 'score',
+            'time': (new Date()).getMilliseconds(),
+            'questionId': questionId,
+            'score': score
+        }
+        console.log('sendingggg...')
+        console.log(jsonBody);
+        this.websocket.send(JSON.stringify(jsonBody));
+    }
+
     sendElementCoordinates(elements, elementType) {
 
         const elementShapes = this.visualizationMap.getShapes(elements);

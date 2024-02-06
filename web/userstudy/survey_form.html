@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoMapVis: Done</title>
+    <!-- <link id="favicon" rel="shortcut icon" href=""/> -->
+
+    <!-- script -->
+    <!--    <script src="feedback_form.js"></script>-->
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/style.css">
+</head>
+<style>
+    button:disabled {
+        cursor: not-allowed;
+        pointer-events: all !important;
+    }
+
+</style>
+<body class="text-unselectable p-4">
+<div class="content container-fluid text-center">
+
+    <div class="col-12">
+        <br><br>
+        <h4 class="my-3">Please click on both survey buttons below and hit 'Finish' below when you are done.</h4>
+        <div class="row justify-content-center mb-4">
+            <button name="survey1" class="btn btn-primary">Survey 1</button>
+        </div>
+        <div class="row justify-content-center mb-4">
+            <button name="survey2" class="btn btn-primary" disabled>Survey 2</button>
+        </div>
+        <div class="row justify-content-center mb-2">
+            <button type="submit" name="finishedSurvey" disabled class="btn btn-success">Finish</button>
+        </div>
+    </div>
+    <p id="msg" class="font_color_primary"></p>
+</div>
+
+</div>
+
+</body>
+<script>
+
+    $(document).ready(function () {
+
+        $('button[name="survey1"]').on('click', function () {
+            $('button[name="survey2"]').attr('disabled', false)
+            window.open('https://docs.google.com/forms/d/e/1FAIpQLSeZq207OdleL5aHFTE8GX0eV3oiPNuhbLjsfmbJuTG1aF8HZw/viewform?usp=sf_link')
+        });
+
+
+        $('button[name="survey2"]').on('click', function () {
+            $('button[name="finishedSurvey"]').attr('disabled', false);
+            window.open('https://forms.gle/tvFBd3e1U5ghNszQ7')
+        });
+
+        $('button[name="survey3"]').on('click', function () {
+            $('button[name="finishedSurvey"]').attr('disabled', false);
+            window.open('https://forms.gle/tvFBd3e1U5ghNszQ7')
+        });
+       $('button[name="finishedSurvey"]').on('click', function () {
+          window.location.href = 'closing_form.html';
+       });
+    });
+</script>
+</html>
+

@@ -151,6 +151,9 @@ public abstract class Adaptation {
         this.hasFlipped = !this.hasFlipped;
     }
     public void applyStyleChange(double stepAmount) {
-        this.setStrength(this.getStrength() + stepAmount);
+        if (!hasFlipped)
+            this.setStrength(this.getStrength() + stepAmount);
+        else
+            this.setStrength(this.getStrength() - stepAmount);
     }
 }

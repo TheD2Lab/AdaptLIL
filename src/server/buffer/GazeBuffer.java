@@ -44,7 +44,12 @@ public class GazeBuffer extends AsyncBuffer {
                     this.gazeDataQueue.wait();
                     this.reentrantLock.lock();
                 }
-                recXmlObject = gazeDataQueue.removeFirst();
+                try {
+                    recXmlObject = gazeDataQueue.removeFirst();
+                } catch (Exception e) {
+                    recXmlObject = new RecXmlObject();
+                    recXmlObject.BPOGV = false;
+                }
                 this.reentrantLock.unlock();
             }
         } catch (InterruptedException e) {

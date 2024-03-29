@@ -3,7 +3,7 @@ package data_classes;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
-import server.serialization_helpers.IntToBooleanDeserializer;
+import adaptovis.serialization_helpers.IntToBooleanDeserializer;
 import wekaext.annotations.IgnoreWekaAttribute;
 
 public class LeftEyePointOfGaze {

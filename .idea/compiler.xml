@@ -9,8 +9,5 @@
         <module name="iav-ontology" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="gazepoint-data-analysis-master" target="17" />
-    </bytecodeTargetLevel>
   </component>
 </project>

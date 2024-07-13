@@ -26,7 +26,7 @@ public class AckBuffer {
     }
 
     public AckXmlObject read() {
-        AckXmlObject ackXmlObject = null;
+        AckXmlObject ackXmlObject;
         try {
             synchronized (this.ackDataQueue) {
                 this.reentrantLock.lock();

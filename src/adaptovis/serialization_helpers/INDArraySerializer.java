@@ -19,6 +19,8 @@ public class INDArraySerializer extends JsonSerializer<INDArray> {
         ByteBuffer.wrap(bytes).putDouble(val);
         return bytes;
     }
+
+    //TODO comment
     byte[] toByteArray(double[] vals) {
         byte[] byteVals = new byte[vals.length * 8];
         int k = 0;

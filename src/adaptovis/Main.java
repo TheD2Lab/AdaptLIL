@@ -32,23 +32,21 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Main {
     public static Main serverMain; //Singleton, keeps server alive
 
-//    public static ServerMain serverMain;
     public static final String url = "localhost";
     public static final int port = 8080;
-    public static String loadModelEndpoint = "loadModel";
 
     public static final String pythonServerURL = "localhost";
     public static final int pythonServerPort = 5000;
     public static float gazeWindowSizeInMilliseconds = 1000;
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
+
     public static final String condaEnv = "gaze_metrics";
     public static final boolean useConda = true;
     public static SimpleLogger logFile = new SimpleLogger(new File("AdaptationOutput_" +System.currentTimeMillis()+".txt"));
 
     public static boolean hasKerasServerAckd = false;
-//    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/models/";
-//    public static String modelName = "/stacked_lstm-Adam0,0014_10-30 20_31_55.h5";
+
 
     public static String modelConfigPath = "/home/notroot/Desktop/d2lab/iav/models/";
     public static String modelName = "transformer_model_channels.h5";
@@ -57,23 +55,6 @@ public class Main {
 
     //Used to block main thread from making a keras server load_modal before receiving an ACK
     public static final ReentrantLock mainThreadLock = new ReentrantLock();
-    public static void serializationTest() {
-        XmlMapper mapper = new XmlMapper();
-        String serialString = "<REC CNT=\"34\"/>";
-        String serialString2 = "<REC TIME_TICK=\"3434344\"/>";
-        String fixationString = "<REC FPOGX=\"0.48439\" FPOGY=\"0.50313\" FPOGS=\"1891.86768\" FPOGD=\"0.49280\" FPOGID=\"1599\" FPOGV=\"1\" />";
-        XmlObject someXmlObj = null;
-
-        someXmlObj =  GazeApiCommands.mapToXmlObject(fixationString);
-
-        if (someXmlObj instanceof RecXmlObject)
-            System.out.println(((RecXmlObject) someXmlObj).getFixation().getX());
-
-
-    }
-
-
-
 
     public static void main(String[] args) {
         preloadND4J();
@@ -83,13 +64,16 @@ public class Main {
         logFile.logLine("App Ran at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
         System.out.println("Beginning GP3 Real-Time Prototype Stream");
         serverMain = new Main();
+
         //Give adaptation mediator the keras endpoint
         System.out.println("Loaded keras model : " + modelName);
         System.out.println("Starting grizzly HTTP server");
         serverMain.initHttpServerAndWebSocketPort();
 
         System.out.println("returned back to main thread after init http --- locking thread");
+
         try {
+
             //Throw onto new thread
             Runnable runnable = ()-> {
                 long pid = 0;
@@ -119,6 +103,8 @@ public class Main {
         }
     }
 
+    
+
     public static void execKerasServerAck() {
 
         try {
@@ -129,7 +115,6 @@ public class Main {
 
             //Make POST request to keras endpoint
             kerasServerCore.loadKerasModel(modelName);
-
 
             System.out.println("Initialized HTTP Server & WebSocket port");
             System.out.println("Starting gp3 socket");
@@ -160,6 +145,7 @@ public class Main {
     }
 
     public List<String> readProcessOutput(Process p) throws IOException { return readProcessOutput(p, false);}
+
     public static List<String> readProcessOutput(Process p, boolean debug) throws IOException {
         ArrayList<String> resultStrings = new ArrayList<>();
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -268,7 +254,6 @@ public class Main {
      */
     public static void preloadND4J() {
         Nd4j.create(1,1); //Used to preload ND4j backend and prevent inference delay
-
     }
 
     public static void ShutDownFunction() {

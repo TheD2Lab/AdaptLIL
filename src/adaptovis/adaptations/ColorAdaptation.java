@@ -4,8 +4,8 @@ import java.util.AbstractMap;
 import java.util.Map;
 
 public class ColorAdaptation extends Adaptation{
-    public ColorAdaptation(boolean state, double timeStarted, double timeModified, double timeStopped, Map<String, String> styleConfig) {
-        super("color", state, timeStarted, timeModified, timeStopped, styleConfig, 0.0);
+    public ColorAdaptation(boolean state, Map<String, String> styleConfig) {
+        super("color", state, styleConfig, 0.0);
     }
 
     @Override

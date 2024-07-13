@@ -16,9 +16,6 @@ import java.util.List;
 public class GazepointSimulationServer implements Runnable {
     private String url;
     private int port;
-    private List<RecXmlObject> recXmlPackets;
-    private List<AckXmlObject> ackXmlPackets;
-    private List<XmlObject> packets;
     private ServerSocket serverSocket;
     private Socket socket;
     private File gazeFile;
@@ -71,9 +68,10 @@ public class GazepointSimulationServer implements Runnable {
                 //Get time
                 double curTimeMs = System.currentTimeMillis();
                 //Open gazeFile
-                String[] cells = new String[0];
+                String[] cells;
                 //Read gaze inputs
                 cells = this.gazeCsvReader.readNext();
+
                 if (cells != null) {
                     ++numLines;
                     //Convert to recXmlObject

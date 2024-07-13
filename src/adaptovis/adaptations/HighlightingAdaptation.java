@@ -4,8 +4,8 @@ import java.util.Map;
 
 public class HighlightingAdaptation extends Adaptation {
 
-    public HighlightingAdaptation(boolean state, double timeStarted, double timeModified, double timeStopped, Map<String, String> styleConfig, double strength) {
-        super("highlighting", state, timeStarted, timeModified, timeStopped, styleConfig, strength);
+    public HighlightingAdaptation(boolean state, Map<String, String> styleConfig, double strength) {
+        super("highlighting", state, styleConfig, strength);
     }
 
     @Override

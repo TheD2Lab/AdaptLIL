@@ -734,12 +734,6 @@ public class RecXmlObject extends XmlObject {
         if (this.getRightEyePupil() != null && !this.getRightEyePupil().isValid())
             return true;
         
-//        if (this.getRightEyePointOfGaze() != null && !this.getRightEyePointOfGaze().isValid())
-//            return true;
-        
-//        if (this.getLeftEyePointOfGaze() != null && !this.getLeftEyePointOfGaze().isValid())
-//            return true;
-        
         return false;
     }
 

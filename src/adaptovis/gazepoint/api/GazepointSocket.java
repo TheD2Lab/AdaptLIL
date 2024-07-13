@@ -30,8 +30,8 @@ import java.util.LinkedList;
 @ServerEndpoint("/gp3connection")
 public class GazepointSocket implements Component {
 
-    private String hostName = "localhost";
-    private int port = 4242;
+    private String hostName;
+    private int port;
     private Socket socket;
 
     private BufferedReader input;

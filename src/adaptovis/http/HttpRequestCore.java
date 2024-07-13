@@ -18,7 +18,7 @@ public class HttpRequestCore {
         WebTarget webTarget = client.target(url);
 
         // Create an InvocationBuilder to create the HTTP request
-        System.out.println("building invocationbuilder");
+        System.out.println("building invocation builder");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
         // Send the request and save it to a Response
@@ -30,7 +30,6 @@ public class HttpRequestCore {
     }
 
     /**
-     * TODO - Build GET request using webTarget and serialization of response models.
      *
      * @param url
      * @param request

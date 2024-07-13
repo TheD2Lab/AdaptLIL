@@ -25,24 +25,23 @@ public class AdaptationMediator extends Mediator {
     private KerasServerCore kerasServerCore;
     private GazeWindow gazeWindow;
     private boolean isRunning;
-    private double lastRiskScore;
 
     private Adaptation observedAdaptation;
     Map<String, Adaptation> currentAdaptations;
 
 
     //Thresholds & Constants
-
     private double thresholdForInvokation;
-    private double increaseStrengthThresh = 0.41;
-    private double remainThresh = 0.6;
-    private double smallChangeThreshold = 0.20;
-    private double bigChangeThreshold = 0.30;
+    private double increaseStrengthThresh = 0.41; //TODO replace w/ # classifications
+    private double remainThresh = 0.6; //TODO replace w/ # classifications
+    private double smallChangeThreshold = 0.20; // TODO replace w/ # classifications
+    private double bigChangeThreshold = 0.30; //TODO replace w/ # classifications
 
     private int numSequencesForClassification;
     private int newAdaptationStartSequenceIndex = 0;
     private int curSequenceIndex = 0;
     private double defaultStrength = 0.50;
+
     public AdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, KerasServerCore kerasServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
         this.websocket = websocket;
         this.gazepointSocket = gazepointSocket;
@@ -50,7 +49,6 @@ public class AdaptationMediator extends Mediator {
         this.gazeWindow = gazeWindow;
         this.isRunning = false;
         this.currentAdaptations = new HashMap<>();
-        this.lastRiskScore = 0.0;
         this.thresholdForInvokation = 0.6;
         this.numSequencesForClassification = numSequencesForClassification;
     }
@@ -120,9 +118,6 @@ public class AdaptationMediator extends Mediator {
                     classifications[classificationIndex++] = classificationResult;
                     Integer participantWrongOrRight = null;
                     Float taskCompletionTime = null; //grab from websocket
-                    //Calculate perilScore (risk score)
-                    double curRiskScore = this.calculateRiskScore(classificationResult);
-                    double lastRiskScore = this.getLastRiskScore();
 
                     if (classificationIndex == classifications.length) {
                         System.out.println("# of classifications to begin intervention has occured : " + classificationIndex);
@@ -236,8 +231,8 @@ public class AdaptationMediator extends Mediator {
 
     public List<Adaptation> listOfAdaptations() {
         ArrayList<Adaptation> adaptations = new ArrayList<>();
-        adaptations.add(new DeemphasisAdaptation(true, System.currentTimeMillis(), -1, -1, null, defaultStrength));
-        adaptations.add(new HighlightingAdaptation(true, System.currentTimeMillis(), -1, -1, null, defaultStrength));
+        adaptations.add(new DeemphasisAdaptation(true, null, defaultStrength));
+        adaptations.add(new HighlightingAdaptation(true, null, defaultStrength));
         return adaptations;
     }
 
@@ -288,27 +283,4 @@ public class AdaptationMediator extends Mediator {
         this.gazeWindow = gazeWindow;
     }
 
-
-    public double calculateRiskScore(int classificationResult) {
-        //High weights:
-        //participantAnswer, cognitiveLoadScore
-        //Medium weights: classificaitonResult
-        //Low weights: taskCompletionTime
-        int numHighWeights = 1;
-        int numMedWeights = 1;
-        int numLowWeights = 1;
-        double riskScore = 0;
-
-        //Review weighting. A high weight, if all factors are risky, should flag the threshold.
-        double highWeight = 0.80;
-        double medWeight = 0.35;
-        double lowWeight = 0.15;
-        int negatedParticipantAnswer = 0;
-
-
-
-        riskScore = highWeight * (classificationResult == 0 ? 1 : 0);
-
-        return riskScore;
-    }
 }

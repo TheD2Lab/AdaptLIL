@@ -26,11 +26,10 @@ public class InitPage {
     @Produces(MediaType.APPLICATION_JSON)
     public Response ack(@Context HttpHeaders headers, String jsonText)
     {
-        int resultCode;
-        String message;
         ObjectMapper mapper = new ObjectMapper();
 
         System.out.println("ack started here");
+
         try {
             AckServerStartRequestModel request = mapper.readValue(jsonText, AckServerStartRequestModel.class);
 
@@ -50,8 +49,6 @@ public class InitPage {
         }
 
         return Response.status(500).entity(new ResponseModelHttp(1500)).build();
-
-
-
     }
+
 }

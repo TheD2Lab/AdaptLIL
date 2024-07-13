@@ -18,9 +18,9 @@ public class KerasServerCore {
 
     private final String loadModelEndpoint = "loadModel";
     private final String predictEndpoint = "predict";
-    private String pythonServerURL;
-    private Integer pythonServerPort;
-    private String modelName;
+    private String pythonServerURL; //TODO  Env var load
+    private Integer pythonServerPort; //TODO  Env var load
+    private String modelName; //TODO Env var load
     private String baseUri;
 
     public KerasServerCore(String pythonServerURL, Integer pythonServerPort) {
@@ -30,9 +30,8 @@ public class KerasServerCore {
     }
 
     public void loadKerasModel(String modelName) throws URISyntaxException {
+
         this.modelName = modelName;
-        //Uses resource directory below. Using hardcoding for now and will revisit when I clean this up.
-        //String simpleMlp = new ClassPathResource("simple_mlp.h5").getFile().getPath();
         URI uri = URI.create(baseUri + "/" + (loadModelEndpoint));
         RequestLoadModel requestModel = new RequestLoadModel(modelName);
         Response response = HttpRequestCore.POST(uri.toString(), Entity.entity(requestModel, MediaType.APPLICATION_JSON));
@@ -54,15 +53,12 @@ public class KerasServerCore {
 
     public ResponsePrediction predict(INDArray input) {
         URI uri = URI.create(baseUri + "/" + predictEndpoint);
-        byte[] arr = SerializationUtils.toByteArray(input);
-
         RequestPrediction requestPrediction = new RequestPrediction(input, input.shape(), "byte_array");
         Response response = HttpRequestCore.POST(uri.toString(), Entity.entity(requestPrediction, MediaType.APPLICATION_JSON));
         if (response.getStatus() == 200) {
-            ResponsePrediction prediction = response.readEntity(ResponsePrediction.class);
-            return prediction;
+            return response.readEntity(ResponsePrediction.class);
         } else {
-            System.err.println("Error calling KerasServer predict endpoint: " + uri.toString());
+            System.err.println("Error calling KerasServer predict endpoint: " + uri);
             return null;
         }
     }

@@ -32,12 +32,12 @@ public class GazeBuffer extends AsyncBuffer {
      * @return
      */
     public RecXmlObject read() {
-        RecXmlObject recXmlObject = null;
+        RecXmlObject recXmlObject;
         try {
             synchronized (this.gazeDataQueue) {
                 this.reentrantLock.lock();
 
-                //queue is empty, release locka dn wait
+                //queue is empty, release lock and wait for next gaze data packet
                 if (gazeDataQueue.isEmpty()) {
                     this.reentrantLock.unlock();
                     this.gazeDataQueue.wait();

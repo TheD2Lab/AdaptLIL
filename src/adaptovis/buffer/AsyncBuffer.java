@@ -28,7 +28,7 @@ public class AsyncBuffer<T> {
      * @return
      */
     public T read() {
-        T dataFromQueue = null;
+        T dataFromQueue;
         try {
             synchronized (this.dataQueue) {
                 this.reentrantLock.lock();

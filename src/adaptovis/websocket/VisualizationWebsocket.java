@@ -3,7 +3,6 @@ package adaptovis.websocket;
 import adaptovis.Main;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.grizzly.websockets.DataFrame;
 import org.glassfish.grizzly.websockets.WebSocket;
@@ -13,7 +12,6 @@ import adaptovis.mediator.Component;
 import adaptovis.mediator.Mediator;
 import adaptovis.websocket.request.AdaptationInvokeRequestModelWs;
 import adaptovis.websocket.request.InvokeRequestModelWs;
-import adaptovis.websocket.response.DataResponseModelWs;
 
 import java.util.Set;
 
@@ -50,18 +48,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
      * @param msg
      */
     public void onMessage(WebSocket socket, String msg) {
-        try {
-            DataResponseModelWs response = objectMapper.readValue(msg, DataResponseModelWs.class);
-
-        } catch (JsonMappingException e) {
-            System.out.println("JSON MAPPING EXCEPTION");
-            System.out.println(e.getMessage());
-        } catch (JsonProcessingException e) {
-            System.out.println("JSON PROCESSING EXCEPTION");
-            System.out.println(e.getMessage());
-        } finally {
-            this.hasResponded = true;
-        }
+        this.hasResponded = true;
     }
 
     /**

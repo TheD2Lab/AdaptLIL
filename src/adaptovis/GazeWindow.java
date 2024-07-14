@@ -1,5 +1,6 @@
 package adaptovis;
 
+import adaptovis.annotations.IgnoreWekaAttribute;
 import analysis.GazeMetrics;
 import data_classes.Fixation;
 import data_classes.Saccade;
@@ -12,7 +13,6 @@ import adaptovis.mediator.Mediator;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
-import wekaext.annotations.IgnoreWekaAttribute;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

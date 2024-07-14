@@ -1,13 +1,13 @@
 package data_classes;
 
 
+import adaptovis.annotations.IgnoreWekaAttribute;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import interpolation.Interpolation;
 import adaptovis.serialization_helpers.IntToBooleanDeserializer;
-import wekaext.annotations.IgnoreWekaAttribute;
 
 import java.awt.geom.Point2D;
 

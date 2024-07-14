@@ -41,17 +41,10 @@ public class Main {
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
 
-    public static final String condaEnv = "gaze_metrics";
-    public static final boolean useConda = true;
     public static SimpleLogger logFile = new SimpleLogger(new File("AdaptationOutput_" +System.currentTimeMillis()+".txt"));
-
     public static boolean hasKerasServerAckd = false;
-
-
-    public static String modelConfigPath = "/home/notroot/Desktop/d2lab/iav/models/";
     public static String modelName = "transformer_model_channels.h5";
 
-    public static HttpServer javaServer;
 
     //Used to block main thread from making a keras server load_modal before receiving an ACK
     public static final ReentrantLock mainThreadLock = new ReentrantLock();
@@ -176,7 +169,7 @@ public class Main {
         initPythonPBuilder.redirectErrorStream(true);
 
         Process p = initPythonPBuilder.start();
-        List<String> consumeOutput = serverMain.readProcessOutput(p);
+        serverMain.readProcessOutput(p);
         return p.pid();
     }
 
@@ -227,9 +220,6 @@ public class Main {
             serverSimThread.start();
         }
         GazepointSocket gazepointSocket = new GazepointSocket(gp3Hostname, gp3Port);
-        //screenheight && width should be an ack for consistentcy. see gazepoint documentation
-        float screenHeight = 1920;
-        float screenWidth = 1080;
         gazepointSocket.connect();
         System.out.println("Connected to GP3");
         System.out.println("Starting Data Stream via thread");

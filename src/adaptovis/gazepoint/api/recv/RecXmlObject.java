@@ -1,5 +1,6 @@
 package adaptovis.gazepoint.api.recv;
 
+import adaptovis.annotations.IgnoreWekaAttribute;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -7,7 +8,6 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import data_classes.*;
 import adaptovis.gazepoint.api.XmlObject;
 import adaptovis.serialization_helpers.IntToBooleanDeserializer;
-import wekaext.annotations.IgnoreWekaAttribute;
 
 import java.util.List;
 

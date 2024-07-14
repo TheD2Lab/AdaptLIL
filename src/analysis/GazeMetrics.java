@@ -1,8 +1,8 @@
 package analysis;
 
+import adaptovis.annotations.IgnoreWekaAttribute;
 import data_classes.Fixation;
 import data_classes.Saccade;
-import wekaext.annotations.IgnoreWekaAttribute;
 
 import java.util.ArrayList;
 import java.util.List;

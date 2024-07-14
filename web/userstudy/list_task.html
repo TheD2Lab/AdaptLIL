@@ -25,7 +25,6 @@
 
     <script src="../scripts/script-alignment.js"></script>
     <script src="../scripts/BaselineMap.js"></script>
-    <script src="../scripts/MapWorld.js"></script>
     <script src="../scripts/websocket.js"></script>
 
 
@@ -67,7 +66,6 @@
             console.log("Task: Ready to generate form!");
             taskForm.initOnLoad();
             baselineMap.drawBaselineSvg();
-            const mapWorld = new MapWorld(baselineMap, indentedTree);
             let websocketConnected = false;
 
 

@@ -171,7 +171,7 @@ class BaselineMap {
                                     unhighlightMapline(mapline.id);
                             }
                         }
-                        //TODOz
+                        //TODO
                         //WE NEED A WAY TO GET ALIGNMENTS FROM NODE otherwise we cant have gTree highlighting working right because it will unhighlight
                         //ones that are clicked.
                         // unhighlightText(d3.select(this.parentElement.parentElement), d)
@@ -218,7 +218,6 @@ class BaselineMap {
         if (!almt) {
             return '';
         }
-        // console.log(`calcMapLinePath() id:${almt.id} e1pos:${almt.e1pos.x},${almt.e1pos.y} e2pos:${almt.e2pos.x},${almt.e2pos.y}`);
 
         const ontGap = 200;
         const dn = 6; //distance from the nodemark
@@ -305,7 +304,6 @@ class BaselineMap {
                 //Highlight Adaptation
                 if (_this.linkIndentedList.adaptations.highlightingEnabled) {
 
-                    //TODO, we need to check if map line is clicked
                     if (_this.maplineClicked && !_this.clickedMaplines.hasOwnProperty(almt.id)) {
                         unhighlightMapline(almt.id);
                         console.log(almt);
@@ -356,6 +354,7 @@ class BaselineMap {
                 }
             }
         })
+
         const maplineUpdate = _this.maplines.merge(maplineEnter)
             .classed('map-to-hidden', d => d.mapToHidden)
             .transition(t)
@@ -363,9 +362,6 @@ class BaselineMap {
                 d3.select(n[i]).selectAll('path')
                     .attr('d', () => _this.calcMapLinePath(d, i));
             });
-
-
-        // d3.selectAll('*:not(.map-to-hidden)>.mapLine-fg').style('stroke-dasharray', '0 0')
 
         //Always place direct mappings on top.
         svgMap.selectAll('.map-to-hidden').lower();
@@ -380,8 +376,7 @@ class BaselineMap {
     refreshMapLineColors() {
         const _this = this;
 
-        //TODO
-        //Add multi node levels.
+
         if (_this.linkIndentedList.adaptations.colorSchemeEnabled) {
             d3.selectAll('*:not(.map-to-hidden)>.mapLine-fg').style('stroke',
                 _this.linkIndentedList.adaptations.colorSchemeAdaptation.styleConfig.map_to_not_hidden_color);

@@ -113,6 +113,27 @@ this.visualizationMap.adaptations.toggleAdaptation(response.adaptation.type, res
 
 Where the visualizationMap is the current visualization (in our case, link-indented-list or LinkIndentedList.js for the maplines and BaselineMap.js for the ontologies.
 Since it is built on d3.js, elements are DOM. Therefore, to reflect adaptation updates, hover and click events must also be updated based on these values.
+# Loading a deep learning model
+ ###
+ 
+# Adding a new adaptation
+ ### Backend
+1) Navigate to src/adaptations
+2) Create a new Adaptation class
+3) Add a default style config
+   4) What does this do?
+4) Establish JSON structure and elements to
+ ### Frontend
+1) Navigate to web/scripts/VisualizationAdapation.js
+2) Navigate to web/scripts/BaselineMap.js
+3) Navigate to web/scripts/script-alignment.js
+# Replacing Rule-Based Selection Process
+ ### Overview
+ ### Replacement Procedure
+
+
+# Using a Different Eye Tracker
+#### HOWTO
 
 # Adaptation Mediator, Controlling the flow and adjusting behavior
 

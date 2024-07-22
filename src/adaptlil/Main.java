@@ -185,7 +185,7 @@ public class Main {
         final WebSocketAddOn addon = new WebSocketAddOn();
 
 
-        server.getListener("grizzgitly").registerAddOn(addon);
+        server.getListener("grizzly").registerAddOn(addon);
 
         try {
             server.start();

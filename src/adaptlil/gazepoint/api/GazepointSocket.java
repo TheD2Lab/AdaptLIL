@@ -92,8 +92,6 @@ public class GazepointSocket implements Component {
      */
     public void startGazeDataStream() throws IOException {
         SetEnableSendCommand setEnableSendCommand = new SetEnableSendCommand("ENABLE_SEND_DATA", true);
-        this.write((xmlMapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true))));
-
         output.println(xmlMapper.writeValueAsString(setEnableSendCommand));
 
         //Gaze is now sending data in form of REC, begin write runnable

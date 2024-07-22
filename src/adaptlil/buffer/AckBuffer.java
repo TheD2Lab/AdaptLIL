@@ -1,22 +1,22 @@
 package adaptlil.buffer;
 
-import adaptlil.gazepoint.api.ack.AckXmlObject;
+import adaptlil.gazepoint.api.ack.AckXml;
 
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Similar to the GazeBuffer it holds
+ * Similar to the GazeBuffer but it holds the acknowledgement packets/xml
  */
 public class AckBuffer {
-    final LinkedList<AckXmlObject> ackDataQueue = new LinkedList<>();
+    final LinkedList<AckXml> ackDataQueue = new LinkedList<>();
     private ReentrantLock reentrantLock;
 
     public AckBuffer() {
         this.reentrantLock = new ReentrantLock();
     }
 
-    public void write(AckXmlObject xmlObject) {
+    public void write(AckXml xmlObject) {
         synchronized (ackDataQueue) {
             this.reentrantLock.lock();
             ackDataQueue.add(xmlObject);
@@ -25,8 +25,8 @@ public class AckBuffer {
         }
     }
 
-    public AckXmlObject read() {
-        AckXmlObject ackXmlObject;
+    public AckXml read() {
+        AckXml ackXml;
         try {
             synchronized (this.ackDataQueue) {
                 this.reentrantLock.lock();
@@ -37,12 +37,12 @@ public class AckBuffer {
                     this.ackDataQueue.wait();
                     this.reentrantLock.lock();
                 }
-                ackXmlObject = ackDataQueue.removeFirst();
+                ackXml = ackDataQueue.removeFirst();
                 this.reentrantLock.unlock();
             }
         } catch (InterruptedException e) {
             return null;
         }
-        return ackXmlObject;
+        return ackXml;
     }
 }

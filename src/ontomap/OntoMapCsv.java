@@ -1,11 +1,10 @@
-package analysis.ontomap;
+package ontomap;
 
-import analysis.Participant;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import data_classes.*;
 import adaptlil.GazeWindow;
-import adaptlil.gazepoint.api.recv.RecXmlObject;
+import adaptlil.gazepoint.api.recv.RecXml;
 import weka.core.*;
 import weka.core.converters.ArffSaver;
 
@@ -393,13 +392,13 @@ public class OntoMapCsv {
 
                     boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
 //                    System.out.println("timeCutOff: " + timeCutoff);
-                    RecXmlObject recXmlObject = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
+                    RecXml recXml = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
                     ++totalNumPackets;
                     //If we have any invalid flags, should we discard?
                     if (questionDuration < observablePeriod) {
                         ++numPacketsDiscarded;
 
-                        if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
+                        if ((recXml.getTime() * 1000) >= timeCutoff) {
 
                             System.out.println("question discarded because it is shorter than the observablePeriod: qid: " + currentQuestionIndex);
                             if (rightOrWrongs.get(currentQuestionIndex))
@@ -415,7 +414,7 @@ public class OntoMapCsv {
                         questionInstanceList.clear();
                             continue;
                     }
-                    if ((recXmlObject.getTime() * 1000) >= timeCutoff) {
+                    if ((recXml.getTime() * 1000) >= timeCutoff) {
                         System.out.println("going to next task: pwindow size: " + participantWindow.getInternalIndex());
                         //User now on other task
                         //If the above method doesn't work, we can weight the last window higher than the first few.
@@ -427,7 +426,7 @@ public class OntoMapCsv {
                     }
                     //Reduce to only adding one window
                     //Add to windows for task
-                    participantWindow.add(recXmlObject);
+                    participantWindow.add(recXml);
 
 
                     //control window size and add to taskwindows once size is too large.
@@ -624,8 +623,8 @@ public class OntoMapCsv {
         }
     }
 
-    public static RecXmlObject getRecXmlObjectFromCells(List<String> headerRow, String[] cells) {
-        RecXmlObject recXmlObject = new RecXmlObject();
+    public static RecXml getRecXmlObjectFromCells(List<String> headerRow, String[] cells) {
+        RecXml recXml = new RecXml();
         Fixation fixation = analysis.fixation.getFixationFromCSVLine(
                 headerRow.indexOf("FPOGD"),
                 headerRow.indexOf("FPOGX"),
@@ -662,11 +661,11 @@ public class OntoMapCsv {
                 headerRow.indexOf("BPOGV"),
                 cells
         );
-        recXmlObject.setTime(Double.valueOf(cells[headerRow.stream().filter(str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1)]));
-        recXmlObject.setFixation(fixation);
-        recXmlObject.setBestPointOfGaze(bestPointOfGaze);
-        recXmlObject.setLeftEyePupil(leftEyePupil);
-        recXmlObject.setRightEyePupil(rightEyePupil);
+        recXml.setTime(Double.valueOf(cells[headerRow.stream().filter(str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1)]));
+        recXml.setFixation(fixation);
+        recXml.setBestPointOfGaze(bestPointOfGaze);
+        recXml.setLeftEyePupil(leftEyePupil);
+        recXml.setRightEyePupil(rightEyePupil);
 
         //Setting the ID of the fixation to null because we don't want it in our training data.
         //Temp fix, before we introduce annotations to ignore fields in instance construciton
@@ -681,7 +680,7 @@ public class OntoMapCsv {
 //        recXmlObject.RPS=null;
 //        recXmlObject.RPV=null;
 //        recXmlObject.BPOGV=null;
-        return recXmlObject;
+        return recXml;
     }
 
     public static void saveInstancesToFile(Instances instances, String fileName) throws IOException {

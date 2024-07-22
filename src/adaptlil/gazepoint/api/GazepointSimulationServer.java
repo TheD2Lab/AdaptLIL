@@ -1,10 +1,10 @@
 package adaptlil.gazepoint.api;
 
-import analysis.ontomap.OntoMapCsv;
+import ontomap.OntoMapCsv;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import adaptlil.gazepoint.api.recv.RecXmlObject;
+import adaptlil.gazepoint.api.recv.RecXml;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -74,7 +74,7 @@ public class GazepointSimulationServer implements Runnable {
                 if (cells != null) {
                     ++numLines;
                     //Convert to recXmlObject
-                    RecXmlObject recXmlObject = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
+                    RecXml recXml = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
                     //Calculate time diff
                     double timeDiff = curTimeMs - System.currentTimeMillis();
                     //if (timeDiff < 7ms (poll rate)
@@ -84,7 +84,7 @@ public class GazepointSimulationServer implements Runnable {
                     //sleep for 7ms - timediff
                     //else
                     //write to socket immediately
-                    output.println(xmlMapper.writeValueAsString(recXmlObject));
+                    output.println(xmlMapper.writeValueAsString(recXml));
                 } else {
                     doneReading = true;
                 }

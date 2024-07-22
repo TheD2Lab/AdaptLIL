@@ -1,9 +1,12 @@
 package adaptlil.adaptations;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 
+/**
+ * Abstract class for Adaptations. When making an adaptation in the AdaptLIL Architecture, following this abstract
+ * class structure allows for an easier implementation with the rest of the system.
+ */
 public abstract class Adaptation {
 
     private String type;

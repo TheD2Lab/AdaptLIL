@@ -1,12 +1,12 @@
 package adaptlil;
 
 import adaptlil.annotations.IgnoreWekaAttribute;
-import analysis.GazeMetrics;
+import ontomap.GazeMetrics;
 import data_classes.Fixation;
 import data_classes.Saccade;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import adaptlil.gazepoint.api.recv.RecXmlObject;
+import adaptlil.gazepoint.api.recv.RecXml;
 import adaptlil.mediator.AdaptationMediator;
 import adaptlil.mediator.Component;
 import adaptlil.mediator.Mediator;
@@ -32,7 +32,7 @@ public class GazeWindow implements Component {
     private int pollingRateInHz;
     private int bufferIndex;
 
-    private RecXmlObject[] gazeBuffer;
+    private RecXml[] gazeBuffer;
     private AdaptationMediator mediator;
 
     private GazeMetrics gazeMetrics;
@@ -46,7 +46,7 @@ public class GazeWindow implements Component {
 
         this.pollingRateInHz = 150; // default is 150hz
         this.setWindowSizeInMilliseconds(windowSizeInMilliseconds);
-        this.gazeBuffer = new RecXmlObject[this.windowSize];
+        this.gazeBuffer = new RecXml[this.windowSize];
     }
 
 
@@ -56,7 +56,7 @@ public class GazeWindow implements Component {
     public void interpolateMissingValues() {
         int invalidIndex = -1;
         int lastValidIndex = 0;
-        List<RecXmlObject> invalidObjects = new ArrayList<RecXmlObject>();
+        List<RecXml> invalidObjects = new ArrayList<RecXml>();
         for (int i = 0; i < this.gazeBuffer.length; ++i) {
             boolean isValid = !this.gazeBuffer[i].hasInvalidAttributes();
 
@@ -65,13 +65,13 @@ public class GazeWindow implements Component {
 
                 //interpolate, a new valid segment has been found after the first.
                 if (invalidIndex > -1) {
-                    RecXmlObject firstValidObj = this.gazeBuffer[lastValidIndex];
-                    RecXmlObject lastValidObj = this.gazeBuffer[i];
+                    RecXml firstValidObj = this.gazeBuffer[lastValidIndex];
+                    RecXml lastValidObj = this.gazeBuffer[i];
                     int steps = i - lastValidIndex - 1;
-                    RecXmlObject[] interpolatedRecXmlObjects = this.gazeBuffer[i].interpolate(firstValidObj, lastValidObj, invalidObjects, steps);
+                    RecXml[] interpolatedRecXmls = this.gazeBuffer[i].interpolate(firstValidObj, lastValidObj, invalidObjects, steps);
 
                     //Reassign interpolated objects
-                    System.arraycopy(interpolatedRecXmlObjects, 0, this.gazeBuffer, invalidIndex, interpolatedRecXmlObjects.length);
+                    System.arraycopy(interpolatedRecXmls, 0, this.gazeBuffer, invalidIndex, interpolatedRecXmls.length);
 
                     invalidObjects.clear();
                 }
@@ -142,15 +142,15 @@ public class GazeWindow implements Component {
         if (!useAdditionalGazeMetrics) { //Raw Gaze for the INDArray
             for (int i = 0; i < gazeBuffer.length; ++i) {
 
-                RecXmlObject recXmlObject = gazeBuffer[i];
-                for (Field field : recXmlObject.getClass().getDeclaredFields()) {
+                RecXml recXml = gazeBuffer[i];
+                for (Field field : recXml.getClass().getDeclaredFields()) {
                     Object val = new Object();
 
                     try {
 
                         //Only set values for
                         if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
-                            val = field.get(recXmlObject);
+                            val = field.get(recXml);
 
                             //Check types and cast appropriately.
                             //If there is a primitive type
@@ -216,10 +216,10 @@ public class GazeWindow implements Component {
         ArrayList<Attribute> attributeList = new ArrayList<>();
         if (!useAdditionalGazeMetrics) {
             for (int i = 0; i < gazeBuffer.length; ++i) {
-                RecXmlObject recXmlObject = gazeBuffer[i];
-                for (int j = 0; j < recXmlObject.getClass().getDeclaredFields().length; ++j) {
-                    Field field = recXmlObject.getClass().getDeclaredFields()[j];
-                    if (field.canAccess(recXmlObject)) {
+                RecXml recXml = gazeBuffer[i];
+                for (int j = 0; j < recXml.getClass().getDeclaredFields().length; ++j) {
+                    Field field = recXml.getClass().getDeclaredFields()[j];
+                    if (field.canAccess(recXml)) {
                         //Skip strings and those with the IgnoreWekaAttribute annotation
                         if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
                             String attributeName = "";
@@ -272,15 +272,15 @@ public class GazeWindow implements Component {
         if (!useAdditionalGazeMetrics) {
             for (int i = 0; i < gazeBuffer.length; ++i) {
 
-                RecXmlObject recXmlObject = gazeBuffer[i];
-                for (Field field : recXmlObject.getClass().getDeclaredFields()) {
+                RecXml recXml = gazeBuffer[i];
+                for (Field field : recXml.getClass().getDeclaredFields()) {
                     Object val = new Object();
 
                     try {
 
                         //Only set values for
                         if (!field.isAnnotationPresent(IgnoreWekaAttribute.class) && field.getType() != String.class) {
-                            val = field.get(recXmlObject);
+                            val = field.get(recXml);
 
                             //Check types and cast appropriately.
                             //If there is a primitive type
@@ -419,12 +419,12 @@ public class GazeWindow implements Component {
 
     /**
      * Adds a RecXmlObject to the buffer.
-     * @param recXmlObject
+     * @param recXml
      * @return The index it was inserted into is returned. -1 is returned if the buffer is full.
      */
-    public int add(RecXmlObject recXmlObject) {
+    public int add(RecXml recXml) {
         if (this.bufferIndex < this.windowSize) {
-            this.gazeBuffer[this.bufferIndex] = recXmlObject;
+            this.gazeBuffer[this.bufferIndex] = recXml;
             ++this.bufferIndex;
             return this.bufferIndex - 1;
         } else {
@@ -444,11 +444,11 @@ public class GazeWindow implements Component {
      * Clears the gazeBuffer and resets the internal position.
      */
     public void flush() {
-        this.gazeBuffer = new RecXmlObject[this.windowSize];
+        this.gazeBuffer = new RecXml[this.windowSize];
         this.bufferIndex = 0;
     }
 
-    public void setGazeBuffer(RecXmlObject[] gazeBuffer) {
+    public void setGazeBuffer(RecXml[] gazeBuffer) {
         this.gazeBuffer = gazeBuffer;
     }
 
@@ -467,7 +467,7 @@ public class GazeWindow implements Component {
         this.windowSizeInMilliseconds = (float) windowSize / pollingRateInHz;
     }
 
-    public RecXmlObject[] getGazeBuffer() {
+    public RecXml[] getGazeBuffer() {
         return gazeBuffer;
     }
 

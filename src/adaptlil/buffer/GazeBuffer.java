@@ -1,12 +1,15 @@
 package adaptlil.buffer;
 
-import adaptlil.gazepoint.api.recv.RecXmlObject;
+import adaptlil.gazepoint.api.recv.RecXml;
 
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Asynchronous Buffer that takes in gaze data packets
+ */
 public class GazeBuffer extends AsyncBuffer {
-    private final LinkedList<RecXmlObject> gazeDataQueue = new LinkedList<>();
+    private final LinkedList<RecXml> gazeDataQueue = new LinkedList<>();
 
     private ReentrantLock reentrantLock;
 
@@ -18,7 +21,7 @@ public class GazeBuffer extends AsyncBuffer {
      * Thread safe, write/pushes the xmlObject param to the back of the queue.
      * @param xmlObject
      */
-    public void write(RecXmlObject xmlObject) {
+    public void write(RecXml xmlObject) {
         synchronized (gazeDataQueue) {
             this.reentrantLock.lock();
             gazeDataQueue.add(xmlObject);
@@ -31,8 +34,8 @@ public class GazeBuffer extends AsyncBuffer {
      * Thread safe read, removes the top of queue
      * @return
      */
-    public RecXmlObject read() {
-        RecXmlObject recXmlObject;
+    public RecXml read() {
+        RecXml recXml;
         try {
             synchronized (this.gazeDataQueue) {
                 this.reentrantLock.lock();
@@ -44,17 +47,17 @@ public class GazeBuffer extends AsyncBuffer {
                     this.reentrantLock.lock();
                 }
                 try {
-                    recXmlObject = gazeDataQueue.removeFirst();
+                    recXml = gazeDataQueue.removeFirst();
                 } catch (Exception e) {
-                    recXmlObject = new RecXmlObject();
-                    recXmlObject.BPOGV = false;
+                    recXml = new RecXml();
+                    recXml.BPOGV = false;
                 }
                 this.reentrantLock.unlock();
             }
         } catch (InterruptedException e) {
             return null;
         }
-        return recXmlObject;
+        return recXml;
     }
 
     /**

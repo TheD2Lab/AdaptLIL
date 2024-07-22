@@ -1,7 +1,6 @@
-package analysis;
+package ontomap;
 
 import java.io.File;
-import java.io.FileReader;
 
 public class Participant {
     private String id;

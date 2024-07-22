@@ -10,9 +10,9 @@ import adaptlil.mediator.Component;
 import adaptlil.mediator.Mediator;
 import adaptlil.buffer.AckBuffer;
 import adaptlil.buffer.GazeBuffer;
-import adaptlil.gazepoint.api.ack.AckXmlObject;
+import adaptlil.gazepoint.api.ack.AckXml;
 import adaptlil.gazepoint.api.get.GetCommand;
-import adaptlil.gazepoint.api.recv.RecXmlObject;
+import adaptlil.gazepoint.api.recv.RecXml;
 import adaptlil.gazepoint.api.set.SetCommand;
 import adaptlil.gazepoint.api.set.SetEnableSendCommand;
 
@@ -50,7 +50,7 @@ public class GazepointSocket implements Component {
 
     private final GazeBuffer gazeDataBuffer;
     private AckBuffer ackBuffer;
-    private final LinkedList<RecXmlObject> gazeDataQueue = new LinkedList<>();
+    private final LinkedList<RecXml> gazeDataQueue = new LinkedList<>();
     private FileInputStream testFileReader;
     private AdaptationMediator mediator;
 
@@ -106,13 +106,13 @@ public class GazepointSocket implements Component {
             //Offer data to queue, block if queue is being used.
             XmlObject command = GazeApiCommands.mapToXmlObject(msg);
             if (GazeApiCommands.mapToXmlObject(msg) != null) {
-                if (command instanceof AckXmlObject) {
+                if (command instanceof AckXml) {
 
-                    this.ackBuffer.write((AckXmlObject) command);
+                    this.ackBuffer.write((AckXml) command);
                 }
-                else if (command instanceof RecXmlObject) {
+                else if (command instanceof RecXml) {
 
-                    this.gazeDataBuffer.write((RecXmlObject) command);
+                    this.gazeDataBuffer.write((RecXml) command);
                 }
             } else
                 System.err.println("failed to write to datapacket to buffer");
@@ -128,7 +128,7 @@ public class GazepointSocket implements Component {
      * Grabs the head of the gaze data xml object queue (Reference gazepoint API)
      * @return Returns the XML Data Object that details whatever GazeData has been sent from the tracker
      */
-    public RecXmlObject readGazeDataFromBuffer() {
+    public RecXml readGazeDataFromBuffer() {
         return gazeDataBuffer.read();
     }
 
@@ -137,10 +137,10 @@ public class GazepointSocket implements Component {
      * @return Returns the ACK Xml from the server.
      * @throws IOException If this is thrown, it may be a logic issue where we are reading the wrong input line.
      */
-    public AckXmlObject stopGazeDataStream() throws IOException {
+    public AckXml stopGazeDataStream() throws IOException {
         SetEnableSendCommand enableSendData = new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_DATA, false);
         output.println(xmlMapper.writeValueAsString(enableSendData));
-        return xmlMapper.readValue(input.readLine(), AckXmlObject.class);
+        return xmlMapper.readValue(input.readLine(), AckXml.class);
     }
 
     public GazeBuffer getGazeDataQueue() {

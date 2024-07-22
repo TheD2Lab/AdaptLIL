@@ -1,6 +1,5 @@
-package analysis.ontomap;
+package ontomap;
 
-import analysis.GazeMetrics;
 import adaptlil.GazeWindow;
 
 public class GazeClassificationData {

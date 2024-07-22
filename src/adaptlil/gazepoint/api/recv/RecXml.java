@@ -21,7 +21,7 @@ import java.util.List;
  */
 @JacksonXmlRootElement(localName = "REC")
 
-public class RecXmlObject extends XmlObject {
+public class RecXml extends XmlObject {
     @JsonIgnore
     private Fixation fixation;
     @JsonIgnore
@@ -615,8 +615,8 @@ public class RecXmlObject extends XmlObject {
         this.time = time;
     }
 	
-    public RecXmlObject[] interpolate(RecXmlObject first, RecXmlObject last, List<RecXmlObject> unmodified, int steps){
-        RecXmlObject[] interpolationObjs = new RecXmlObject[steps];
+    public RecXml[] interpolate(RecXml first, RecXml last, List<RecXml> unmodified, int steps){
+        RecXml[] interpolationObjs = new RecXml[steps];
         BestPointOfGaze[] bestPointOfGazes;
         if (first.getBestPointOfGaze() != null && last.getBestPointOfGaze() != null)
             bestPointOfGazes = first.getBestPointOfGaze().interpolate(first.getBestPointOfGaze(), last.getBestPointOfGaze(), steps);
@@ -664,7 +664,7 @@ public class RecXmlObject extends XmlObject {
 
         //Only interpolate on data attributes that are not valid
         for (int i = 0; i < steps; ++i) {
-            RecXmlObject interpolatedRec = unmodified.get(i);
+            RecXml interpolatedRec = unmodified.get(i);
 
             if ((unmodified.get(i).getFixation() == null || !unmodified.get(i).getFixation().isValid())) {
                 if (fixations != null)

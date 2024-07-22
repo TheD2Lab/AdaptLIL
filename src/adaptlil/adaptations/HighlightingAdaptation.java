@@ -2,6 +2,10 @@ package adaptlil.adaptations;
 
 import java.util.Map;
 
+/**
+ * The highlighting adaptation emphasizes and increases visual prominence of elements. As such it only needs
+ * a strength value and the frontend visualization is responsible for its behavior
+ */
 public class HighlightingAdaptation extends Adaptation {
 
     public HighlightingAdaptation(boolean state, Map<String, String> styleConfig, double strength) {

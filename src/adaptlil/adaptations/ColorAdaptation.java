@@ -3,6 +3,10 @@ package adaptlil.adaptations;
 import java.util.AbstractMap;
 import java.util.Map;
 
+/**
+ * ColorAdaptation is an example of an Adaptation with no set strength value. Instead it relies on styleConfigs to invoke
+ * two set CSS styles
+ */
 public class ColorAdaptation extends Adaptation{
     public ColorAdaptation(boolean state, Map<String, String> styleConfig) {
         super("color", state, styleConfig, 0.0);

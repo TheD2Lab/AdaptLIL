@@ -5,13 +5,13 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import adaptlil.gazepoint.api.XmlObject;
 
 @JacksonXmlRootElement(localName = "ACK")
-public class AckXmlObject extends XmlObject {
+public class AckXml extends XmlObject {
 
 
     @JacksonXmlProperty(isAttribute = true, localName = "ID")
     public String id;
-    public AckXmlObject() {}
-    public AckXmlObject(String id) {
+    public AckXml() {}
+    public AckXml(String id) {
         this.id = id;
     }
 }

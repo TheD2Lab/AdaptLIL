@@ -9,7 +9,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import adaptlil.GazeWindow;
 import adaptlil.websocket.VisualizationWebsocket;
 import adaptlil.gazepoint.api.GazepointSocket;
-import adaptlil.gazepoint.api.recv.RecXmlObject;
+import adaptlil.gazepoint.api.recv.RecXml;
 import adaptlil.http.KerasServerCore;
 import adaptlil.websocket.request.AdaptationInvokeRequestModelWs;
 
@@ -80,10 +80,10 @@ public class AdaptationMediator extends Mediator {
                 this.gazepointSocket.getGazeDataQueue().flush();
             }
 
-            RecXmlObject recXmlObject = this.gazepointSocket.readGazeDataFromBuffer();
+            RecXml recXml = this.gazepointSocket.readGazeDataFromBuffer();
 
             //Add to windows for task
-            this.gazeWindow.add(recXmlObject);
+            this.gazeWindow.add(recXml);
 
 
             if (gazeWindow.isFull()) { //Likely change to a time series roll

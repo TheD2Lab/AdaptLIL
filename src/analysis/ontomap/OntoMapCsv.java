@@ -4,12 +4,10 @@ import analysis.Participant;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import data_classes.*;
-import server.GazeWindow;
-import server.gazepoint.api.recv.RecXmlObject;
-import weka.classifiers.Classifier;
+import adaptlil.GazeWindow;
+import adaptlil.gazepoint.api.recv.RecXmlObject;
 import weka.core.*;
 import weka.core.converters.ArffSaver;
-import wekaext.WekaExperiment;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -318,7 +316,7 @@ public class OntoMapCsv {
                 new File(pOutputDir.getAbsolutePath() + "/retrain").mkdirs();
                 new File(pOutputDir.getAbsolutePath() + "/test").mkdirs();
             }
-            GazeWindow participantWindow = new GazeWindow(false, windowSizeInMilliseconds);
+            GazeWindow participantWindow = new GazeWindow(windowSizeInMilliseconds);
 
 
             File[] answersFiles = new File[]{

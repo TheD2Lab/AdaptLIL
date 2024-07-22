@@ -4,12 +4,6 @@ class Websocket {
     constructor(visualizationMap) {
         this.websocket = new WebSocket("ws://"+this.hostName+":"+this.port+"/gaze");
         this.visualizationMap = visualizationMap;
-        //TODO, replace map with the matrixmap.
-        this.map = {width: 3000,
-                    height: 3000,
-                    viewportWidth: 500,
-                    viewportHeight: 600
-        };
         this.adaptationData = [['type','state','strength', 'timestamp']];
     }
 

@@ -77,7 +77,11 @@
             <artifactId>opencsv</artifactId>
             <version>5.7.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>nz.ac.waikato.cms.weka</groupId>
+            <artifactId>weka-stable</artifactId>
+            <version>3.8.0</version>
+        </dependency>
         <!-- deeplearning4j-core: contains main functionality and neural networks -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>

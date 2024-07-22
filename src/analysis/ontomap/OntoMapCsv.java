@@ -4,8 +4,8 @@ import analysis.Participant;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import data_classes.*;
-import adaptovis.GazeWindow;
-import adaptovis.gazepoint.api.recv.RecXmlObject;
+import adaptlil.GazeWindow;
+import adaptlil.gazepoint.api.recv.RecXmlObject;
 import weka.core.*;
 import weka.core.converters.ArffSaver;
 

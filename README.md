@@ -122,6 +122,7 @@ Since it is built on d3.js, elements are DOM. Therefore, to reflect adaptation u
 2) Create a new Adaptation class
 3) Add a default style config
    4) What does this do?
+   5) 
 4) Establish JSON structure and elements to
  ### Frontend
 1) Navigate to web/scripts/VisualizationAdapation.js

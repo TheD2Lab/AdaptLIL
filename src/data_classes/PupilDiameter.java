@@ -1,6 +1,6 @@
 package data_classes;
 
-import adaptovis.annotations.IgnoreWekaAttribute;
+import adaptlil.annotations.IgnoreWekaAttribute;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
 

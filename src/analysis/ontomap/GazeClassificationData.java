@@ -1,7 +1,7 @@
 package analysis.ontomap;
 
 import analysis.GazeMetrics;
-import adaptovis.GazeWindow;
+import adaptlil.GazeWindow;
 
 public class GazeClassificationData {
     public GazeWindow gazeWindow;

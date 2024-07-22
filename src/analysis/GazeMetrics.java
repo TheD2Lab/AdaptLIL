@@ -1,6 +1,6 @@
 package analysis;
 
-import adaptovis.annotations.IgnoreWekaAttribute;
+import adaptlil.annotations.IgnoreWekaAttribute;
 import data_classes.Fixation;
 import data_classes.Saccade;
 

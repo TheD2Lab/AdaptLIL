@@ -84,8 +84,39 @@ function updateMappingPos(alignments) {
     });
 }
 
+/**
+ * Restore opacity in the svg for the specified alignments
+ * @param svg
+ * @param alignments
+ */
+function restoreOpacityForAlignments(svg, alignments) {
+    for (const align of Object.values(alignments)) {
+        const restoreOpacityVal = 1;
+        svg.selectAll('#a'+ align.id).style('opacity', restoreOpacityVal);
+        svg.select('#gTree1').selectAll('#n' + align.e1.id).style('opacity', restoreOpacityVal);
+        svg.select('#gTree2').selectAll('#n' + align.e2.id).style('opacity', restoreOpacityVal);
 
-function deemphasizeText(g, text, adaptation) {
+        let leftAlignParen = align.e1 != null ? align.e1.parent : null;
+        // while (leftAlignParen != null) {
+        //
+        //     const curNode = svg.select('#gTree1').select('#n'+leftAlignParen.id)
+        //
+        //     curNode.style('opacity', restoreOpacityVal)
+        //     leftAlignParen = leftAlignParen.parent;
+        // }
+        //
+        // let rightAlignParen = align.e2 != null ? align.e2.parent : null;
+        //
+        // while(rightAlignParen != null) {
+        //     const curNode = svg.select('#gTree2').select('#n'+rightAlignParen.id)
+        //
+        //     curNode.style('opacity', restoreOpacityVal)
+        //     rightAlignParen = rightAlignParen.parent;
+        // }
+    }
+}
+
+function deemphasizeText(svg, tree, node, clickedMaplines, adaptation) {
     //Based on strength, determine values
     //Set all maplines to be transparent
     let adaptive_opacity = 0.8 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
@@ -96,27 +127,33 @@ function deemphasizeText(g, text, adaptation) {
     d3.selectAll('.mapping').style('opacity', adaptive_opacity);
     d3.selectAll('.node').style('opacity', adaptive_opacity);
 
-    g.select('#n'+text.id)
+    restoreOpacityForAlignments(svg, clickedMaplines);
+
+    tree.select('#n'+node.id)
         .style('opacity', 1)
-        .select('text')
 }
 
-function unhighlightText(g, text) {
-    g.select('#n'+text.id)
+function unhighlightNode(g, node) {
+    g.select('#n'+node.id)
         .style('opacity', 1)
         .select('text')
         .style('font-weight', 100);
 }
-function highlightText(g, text, adaptation) {
+function highlightNode(g, node, adaptation) {
     let adaptiveFontWeight = Math.ceil(900 * adaptation.strength);
     if (adaptiveFontWeight < 500)
         adaptiveFontWeight = 500;
 
-    console.log(text);
-    g.select('#n'+text.id)
+    g.select('#n'+node.id)
         .style('opacity', 1)
         .select('text')
         .style('font-weight', adaptiveFontWeight);
+
+    //alignment .mapping .mapline
+    // g.select("#gMap").select('#a'+almt.id)
+    //     .style('opacity', 1)
+    //     // .classed('muted', false)
+    //     .raise();
 
 }
 
@@ -128,11 +165,12 @@ function highlightText(g, text, adaptation) {
  */
 function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     if (!alignments) { return; }    //for undefined
+
     console.log('highlightAlignment()');
 
     let adaptiveFontWeight = Math.ceil(900 * adaptation.strength);
-    if (adaptiveFontWeight < 500)
-        adaptiveFontWeight = 500;
+    if (adaptiveFontWeight < 200)
+        adaptiveFontWeight = 200;
 
     let adaptiveMaplineFgStrokeWidth = Math.ceil(6 * adaptation.strength);
     if (adaptiveMaplineFgStrokeWidth < 2)
@@ -141,15 +179,15 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
     if (adaptiveMaplineBgStrokeWidth < 1)
         adaptiveMaplineBgStrokeWidth = 1;
 
-    let adaptiveHiddenMaplingFgStrokeWidth = Math.ceil(4 * adaptation.strength);
+    let adaptiveHiddenMaplingFgStrokeWidth = Math.ceil(6 * adaptation.strength);
     if (adaptiveHiddenMaplingFgStrokeWidth < 1)
         adaptiveHiddenMaplingFgStrokeWidth = 1;
 
 
 
     //Mutes all mapping and nodes in the group
-    g.selectAll('.node').classed('muted', true);
-    g.selectAll('.mapping').classed('muted', true);
+    // g.selectAll('.node').classed('muted', true);
+    // g.selectAll('.mapping').classed('muted', true);
     //Includes any alignment sets mapped to redundant nodes
     alignments = Array.isArray(alignments) ? alignments : [alignments];
     const allAlignments = alignments;
@@ -182,12 +220,12 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
         //alignment .mapping .mapline
         g.select("#gMap").select('#a'+almt.id)
             .style('opacity', 1)
-            .classed('muted', false)
+            // .classed('muted', false)
             .raise();
 
         g.select("#gMap").select('#a'+almt.id).select('.mapLine-fg').style('stroke', '#0077ff').style('stroke-width', adaptiveMaplineFgStrokeWidth+'px');
         g.select("#gMap").select('#a'+almt.id).select('.mapLine-bg ').style('stroke-width', adaptiveMaplineBgStrokeWidth+'px');
-        g.select("#gMap").select('#a'+almt.id).select('.map-to-hidden>.mapLine-fg').style('stroke-dasharray', '2 6').style('stroke-width', adaptiveHiddenMaplingFgStrokeWidth+'px');
+        g.select("#gMap").select('#a'+almt.id+'.map-to-hidden').select('path.mapLine-fg').style('stroke-dasharray', '2 6').style('stroke-width', adaptiveHiddenMaplingFgStrokeWidth+'px');
         /**TODO, add transition,style timer (if it's easy)*/
 
         /**
@@ -204,13 +242,14 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
          */
         //tree nodes .node .branch|.leaf (all nodes in the currently cliked mapping can be highlighted
         g.select("#gTree1").select('#n'+almt.e1.id)
-            .classed('muted', false).style('opacity', 1)
+            // .classed('muted', false)
+            .style('opacity', 1)
             .select('text')
             .style('font-weight', adaptiveFontWeight);
         //tree nodes .node .branch|.leaf
 
         g.select("#gTree2").select('#n'+almt.e2.id)
-            .classed('muted', false)
+            // .classed('muted', false)
             .style('opacity', 1)
             .select('text')
             .style('font-weight', adaptiveFontWeight);
@@ -242,12 +281,13 @@ function highlightAlignment(alignments, g, alignmentSet, adaptation) {
         if(almt.overlappedTop)
             g.select('#gMap').select('#a'+almt.id).raise();
     });
+
 }
 
-function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, node=undefined) {
+function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, tree=undefined, node=undefined) {
+
     if (!alignments) { return; }
     alignments = Array.isArray(alignments) ? alignments : [alignments];
-
     //Based on strength, determine values
     //Set all maplines to be transparent
     let adaptive_opacity = 0.8 - (1 * (Number(adaptation.strength))) //De-emphasized opacity is inverse of strength
@@ -259,39 +299,14 @@ function deemphasize(alignments, g, alignmentSet, adaptation, maplinesClicked, n
     g.selectAll('.node').style('opacity', adaptive_opacity);
 
     //Restore opacity to clicked or currently hovered map lines and nodes
-
     const alignmentsToRestore = alignments.concat(Object.values(maplinesClicked));
-
-    for (const align of Object.values(alignmentsToRestore)) {
-        const restoreOpacityVal = 1;
-        g.selectAll('#a'+ align.id).style('opacity', restoreOpacityVal);
-        g.select('#gTree1').selectAll('#n' + align.e1.id).style('opacity', restoreOpacityVal);
-        g.select('#gTree2').selectAll('#n' + align.e2.id).style('opacity', restoreOpacityVal);
-
-        let leftAlignParen = align.e1 != null ? align.e1.parent : null;
-        while (leftAlignParen != null) {
-
-            const curNode = g.select('#gTree1').select('#n'+leftAlignParen.id)
-
-            curNode.style('opacity', restoreOpacityVal)
-            leftAlignParen = leftAlignParen.parent;
-        }
-
-        let rightAlignParen = align.e2 != null ? align.e2.parent : null;
-
-        while(rightAlignParen != null) {
-            const curNode = g.select('#gTree2').select('#n'+rightAlignParen.id)
-
-            curNode.style('opacity', restoreOpacityVal)
-            rightAlignParen = rightAlignParen.parent;
-        }
-
+    restoreOpacityForAlignments(g, alignmentsToRestore);
+    if (tree !== undefined && node !== undefined) {
+        tree.select('#n'+node.id)
+            .style('opacity', 1)
     }
-
-
-
 }
-function restoreOpacity(g, allAlignments, maplinesClicked={}) {
+function restoreOpacity(g, maplinesClicked={}) {
 
     //Only unhighlight non-clicked mappings
     g.selectAll('.mapping').filter(function (d) {
@@ -299,8 +314,15 @@ function restoreOpacity(g, allAlignments, maplinesClicked={}) {
 
     }).style('opacity', 1)
     g.selectAll('.node').style('opacity', 1)
-
 }
+
+function unhighlightMapline(alignment_id) {
+    d3.select('#a'+alignment_id).selectAll('.mapLine-fg').style('stroke-width', '1px');
+    d3.select('#a'+alignment_id).selectAll('.mapLine-bg').style('stroke-width', '4.5px');
+    d3.select('#a'+alignment_id).selectAll('.map-to-hidden.mapLine-fg').style('stroke-dasharray', '2 4')
+}
+
+
 function unhighlightAll(g) {
 
     /**
@@ -317,12 +339,13 @@ function unhighlightAll(g) {
      *   stroke-dasharray: 2 6;
      * }
      */
-    g.selectAll("*")
-        .classed('highlight', false)
-        .classed('muted', false);
+    // g.selectAll("*")
+        // .classed('highlight', false)
+        // .classed('muted', false);
     g.selectAll('.mapLine-fg').style('stroke-width', '1px');
     g.selectAll('.mapLine-bg').style('stroke-width', '4.5px');
     g.selectAll('.map-to-hidden.mapLine-fg').style('stroke-dasharray', '2 4')
+    g.selectAll('.node>text').style('font-weight', 100)
     //Always place direct mappings on top.
     g.selectAll('.map-to-hidden').lower();
     g.selectAll('text').style('font-weight', 100)

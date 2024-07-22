@@ -104,6 +104,7 @@ def ackJavaServer():
     #MAKE POST REQUEST BACK TO JAVA BACKEND NOTIFYING IS ALIVE
     response = requests.post(javaServerPath+"/init/ackKerasServer", json={"message": "Server is alive", "resultCode": 1000})
     print("made request")
+    print(response)
     print(response.json())
     responseJson = response.json()
     print(str(responseJson['resultCode']) + ": response from JAVA Server: " + str(responseJson['message']))

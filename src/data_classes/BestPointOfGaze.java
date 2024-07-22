@@ -1,9 +1,9 @@
 package data_classes;
 
+import adaptlil.annotations.IgnoreWekaAttribute;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import interpolation.Interpolation;
-import wekaext.annotations.IgnoreWekaAttribute;
 
 @JsonAutoDetect(fieldVisibility=JsonAutoDetect.Visibility.ANY)
 public class BestPointOfGaze {

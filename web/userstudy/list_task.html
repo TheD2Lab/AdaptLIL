@@ -25,7 +25,6 @@
 
     <script src="../scripts/script-alignment.js"></script>
     <script src="../scripts/BaselineMap.js"></script>
-    <script src="../scripts/MapWorld.js"></script>
     <script src="../scripts/websocket.js"></script>
 
 
@@ -52,26 +51,31 @@
         };
 
         const indentedTree = new LinkIndentedList();
+        window.indentedTree = indentedTree;
         const baselineMap = new BaselineMap(indentedTree);
+        window.baselinemap = baselineMap;
         const taskForm = new TaskForm(baselineMap);
         taskForm.setVis("baseline");
 
 
 
         window.addEventListener('load', function (event) {
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const is_adaptive = urlParams.get('is-adaptive');
             console.log("Task: Ready to generate form!");
             taskForm.initOnLoad();
             baselineMap.drawBaselineSvg();
-            const mapWorld = new MapWorld(baselineMap, indentedTree);
             let websocketConnected = false;
 
 
-
-            const websocket = new Websocket(indentedTree);
-            taskForm.setWebsocket(websocket);
-            websocket.openConnection();
-            websocketConnected = true;
-            websocket.listenForMessages();
+            if (is_adaptive == 'Adaptive') {
+                const websocket = new Websocket(indentedTree);
+                taskForm.setWebsocket(websocket);
+                websocket.openConnection();
+                websocketConnected = true;
+                websocket.listenForMessages();
+            }
 
         });
     </script>
@@ -105,6 +109,17 @@
             <svg class="mapsvg" id="baseline-svg" width="800" height="500">
             </svg>
         </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="adaptationModalNotification" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>We have detected that you may need some additional help. The visualization's behavior will change to better assist you.</p>
+        </div>
+
     </div>
 </body>
 

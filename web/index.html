@@ -29,7 +29,7 @@
 
     <div class="content container-fluid text-center">
     <form id="start-task" action="userstudy/begin_task.html">
-        <h2 class="py-2 mt-4">Ontology Mapping Visualization</h2>
+        <h2 class="py-2 mt-4">Intelligent Adaptive Ontology Visualization</h2>
         <h4 class="py-2 mt-4">Experiment Setup</h4>
         <div id="domain-options">
             <input type="radio" name="domain" id="conf-domain" value="0">Conference</input>
@@ -37,8 +37,8 @@
         </div>
         <select name="visualization" id="vis-options" required>
             <option value="" selected disabled>Choose visualization</option>
-            <option value="list_task.html">Indented List</option>
-            <option value="mat_task.html">Matrix</option>
+            <option value="adaptive">A</option> <!--- A/B to hide from participant when setting up --->
+            <option value="adaptive">B</option>
         </select>
         <div id="participant_id" class="py-2 mt-4">
             <input type="text" id="p_id" name="participantID" class="input-text" onkeydown="return (event.keyCode!=13 && event.keyCode!=189);" placeholder="Participant ID" autocomplete="off" required>

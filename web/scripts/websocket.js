@@ -4,12 +4,6 @@ class Websocket {
     constructor(visualizationMap) {
         this.websocket = new WebSocket("ws://"+this.hostName+":"+this.port+"/gaze");
         this.visualizationMap = visualizationMap;
-        //TODO, replace map with the matrixmap.
-        this.map = {width: 3000,
-                    height: 3000,
-                    viewportWidth: 500,
-                    viewportHeight: 600
-        };
         this.adaptationData = [['type','state','strength', 'timestamp']];
     }
 
@@ -129,6 +123,37 @@ class Websocket {
                 'entities': this.visualizationMap.entities
             }
         }
+    }
+
+    /**
+     *
+     * @param timeStart
+     * @param questionId
+     */
+    sendRecordGazeRequestForQuestion(timeStart, questionId, action='on') {
+        const jsonBody = {
+            'type': 'command',
+            'name': 'record',
+            'time': (new Date()).getMilliseconds(),
+            'questionId': questionId,
+            'action': action
+        }
+        console.log('sendingggg...')
+        console.log(jsonBody);
+        this.websocket.send(JSON.stringify(jsonBody));
+    }
+
+    sendScoreForQuestion(questionId, score) {
+        const jsonBody = {
+            'type': 'data',
+            'name' : 'score',
+            'time': (new Date()).getMilliseconds(),
+            'questionId': questionId,
+            'score': score
+        }
+        console.log('sendingggg...')
+        console.log(jsonBody);
+        this.websocket.send(JSON.stringify(jsonBody));
     }
 
     sendElementCoordinates(elements, elementType) {

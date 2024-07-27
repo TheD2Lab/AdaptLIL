@@ -19,6 +19,7 @@ public class LeftEyePupil {
     private boolean isValid;
 
     public LeftEyePupil() {} //Default constructor for Jackson
+
     /**
      *
      * @param x fraction of camera image size
@@ -33,6 +34,52 @@ public class LeftEyePupil {
         this.diameter = diameter;
         this.scale = scale;
         this.isValid = isValid;
+    }
+
+
+    /**
+     * Reads LeftEyePupil data from the csv generated via gazepoint.
+     * @param lpcxIndex
+     * @param lpcyIndex
+     * @param lpsIndex
+     * @param lpdIndex
+     * @param lpvIndex
+     * @param cells
+     * @return
+     */
+    public static LeftEyePupil getLeftEyePupilFromCsvLine(int lpcxIndex, int lpcyIndex, int lpsIndex, int lpdIndex, int lpvIndex, String[] cells) {
+        return new LeftEyePupil(Double.parseDouble(cells[lpcxIndex]), Double.parseDouble(cells[lpcyIndex]),
+                Double.parseDouble(cells[lpdIndex]), Double.parseDouble(cells[lpsIndex]), cells[lpvIndex].equals("1"));
+    }
+
+    /**
+     * TODO, implement more accurate interpolation, right now we will do a simple linear inteprolation n diameters
+     * https://ieeexplore.ieee.org/document/9129915
+     * https://www.mathworks.com/help/matlab/ref/pchip.html
+     * @param a
+     * @param b
+     * @param steps
+     * @return
+     */
+    public LeftEyePupil[] interpolate(LeftEyePupil a, LeftEyePupil b, int steps) {
+        LeftEyePupil[] leftPupilInterpols = new LeftEyePupil[steps];
+        Interpolation interpolation = new Interpolation();
+        double[] aCoords = new double[]{a.getX(), a.getY()};
+        double[] bCoords = new double[]{b.getX(), b.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
+        double[] diameters = interpolation.interpolate(a.getDiameter(), b.getDiameter(), steps);
+        double[] scales = interpolation.interpolate(a.getScale(), b.getScale(), steps);
+        for (int i = 0; i < steps; ++i) {
+            LeftEyePupil c = new LeftEyePupil();
+            c.setX(interpolCoords[i][0]);
+            c.setY(interpolCoords[i][1]);
+            c.setDiameter(diameters[i]);
+            c.setScale(scales[i]);
+            c.setIsValid(true);
+            leftPupilInterpols[i] = c;
+        }
+
+        return leftPupilInterpols;
     }
 
     /**
@@ -115,34 +162,5 @@ public class LeftEyePupil {
         return isValid;
     }
 
-    /**
-     * TODO, implement more accurate interpolation, right now we will do a simple linear inteprolation n diameters
-     * https://ieeexplore.ieee.org/document/9129915
-     * https://www.mathworks.com/help/matlab/ref/pchip.html
-     * @param a
-     * @param b
-     * @param steps
-     * @return
-     */
-    public LeftEyePupil[] interpolate(LeftEyePupil a, LeftEyePupil b, int steps) {
-        LeftEyePupil[] leftPupilInterpols = new LeftEyePupil[steps];
-        Interpolation interpolation = new Interpolation();
-        double[] aCoords = new double[]{a.getX(), a.getY()};
-        double[] bCoords = new double[]{b.getX(), b.getY()};
-        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
-        double[] diameters = interpolation.interpolate(a.getDiameter(), b.getDiameter(), steps);
-        double[] scales = interpolation.interpolate(a.getScale(), b.getScale(), steps);
-        for (int i = 0; i < steps; ++i) {
-            LeftEyePupil c = new LeftEyePupil();
-            c.setX(interpolCoords[i][0]);
-            c.setY(interpolCoords[i][1]);
-            c.setDiameter(diameters[i]);
-            c.setScale(scales[i]);
-            c.setIsValid(true);
-            leftPupilInterpols[i] = c;
-        }
-
-        return leftPupilInterpols;
-    }
 
 }

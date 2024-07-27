@@ -36,6 +36,44 @@ public class RightEyePupil {
         this.isValid = isValid;
     }
 
+    public static RightEyePupil getRightEyePupilFromCsvLine(int rpcxIndex, int rpcyIndex, int rpsIndex, int rpdIndex, int rpvIndex, String[] cells) {
+        return new RightEyePupil(Double.parseDouble(cells[rpcxIndex]),
+                Double.parseDouble(cells[rpcyIndex]),
+                Double.parseDouble(cells[rpdIndex]),
+                Double.parseDouble(cells[rpsIndex]),
+                cells[rpvIndex].equals("1"));
+    }
+
+    /**
+     * TODO, implement more accurate interpolation, right now we will do a simple linear inteprolation n diameters
+     * https://ieeexplore.ieee.org/document/9129915
+     * https://www.mathworks.com/help/matlab/ref/pchip.html
+     * @param a
+     * @param b
+     * @param steps
+     * @return
+     */
+    public RightEyePupil[] interpolate(RightEyePupil a, RightEyePupil b, int steps) {
+        RightEyePupil[] rightPupilInterpols = new RightEyePupil[steps];
+        Interpolation interpolation = new Interpolation();
+        double[] aCoords = new double[]{a.getX(), a.getY()};
+        double[] bCoords = new double[]{b.getX(), b.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
+        double[] diameters = interpolation.interpolate(a.getDiameter(), b.getDiameter(), steps);
+        double[] scales = interpolation.interpolate(a.getScale(), b.getScale(), steps);
+        for (int i = 0; i < steps; ++i) {
+            RightEyePupil c = new RightEyePupil();
+            c.setX(interpolCoords[i][0]);
+            c.setY(interpolCoords[i][1]);
+            c.setDiameter(diameters[i]);
+            c.setScale(scales[i]);
+            c.setIsValid(true);
+            rightPupilInterpols[i] = c;
+        }
+
+        return rightPupilInterpols;
+    }
+
     /**
      * X-Coordinate of right eye
      * @param x fraction of camera image size
@@ -116,33 +154,5 @@ public class RightEyePupil {
         return isValid;
     }
 
-    /**
-     * TODO, implement more accurate interpolation, right now we will do a simple linear inteprolation n diameters
-     * https://ieeexplore.ieee.org/document/9129915
-     * https://www.mathworks.com/help/matlab/ref/pchip.html
-     * @param a
-     * @param b
-     * @param steps
-     * @return
-     */
-    public RightEyePupil[] interpolate(RightEyePupil a, RightEyePupil b, int steps) {
-        RightEyePupil[] rightPupilInterpols = new RightEyePupil[steps];
-        Interpolation interpolation = new Interpolation();
-        double[] aCoords = new double[]{a.getX(), a.getY()};
-        double[] bCoords = new double[]{b.getX(), b.getY()};
-        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
-        double[] diameters = interpolation.interpolate(a.getDiameter(), b.getDiameter(), steps);
-        double[] scales = interpolation.interpolate(a.getScale(), b.getScale(), steps);
-        for (int i = 0; i < steps; ++i) {
-            RightEyePupil c = new RightEyePupil();
-            c.setX(interpolCoords[i][0]);
-            c.setY(interpolCoords[i][1]);
-            c.setDiameter(diameters[i]);
-            c.setScale(scales[i]);
-            c.setIsValid(true);
-            rightPupilInterpols[i] = c;
-        }
 
-        return rightPupilInterpols;
-    }
 }

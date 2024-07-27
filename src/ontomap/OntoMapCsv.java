@@ -502,34 +502,6 @@ public class OntoMapCsv {
                 System.out.println(numWrong == 0 ? " validation passed for numWrong" : "FAILED numWrong");
                 System.out.println(numWrong);
 
-//                OntoMapCsv.saveParticipantDataAsSeparateFile(useParticipantForTrainingData, p, useParticipantForTrainingData ? participantTrainingInstances.get(p.getId()) : participantTestInstances.get(p.getId()),
-//                        nominalValues, answerFile, outputDir);
-
-//                if (useParticipantForTrainingData) {
-//                    List<Instance> participantTrainInstanceList = participantTrainingInstances.get(p.getId());
-//                    ArrayList<Attribute> attributeList = Collections.list(participantTrainInstanceList.get(0).enumerateAttributes());
-//                    attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
-//                    trainDataInstances = new Instances("OntoMapTrainGaze", attributeList, participantTrainInstanceList.get(0).numAttributes());
-//
-//                    for (int i = 1; i < participantTrainInstanceList.size(); ++i) {
-//                        trainDataInstances.add(participantTrainInstanceList.get(i));
-//                    }
-//                    trainDataInstances.setClassIndex(trainDataInstances.numAttributes() - 1);
-//                    OntoMapCsv.saveInstancesToFile(trainDataInstances, outputDir.getPath() + "/trainData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
-//                    trainDataInstances.clear();
-//                } else {
-//                    List<Instance> participantTestInstanceList = participantTestInstances.get(p.getId());
-//                    ArrayList<Attribute> attributeList = Collections.list(participantTestInstanceList.get(0).enumerateAttributes());
-//                    attributeList.add(new Attribute("correct", nominalValues)); //Weka Instance for the window will not include the additional attribute added with correct/wrong pairing. Maybe we could add wrong/right to the window for classificaiton in real time.
-//                    testDataInstances = new Instances("OntoMapTestGaze", attributeList, participantTestInstanceList.get(0).numAttributes());
-//
-//                    for (int i = 1; i < participantTestInstanceList.size(); ++i) {
-//                        testDataInstances.add(participantTestInstanceList.get(i));
-//                    }
-//                    testDataInstances.setClassIndex(testDataInstances.numAttributes() - 1);
-//                    OntoMapCsv.saveInstancesToFile(testDataInstances, outputDir.getPath() + "/testData_" + windowSizeInMilliseconds + "mssec_" + p.getId() + " " + answerFile.getName() + ".arff");
-//                    testDataInstances.clear();
-//                }
                 fixationFileReader.close();
                 fixationCsvReader.close();
             }
@@ -539,8 +511,7 @@ public class OntoMapCsv {
         }
         System.out.println("discarded packets: " + numPacketsDiscarded + " total packets: " + totalNumPackets);
         OntoMapCsv.saveTestAndTrainingToOneFile(trainInstanceList, testInstanceList, nominalValues, outputDir);
-        //Readd saving as one whole file (and do some c ross fold validation)
-        //
+
     }
 
     public static Instances listInstanceToInstances(List<Instance> instanceList, List<String> targetValues) {
@@ -625,7 +596,7 @@ public class OntoMapCsv {
 
     public static RecXml getRecXmlObjectFromCells(List<String> headerRow, String[] cells) {
         RecXml recXml = new RecXml();
-        Fixation fixation = analysis.fixation.getFixationFromCSVLine(
+        Fixation fixation = Fixation.getFixationFromCSVLine(
                 headerRow.indexOf("FPOGD"),
                 headerRow.indexOf("FPOGX"),
                 headerRow.indexOf("FPOGY"),
@@ -636,7 +607,7 @@ public class OntoMapCsv {
 
 
 
-        RightEyePupil rightEyePupil = analysis.gaze.getRightEyePupilFromCsvLine(
+        RightEyePupil rightEyePupil = RightEyePupil.getRightEyePupilFromCsvLine(
                 headerRow.indexOf("RPCX"),
                 headerRow.indexOf("RPCY"),
                 headerRow.indexOf("RPS"),
@@ -645,7 +616,7 @@ public class OntoMapCsv {
                 cells
         );
 
-        LeftEyePupil leftEyePupil = analysis.gaze.getLeftEyePupilFromCsvLine(
+        LeftEyePupil leftEyePupil = LeftEyePupil.getLeftEyePupilFromCsvLine(
                 headerRow.indexOf("LPCX"),
                 headerRow.indexOf("LPCY"),
                 headerRow.indexOf("LPS"),
@@ -655,31 +626,27 @@ public class OntoMapCsv {
         );
 
 
-        BestPointOfGaze bestPointOfGaze = analysis.gaze.getBestPointOfGaze(
+        BestPointOfGaze bestPointOfGaze = BestPointOfGaze.getBestPointOfGaze(
                 headerRow.indexOf("BPOGX"),
                 headerRow.indexOf("BPOGY"),
                 headerRow.indexOf("BPOGV"),
                 cells
         );
-        recXml.setTime(Double.valueOf(cells[headerRow.stream().filter(str -> str.contains("TIME")).map(str -> headerRow.indexOf(str)).findFirst().orElse(-1)]));
+
+        recXml.setTime(
+                Double.valueOf(
+                        cells[headerRow.stream().filter(str -> str.contains("TIME"))
+                                .map(str -> headerRow.indexOf(str))
+                                .findFirst()
+                                .orElse(-1)]
+                )
+        );
+
         recXml.setFixation(fixation);
         recXml.setBestPointOfGaze(bestPointOfGaze);
         recXml.setLeftEyePupil(leftEyePupil);
         recXml.setRightEyePupil(rightEyePupil);
 
-        //Setting the ID of the fixation to null because we don't want it in our training data.
-        //Temp fix, before we introduce annotations to ignore fields in instance construciton
-//        recXmlObject.FPOGID=null;
-//        recXmlObject.FPOGV=null;
-//        recXmlObject.LPCX=null;
-//        recXmlObject.LPCY=null;
-//        recXmlObject.LPS=null;
-//        recXmlObject.LPV=null;
-//        recXmlObject.RPCX=null;
-//        recXmlObject.RPCY=null;
-//        recXmlObject.RPS=null;
-//        recXmlObject.RPV=null;
-//        recXmlObject.BPOGV=null;
         return recXml;
     }
 

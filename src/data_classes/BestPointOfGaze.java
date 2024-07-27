@@ -8,6 +8,16 @@ import interpolation.Interpolation;
 @JsonAutoDetect(fieldVisibility=JsonAutoDetect.Visibility.ANY)
 public class BestPointOfGaze {
 
+    @JacksonXmlProperty(isAttribute = true, localName = "BPOGX")
+    private double x;
+    @JacksonXmlProperty(isAttribute = true, localName = "BPOGY")
+    private double y;
+
+    @IgnoreWekaAttribute
+    @JacksonXmlProperty(isAttribute = true, localName = "BPOGV")
+    private boolean isValid;
+
+
     //Default constructor for Jackson
     public BestPointOfGaze() {}
 
@@ -17,14 +27,18 @@ public class BestPointOfGaze {
         this.isValid = isValid;
     }
 
-    @JacksonXmlProperty(isAttribute = true, localName = "BPOGX")
-    private double x;
-    @JacksonXmlProperty(isAttribute = true, localName = "BPOGY")
-    private double y;
+    /**
+     * Constructs BestPointOfGaze Object through the strings of an array. In this case, an excel line.
+     * @param bpogxIndex
+     * @param bpogyIndex
+     * @param bpogvIndex
+     * @param cells
+     * @return
+     */
+    public static BestPointOfGaze getBestPointOfGaze(int bpogxIndex, int bpogyIndex, int bpogvIndex, String[] cells) {
+        return new BestPointOfGaze(Double.parseDouble(cells[bpogxIndex]), Double.parseDouble(cells[bpogyIndex]), cells[bpogvIndex].equals("1"));
+    }
 
-    @IgnoreWekaAttribute
-    @JacksonXmlProperty(isAttribute = true, localName = "BPOGV")
-    private boolean isValid;
 
     public double getX() {
         return x;

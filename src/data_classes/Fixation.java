@@ -54,6 +54,15 @@ public class Fixation {
         this.id = -1;
     }
 
+    public static Fixation getFixationFromCSVLine(int durationColIndex, int xColIndex, int yColIndex, int idColIndex, int timestampColIndex, String[] fixationLine) {
+        float duration = Float.parseFloat(fixationLine[durationColIndex]);
+        float x = Float.parseFloat(fixationLine[xColIndex]);
+        float y = Float.parseFloat(fixationLine[yColIndex]);
+        int id = Integer.parseInt(fixationLine[idColIndex]);
+        float timestamp = Float.parseFloat(fixationLine[timestampColIndex]);
+        return new Fixation(x, y, timestamp, duration, true, id);
+    }
+
     public double getX() {
         return x;
     }

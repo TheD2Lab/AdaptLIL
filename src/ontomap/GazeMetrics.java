@@ -1,12 +1,12 @@
 package ontomap;
 
 import adaptlil.annotations.IgnoreWekaAttribute;
-import analysis.descriptiveStats;
 import data_classes.Fixation;
 import data_classes.Saccade;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 public class GazeMetrics {
 
@@ -95,13 +95,17 @@ public class GazeMetrics {
         this.calculateAbsoluteDegreeMetaData();
     }
 
+    /**
+     * Calculate the statistical data surrounding the fixations.
+     */
     public void calculateFixationMetaData() {
         this.fixationCount = fixations.size();
         this.sumOfFixationDuration = 0.0;
-        List<Double> durations = new ArrayList<>();
+        double[] durations = new double[this.fixationCount];
 
-        for (Fixation fixation : this.fixations) {
-            durations.add(fixation.getDuration());
+        for (int i = 0; i < this.fixationCount; i++) {
+            Fixation fixation = this.fixations.get(i);
+            durations[i] = fixation.getDuration();
             this.sumOfFixationDuration += fixation.getDuration();
 
             if (fixation.getDuration() < this.minFixationDuration)
@@ -111,10 +115,10 @@ public class GazeMetrics {
                 this.maxFixationDuration = fixation.getDuration();
         }
         if (this.fixationCount > 0) {
-            this.medianFixationDuration = descriptiveStats.getMedianOfDoubles(durations);
-            this.stdOfFixationDuration = descriptiveStats.getStDevOfDoubles(durations);
-
-            this.meanFixationDuration = this.sumOfFixationDuration / this.fixationCount;
+            DescriptiveStatistics durationDescriptiveStatistics = new DescriptiveStatistics(durations);
+            this.medianFixationDuration = durationDescriptiveStatistics.getPercentile(50);
+            this.stdOfFixationDuration = durationDescriptiveStatistics.getStandardDeviation();
+            this.meanFixationDuration = durationDescriptiveStatistics.getMean();
         }
 
     }
@@ -128,10 +132,12 @@ public class GazeMetrics {
 
     public void calculateSaccadeDurationMetaData() {
         this.sumOfSaccadeDurations = 0.0;
-        List<Double> durations = new ArrayList<>();
+        double[] durations = new double[this.saccades.size()];
 
-        for (Saccade saccade : this.saccades) {
-            durations.add(saccade.getDuration());
+        for (int i = 0; i < this.saccades.size(); i++) {
+            Saccade saccade = this.saccades.get(i);
+            durations[i] = saccade.getDuration();
+
             this.sumOfSaccadeDurations += saccade.getDuration();
 
             if (saccade.getDuration() < this.minSaccadeDuration)
@@ -141,19 +147,21 @@ public class GazeMetrics {
                 this.maxSaccadeDuration = saccade.getDuration();
         }
         if (this.saccadeCount > 0) {
-            this.medianSaccadeDuration = descriptiveStats.getMedianOfDoubles(durations);
-            this.stdOfSaccadeDurations = descriptiveStats.getStDevOfDoubles(durations);
-            this.meanSaccadeDuration = this.sumOfSaccadeDurations / this.saccadeCount;
+            DescriptiveStatistics durationDescriptiveStatistics = new DescriptiveStatistics(durations);
+            this.medianSaccadeDuration = durationDescriptiveStatistics.getPercentile(50);
+            this.stdOfSaccadeDurations = durationDescriptiveStatistics.getStandardDeviation();
+            this.meanSaccadeDuration = durationDescriptiveStatistics.getMean();
         }
 
     }
 
     public void calculateSaccadeLenMetaData() {
         this.sumOfSaccadeLen = 0.0;
-        List<Double> lengths = new ArrayList<>();
+        double[] lengths = new double[this.saccades.size()];
 
-        for (Saccade saccade : this.saccades) {
-            lengths.add(saccade.getLength());
+        for (int i = 0; i < this.saccades.size(); i++) {
+            Saccade saccade = saccades.get(i);
+            lengths[i] = saccade.getLength();
             this.sumOfSaccadeLen += saccade.getLength();
 
             if (saccade.getLength() < this.minSaccadeLen)
@@ -163,9 +171,11 @@ public class GazeMetrics {
                 this.maxSaccadeLen = saccade.getLength();
         }
         if (this.saccadeCount > 0) {
-            this.medianSaccadeLen = descriptiveStats.getMedianOfDoubles(lengths);
-            this.stdOfSaccadeLen = descriptiveStats.getStDevOfDoubles(lengths);
-            this.meanSaccadeLen = this.sumOfSaccadeLen / this.saccadeCount;
+            DescriptiveStatistics saccadeLengthDescriptiveStatistics = new DescriptiveStatistics(lengths);
+
+            this.medianSaccadeLen = saccadeLengthDescriptiveStatistics.getPercentile(50);
+            this.stdOfSaccadeLen = saccadeLengthDescriptiveStatistics.getStandardDeviation();
+            this.meanSaccadeLen = saccadeLengthDescriptiveStatistics.getMean();
         }
 
     }
@@ -177,12 +187,12 @@ public class GazeMetrics {
     }
     
     public void calculateRelativeDegreeMetaData() {
-        List<Double> relativeDegrees = new ArrayList<>();
+        double[] relativeDegrees = new double[this.saccades.size() - 1];
 
         for (int i = 1; i < this.saccades.size(); ++i) {
             Double relativeDegree = this.saccades.get(i-1).calculateRelativeAngle(this.saccades.get(i).getPointB());
             this.sumOfRelativeDegrees += relativeDegree;
-            relativeDegrees.add(relativeDegree);
+            relativeDegrees[i-1] = relativeDegree;
             
             if (relativeDegree < this.minRelativeDegree)
                 this.minRelativeDegree = relativeDegree;
@@ -191,20 +201,21 @@ public class GazeMetrics {
                 this.maxRelativeDegree = relativeDegree;
         }
 
-        if (relativeDegrees.size() > 0) {
-            this.stdOfRelativeDegrees = descriptiveStats.getStDevOfDoubles(relativeDegrees);
-            this.medianRelativeDegree = descriptiveStats.getMedianOfDoubles(relativeDegrees);
-            this.meanRelativeDegree = this.sumOfRelativeDegrees / relativeDegrees.size();
+        if (relativeDegrees.length > 0) {
+            DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics(relativeDegrees);
+            this.stdOfRelativeDegrees = descriptiveStatistics.getStandardDeviation();
+            this.medianRelativeDegree = descriptiveStatistics.getPercentile(50);
+            this.meanRelativeDegree = descriptiveStatistics.getMean();
         }
     }
     
     public void calculateAbsoluteDegreeMetaData() {
-        List<Double> absoluteDegrees = new ArrayList<>();
+        double[] absoluteDegrees = new double[this.saccades.size()];
 
         for (int i = 0; i < this.saccades.size(); ++i) {
             Double absoluteDegree = this.saccades.get(i).calculateAbsoluteAngle();
             this.sumOfAbsoluteDegrees += absoluteDegree;
-            absoluteDegrees.add(absoluteDegree);
+            absoluteDegrees[i] = absoluteDegree;
 
             if (absoluteDegree < this.minAbsoluteDegree)
                 this.minAbsoluteDegree = absoluteDegree;
@@ -213,10 +224,11 @@ public class GazeMetrics {
                 this.maxAbsoluteDegree = absoluteDegree;
         }
 
-        if (absoluteDegrees.size() > 0) {
-            this.stdOfAbsoluteDegrees = descriptiveStats.getStDevOfDoubles(absoluteDegrees);
-            this.medianAbsoluteDegree = descriptiveStats.getMedianOfDoubles(absoluteDegrees);
-            this.meanAbsoluteDegree = this.sumOfAbsoluteDegrees / absoluteDegrees.size();
+        if (absoluteDegrees.length > 0) {
+            DescriptiveStatistics descriptiveStatistics = new DescriptiveStatistics(absoluteDegrees);
+            this.stdOfAbsoluteDegrees = descriptiveStatistics.getStandardDeviation();
+            this.medianAbsoluteDegree = descriptiveStatistics.getPercentile(50);
+            this.meanAbsoluteDegree = descriptiveStatistics.getMean();
         }
     }
 

@@ -1,5 +1,7 @@
-python -m pip install gevent
-python -m pip install flask
-python -m pip install flask_script
-python -m pip install numpy
-python -m pip install tensorflow
+python -m pip install poetry
+python -m poetry install
+python -m poetry install gevent
+python -m poetry install flask
+python -m poetry install flask_script
+python -m poetry install numpy
+python -m poetry install tensorflow==2.10.0

@@ -18,10 +18,13 @@ public class LeftEyePupil {
     @JacksonXmlProperty(isAttribute = true, localName = "LPV")
     private boolean isValid;
 
-    public LeftEyePupil() {} //Default constructor for Jackson
+    /**
+     * Empty default constructor for Jackson Serialization
+     */
+    public LeftEyePupil() {}
 
     /**
-     *
+     * Pupil data for the left eye
      * @param x fraction of camera image size
      * @param y fraction of camera image size
      * @param diameter in pixels
@@ -52,24 +55,23 @@ public class LeftEyePupil {
                 Double.parseDouble(cells[lpdIndex]), Double.parseDouble(cells[lpsIndex]), cells[lpvIndex].equals("1"));
     }
 
+
     /**
-     * TODO, implement more accurate adaptlil.interpolation, right now we will do a simple linear inteprolation n diameters
-     * https://ieeexplore.ieee.org/document/9129915
-     * https://www.mathworks.com/help/matlab/ref/pchip.html
-     * @param a
-     * @param b
-     * @param steps
+     * Performs Linear interpolation nSteps LeftEyePupil elements between the first LeftEyePupil and the next LeftEyePupil
+     * @param firstLeftEyePupil
+     * @param nextLeftEyePupil
+     * @param nSteps
      * @return
      */
-    public LeftEyePupil[] interpolate(LeftEyePupil a, LeftEyePupil b, int steps) {
-        LeftEyePupil[] leftPupilInterpols = new LeftEyePupil[steps];
+    public LeftEyePupil[] interpolate(LeftEyePupil firstLeftEyePupil, LeftEyePupil nextLeftEyePupil, int nSteps) {
+        LeftEyePupil[] leftPupilInterpols = new LeftEyePupil[nSteps];
         Interpolation interpolation = new Interpolation();
-        double[] aCoords = new double[]{a.getX(), a.getY()};
-        double[] bCoords = new double[]{b.getX(), b.getY()};
-        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
-        double[] diameters = interpolation.interpolate(a.getDiameter(), b.getDiameter(), steps);
-        double[] scales = interpolation.interpolate(a.getScale(), b.getScale(), steps);
-        for (int i = 0; i < steps; ++i) {
+        double[] aCoords = new double[]{firstLeftEyePupil.getX(), firstLeftEyePupil.getY()};
+        double[] bCoords = new double[]{nextLeftEyePupil.getX(), nextLeftEyePupil.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, nSteps);
+        double[] diameters = interpolation.interpolate(firstLeftEyePupil.getDiameter(), nextLeftEyePupil.getDiameter(), nSteps);
+        double[] scales = interpolation.interpolate(firstLeftEyePupil.getScale(), nextLeftEyePupil.getScale(), nSteps);
+        for (int i = 0; i < nSteps; ++i) {
             LeftEyePupil c = new LeftEyePupil();
             c.setX(interpolCoords[i][0]);
             c.setY(interpolCoords[i][1]);
@@ -82,6 +84,7 @@ public class LeftEyePupil {
         return leftPupilInterpols;
     }
 
+
     /**
      * X-Coordinate of left eye
      * @param x fraction of camera image size
@@ -89,6 +92,7 @@ public class LeftEyePupil {
     public void setX(double x) {
         this.x = x;
     }
+
 
     /**
      * Y-Coordinate of left eye
@@ -98,6 +102,7 @@ public class LeftEyePupil {
         this.y = y;
     }
 
+
     /**
      * The diameter of the left eye pupil in pixels.
      * @param diameter in pixels
@@ -105,6 +110,7 @@ public class LeftEyePupil {
     public void setDiameter(double diameter) {
         this.diameter = diameter;
     }
+
 
     /**
      * The scale factor of the left eye pupil (unitless). Value equals 1 at calibration
@@ -115,9 +121,15 @@ public class LeftEyePupil {
         this.scale = scale;
     }
 
+
+    /**
+     *
+     * @param isValid
+     */
     public void setIsValid(boolean isValid) {
         this.isValid = isValid;
     }
+
 
     /**
      * The X-coordinate of the left eye pupil in the camera image, as a fraction
@@ -128,6 +140,7 @@ public class LeftEyePupil {
         return x;
     }
 
+
     /**
      * The Y-coordinate of the left eye pupil in the camera image, as a fraction
      * of the camera image size
@@ -137,6 +150,7 @@ public class LeftEyePupil {
         return y;
     }
 
+
     /**
      * The diameter of the left eye pupil in pixels.
      * @return double
@@ -144,6 +158,7 @@ public class LeftEyePupil {
     public double getDiameter() {
         return diameter;
     }
+
 
     /**
      * The scale factor of the left eye pupil (unitless). Value equals 1 at calibration
@@ -153,6 +168,7 @@ public class LeftEyePupil {
     public double getScale() {
         return scale;
     }
+
 
     /**
      * The valid flag with value of 1 if the data is valid, and 0 if it is not.

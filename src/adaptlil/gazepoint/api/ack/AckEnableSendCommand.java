@@ -15,6 +15,12 @@ public class AckEnableSendCommand  extends AckXml {
     @JacksonXmlProperty(isAttribute = true, localName ="STATE")
     public Boolean state;
 
+
+    /**
+     * Constrcutor 
+     * @param id
+     * @param state
+     */
     public AckEnableSendCommand(String id, boolean state) {
         super(id);
         this.state = state;

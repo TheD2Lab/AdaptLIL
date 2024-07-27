@@ -12,11 +12,20 @@ public class DeemphasisAdaptation extends Adaptation {
         super("deemphasis", state, styleConfig, strength);
     }
 
+    @Override
+    public void applyStyleChange(double stepAmount) {
+        if (!this.hasFlipped())
+            this.setStrength(this.getStrength() + stepAmount);
+        else
+            this.setStrength(this.getStrength() - stepAmount);
+    }
+
     public Map<String, String> getDefaultStyleConfig() {
         Map<String, String> defaultStyleConfig = new HashMap<>();
         defaultStyleConfig.put("opacity", "0.25");
 
         return defaultStyleConfig;
     }
+
 
 }

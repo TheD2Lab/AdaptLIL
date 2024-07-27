@@ -51,7 +51,25 @@ public class AsyncBuffer<T> {
         }
         return dataFromQueue;
     }
+    /**
+     * Flush the queue
+     */
+    public void flush() {
+        synchronized(this.dataQueue) {
+            this.reentrantLock.lock();
+            dataQueue.clear();
+            this.reentrantLock.unlock();
+        }
+    }
 
+    public int size() {
+        synchronized (this.dataQueue) {
+            this.reentrantLock.lock();
+            int size = this.dataQueue.size();
+            this.reentrantLock.unlock();
+            return size;
+        }
+    }
     public boolean isEmpty() {
         return this.dataQueue.isEmpty();
     }

@@ -13,9 +13,15 @@ public class ColorAdaptation extends Adaptation{
     }
 
     @Override
+    public void applyStyleChange(double stepAmount) {
+        if (!this.hasFlipped())
+            this.setStrength(this.getStrength() + stepAmount);
+        else
+            this.setStrength(this.getStrength() - stepAmount);
+    }
+
+    @Override
     public Map<String, String> getDefaultStyleConfig() {
-        //  'map_to_hidden_color': '#FF0000',
-        //            'map_to_not_hidden_color' : '#00FFFF',
         return Map.ofEntries(
                 new AbstractMap.SimpleEntry<>("map_to_hidden_color", "#FF0000"),
                 new AbstractMap.SimpleEntry<>("map_to_not_hidden_Color", "#00FFFF")

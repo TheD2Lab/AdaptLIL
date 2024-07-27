@@ -222,7 +222,7 @@ public class Main {
         System.out.println("Connected to GP3");
         System.out.println("Starting Data Stream via thread");
         gazepointSocket.startGazeDataStream();
-        gazepointSocket.write((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true))));
+        gazepointSocket.writeToGazepointSocket((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true))));
 
         return gazepointSocket;
 

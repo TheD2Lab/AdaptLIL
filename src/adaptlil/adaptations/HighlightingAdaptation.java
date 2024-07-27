@@ -18,7 +18,13 @@ public class HighlightingAdaptation extends Adaptation {
         return null;
     }
 
-
+    @Override
+    public void applyStyleChange(double stepAmount) {
+        if (!this.hasFlipped())
+            this.setStrength(this.getStrength() + stepAmount);
+        else
+            this.setStrength(this.getStrength() - stepAmount);
+    }
 
 
 }

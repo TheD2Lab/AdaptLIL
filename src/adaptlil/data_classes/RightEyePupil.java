@@ -19,7 +19,13 @@ public class RightEyePupil {
     @JacksonXmlProperty(isAttribute = true, localName = "RPV")
     private boolean isValid;
 
-    public RightEyePupil() {} //Default constructor for Jackson
+
+    /**
+     * Default constructor for Jackson Serialization
+     */
+    public RightEyePupil() {}
+
+
     /**
      *
      * @param x fraction of camera image size
@@ -36,6 +42,18 @@ public class RightEyePupil {
         this.isValid = isValid;
     }
 
+
+    /**
+     * Constructs a RightEyePupil Object from an excel row as specified by gazepoint api. The index arguments correspond to the
+     * column rows of cells argument.
+     * @param rpcxIndex
+     * @param rpcyIndex
+     * @param rpsIndex
+     * @param rpdIndex
+     * @param rpvIndex
+     * @param cells
+     * @return
+     */
     public static RightEyePupil getRightEyePupilFromCsvLine(int rpcxIndex, int rpcyIndex, int rpsIndex, int rpdIndex, int rpvIndex, String[] cells) {
         return new RightEyePupil(Double.parseDouble(cells[rpcxIndex]),
                 Double.parseDouble(cells[rpcyIndex]),
@@ -45,23 +63,21 @@ public class RightEyePupil {
     }
 
     /**
-     * TODO, implement more accurate adaptlil.interpolation, right now we will do a simple linear inteprolation n diameters
-     * https://ieeexplore.ieee.org/document/9129915
-     * https://www.mathworks.com/help/matlab/ref/pchip.html
-     * @param a
-     * @param b
-     * @param steps
+     * Performs Linear interpolation nSteps RightEyePupil elements between the first RightEyePupil and the next RightEyePupil
+     * @param firstRightEyePupil
+     * @param nextRightEyePupil
+     * @param nSteps
      * @return
      */
-    public RightEyePupil[] interpolate(RightEyePupil a, RightEyePupil b, int steps) {
-        RightEyePupil[] rightPupilInterpols = new RightEyePupil[steps];
+    public RightEyePupil[] interpolate(RightEyePupil firstRightEyePupil, RightEyePupil nextRightEyePupil, int nSteps) {
+        RightEyePupil[] rightPupilInterpols = new RightEyePupil[nSteps];
         Interpolation interpolation = new Interpolation();
-        double[] aCoords = new double[]{a.getX(), a.getY()};
-        double[] bCoords = new double[]{b.getX(), b.getY()};
-        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
-        double[] diameters = interpolation.interpolate(a.getDiameter(), b.getDiameter(), steps);
-        double[] scales = interpolation.interpolate(a.getScale(), b.getScale(), steps);
-        for (int i = 0; i < steps; ++i) {
+        double[] aCoords = new double[]{firstRightEyePupil.getX(), firstRightEyePupil.getY()};
+        double[] bCoords = new double[]{nextRightEyePupil.getX(), nextRightEyePupil.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, nSteps);
+        double[] diameters = interpolation.interpolate(firstRightEyePupil.getDiameter(), nextRightEyePupil.getDiameter(), nSteps);
+        double[] scales = interpolation.interpolate(firstRightEyePupil.getScale(), nextRightEyePupil.getScale(), nSteps);
+        for (int i = 0; i < nSteps; ++i) {
             RightEyePupil c = new RightEyePupil();
             c.setX(interpolCoords[i][0]);
             c.setY(interpolCoords[i][1]);
@@ -74,6 +90,7 @@ public class RightEyePupil {
         return rightPupilInterpols;
     }
 
+
     /**
      * X-Coordinate of right eye
      * @param x fraction of camera image size
@@ -81,6 +98,7 @@ public class RightEyePupil {
     public void setX(double x) {
         this.x = x;
     }
+
 
     /**
      * Y-Coordinate of right eye
@@ -90,6 +108,7 @@ public class RightEyePupil {
         this.y = y;
     }
 
+
     /**
      * The diameter of the right eye pupil in pixels.
      * @param diameter in pixels
@@ -97,6 +116,7 @@ public class RightEyePupil {
     public void setDiameter(double diameter) {
         this.diameter = diameter;
     }
+
 
     /**
      * The scale factor of the right eye pupil (unitless). Value equals 1 at calibration
@@ -107,9 +127,14 @@ public class RightEyePupil {
         this.scale = scale;
     }
 
+    /**
+     * Set the validation flag to signify packet corruption.
+     * @param isValid
+     */
     public void setIsValid(boolean isValid) {
         this.isValid = isValid;
     }
+
 
     /**
      * The X-coordinate of the right eye pupil in the camera image, as a fraction
@@ -120,6 +145,7 @@ public class RightEyePupil {
         return x;
     }
 
+
     /**
      * The Y-coordinate of the right eye pupil in the camera image, as a fraction
      * of the camera image size
@@ -129,6 +155,7 @@ public class RightEyePupil {
         return y;
     }
 
+
     /**
      * The diameter of the right eye pupil in pixels.
      * @return float
@@ -136,6 +163,7 @@ public class RightEyePupil {
     public double getDiameter() {
         return diameter;
     }
+
 
     /**
      * The scale factor of the right eye pupil (unitless). Value equals 1 at calibration
@@ -145,6 +173,7 @@ public class RightEyePupil {
     public double getScale() {
         return scale;
     }
+
 
     /**
      * The valid flag with value of 1 if the data is valid, and 0 if it is not.

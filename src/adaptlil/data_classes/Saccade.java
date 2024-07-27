@@ -32,30 +32,6 @@ public class Saccade {
         this.length = length;
     }
 
-    public void setDuration(double duration) {
-        this.duration = duration;
-    }
-
-    public void setLength(double length) {
-        this.length = length;
-    }
-
-
-    public double getDuration() {
-        return duration;
-    }
-
-    public double getLength() {
-        return length;
-    }
-
-    public Point2D.Double getPointA() {
-        return pointA;
-    }
-
-    public Point2D.Double getPointB() {
-        return pointB;
-    }
 
     /**
      * Given a saccade c, the relative angle from this saccade to the saccade c is calculated
@@ -90,7 +66,7 @@ public class Saccade {
             //when A, B and C are all in a straight line, either horizontally or vertically
             relativeDegree = 180.0;
 
-        }else if(firstDifferenceInX==0.0 && secondDifferenceInY<0.0){
+        } else if(firstDifferenceInX==0.0 && secondDifferenceInY<0.0){
             //when A&B are in a straight vertial line, C is to the lower (left or right) of B
             double secondSlope = Math.abs(secondDifferenceInX)/Math.abs(secondDifferenceInY);
             //returns the arctangent of a number as a value between -PI/2 and PI/2 radians
@@ -101,14 +77,14 @@ public class Saccade {
             relativeDegree =  180.0 - secondDegree;
 
 
-        }else if(firstDifferenceInX==0.0 && secondDifferenceInY>0.0){
+        } else if(firstDifferenceInX==0.0 && secondDifferenceInY>0.0){
             //when A&B are in a straight vertical line, C is to the upper (left or right) of B
             double secondSlope = Math.abs(secondDifferenceInX)/Math.abs(secondDifferenceInY);
             double secondArctangent = Math.atan(secondSlope);
             relativeDegree = Math.toDegrees(secondArctangent);
 
 
-        }else if(secondDifferenceInX==0.0 && firstDifferenceInY<0.0){
+        } else if(secondDifferenceInX==0.0 && firstDifferenceInY<0.0){
             //when B&C are in a stright vertical line, A is to the upper (left or right) of B
             double firstSlope = Math.abs(firstDifferenceInX)/Math.abs(firstDifferenceInY);
             //returns the arctangent of a number as a value between -PI/2 and PI/2 radians
@@ -118,28 +94,28 @@ public class Saccade {
             relativeDegree = 180.0 - firstDegree;
 
 
-        }else if(secondDifferenceInX==0.0 && firstDifferenceInY>0.0){
+        } else if(secondDifferenceInX==0.0 && firstDifferenceInY>0.0){
             //when B&C are in a straight vertical line, A is to the lower (left or right) of B
             double firstSlope = Math.abs(firstDifferenceInX)/Math.abs(firstDifferenceInY);
             double firstArctangent = Math.atan(firstSlope);
             relativeDegree = Math.toDegrees(firstArctangent);
 
 
-        }else if(firstDifferenceInY==0.0 && secondDifferenceInX<0.0){
+        } else if(firstDifferenceInY==0.0 && secondDifferenceInX<0.0){
             //when A&B are in a straight horizontal line, C is to the lower left of B (note if C is to the lower right of B, it is included in the last if-else statement below)
             double secondSlope = Math.abs(secondDifferenceInY)/Math.abs(secondDifferenceInX);
             double secondArctangent = Math.atan(secondSlope);
             relativeDegree = Math.toDegrees(secondArctangent);
 
 
-        }else if(secondDifferenceInY==0.0 && firstDifferenceInX<0.0){
+        } else if(secondDifferenceInY==0.0 && firstDifferenceInX<0.0){
             //when B&C are in a straight horizontal line, A is to the upper right of B (note if A is to the upper left of B, it is included in the last if-else statement below)
             double firstSlop = Math.abs(firstDifferenceInY)/Math.abs(firstDifferenceInX);
             double firstArctangent = Math.atan(firstSlop);
             relativeDegree = Math.toDegrees(firstArctangent);
 
 
-        }else{
+        } else {
             //all other regular cases where A, B and C are spread from one another; and
             //when A&B are in a straight horizontal line, C is to the lower right of B; and
             //when B&C are in a straight horizontal line, A is to the upper left of B.
@@ -188,5 +164,30 @@ public class Saccade {
         }
 
         return absoluteDegree;
+    }
+
+
+    public void setDuration(double duration) {
+        this.duration = duration;
+    }
+
+    public void setLength(double length) {
+        this.length = length;
+    }
+
+    public double getDuration() {
+        return duration;
+    }
+
+    public double getLength() {
+        return length;
+    }
+
+    public Point2D.Double getPointA() {
+        return pointA;
+    }
+
+    public Point2D.Double getPointB() {
+        return pointB;
     }
 }

@@ -8,12 +8,22 @@ import adaptlil.serialization_helpers.IntToBooleanDeserializer;
 
 public class LeftEyePointOfGaze {
 
-
-    //Default constructor for jackson
-    public LeftEyePointOfGaze() {}
+    @JacksonXmlProperty(isAttribute = true, localName = "LPOGX")
+    private double x;
+    @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
+    private double y;
+    @IgnoreWekaAttribute
+    @JsonDeserialize(using = IntToBooleanDeserializer.class)
+    @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
+    private boolean isValid;
 
     /**
      *
+     */
+    public LeftEyePointOfGaze() {}  //Default constructor for jackson
+
+    /**
+     * LeftEyePointOfGaze is where the left eye is currently looking on the screen.
      * @param x The X-coordinate of the left eye POG, as a fraction of the screen size.
      * @param y The Y-coordinate of the left eye POG, as a fraction of the screen size.
      * @param isValid Flag that details if the tracker data is valid or not
@@ -23,15 +33,6 @@ public class LeftEyePointOfGaze {
         this.y = y;
         this.isValid = isValid;
     }
-
-    @JacksonXmlProperty(isAttribute = true, localName = "LPOGX")
-    private double x;
-    @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
-    private double y;
-    @IgnoreWekaAttribute
-    @JsonDeserialize(using = IntToBooleanDeserializer.class)
-    @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
-    private boolean isValid;
 
     /**
      * The X-coordinate of the left eye POG, as a fraction of the screen size.
@@ -80,22 +81,27 @@ public class LeftEyePointOfGaze {
     public boolean isValid() {
         return isValid;
     }
-
     /**
-     *
-     * @param a
-     * @param b
-     * @param steps
+     * @param firstBestPointOfGaze
+     * @param nextBestPointOfGaze
+     * @param nSteps Number of BestPointofGaze packets to interpolate between.
      * @return
      */
-    public LeftEyePointOfGaze[] interpolate(LeftEyePointOfGaze a, LeftEyePointOfGaze b, int steps) {
+    /**
+     * Performs Linear interpolation nSteps LeftEyePointOfGaze elements between the first LeftEyePointOfGaze and the next LeftEyePointOfGaze
+     * @param firstLeftEyePointOfGaze
+     * @param nextLeftEyePointOfGaze
+     * @param nSteps
+     * @return
+     */
+    public LeftEyePointOfGaze[] interpolate(LeftEyePointOfGaze firstLeftEyePointOfGaze, LeftEyePointOfGaze nextLeftEyePointOfGaze, int nSteps) {
         Interpolation interpolation = new Interpolation();
-        LeftEyePointOfGaze[] leftEyeInterpols = new LeftEyePointOfGaze[steps];
-        double[] aCoords = new double[]{a.getX(), a.getY()};
-        double[] bCoords = new double[]{b.getX(), b.getY()};
-        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
+        LeftEyePointOfGaze[] leftEyeInterpols = new LeftEyePointOfGaze[nSteps];
+        double[] aCoords = new double[]{firstLeftEyePointOfGaze.getX(), firstLeftEyePointOfGaze.getY()};
+        double[] bCoords = new double[]{nextLeftEyePointOfGaze.getX(), nextLeftEyePointOfGaze.getY()};
+        double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, nSteps);
 
-        for (int i = 0; i < steps; ++i) {
+        for (int i = 0; i < nSteps; ++i) {
             LeftEyePointOfGaze c = new LeftEyePointOfGaze();
             c.setX(interpolCoords[i][0]);
             c.setY(interpolCoords[i][1]);

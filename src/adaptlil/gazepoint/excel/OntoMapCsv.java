@@ -1,8 +1,8 @@
-package ontomap;
+package adaptlil.gazepoint.excel;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import data_classes.*;
+import adaptlil.data_classes.*;
 import adaptlil.GazeWindow;
 import adaptlil.gazepoint.api.recv.RecXml;
 import weka.core.*;

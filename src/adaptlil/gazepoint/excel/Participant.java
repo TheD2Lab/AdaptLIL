@@ -1,4 +1,4 @@
-package ontomap;
+package adaptlil.gazepoint.excel;
 
 import java.io.File;
 

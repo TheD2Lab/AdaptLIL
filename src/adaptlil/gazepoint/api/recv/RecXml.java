@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import data_classes.*;
+import adaptlil.data_classes.*;
 import adaptlil.gazepoint.api.XmlObject;
 import adaptlil.serialization_helpers.IntToBooleanDeserializer;
 
@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Implements GazeAPI for real time processing of gaze data.
  * public class attributes are used to convert this object to a WEKA instance for machine learning.
- * private attributes are generally data_classes that mirror the GazeAPI for a more 'best-practice' development experience
+ * private attributes are generally adaptlil.data_classes that mirror the GazeAPI for a more 'best-practice' development experience
  * <REC CNT="238465" FPOGX="0.18760" FPOGY="0.78100" FPOGS="1603.46423" FPOGD="0.08008" FPOGID="2078" FPOGV="1" BKID="0" BKDUR="0.00000" BKPMIN="15" DIAL="0.00000" DIALV="0" HR="0.00000" HRV="0" />
  * Looks ike gaze api doesnt send different rec templates where we have to map.
  * It sends one single rec element with unique attribute ids for each command set.

@@ -1,4 +1,4 @@
-package data_classes;
+package adaptlil.data_classes;
 
 
 import adaptlil.annotations.IgnoreWekaAttribute;
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-import interpolation.Interpolation;
+import adaptlil.interpolation.Interpolation;
 import adaptlil.serialization_helpers.IntToBooleanDeserializer;
 
 import java.awt.geom.Point2D;
@@ -111,7 +111,7 @@ public class Fixation {
     }
 
     /**
-     * Right now this is simple linear interpolation, view academic research on most accurate estimations
+     * Right now this is simple linear adaptlil.interpolation, view academic research on most accurate estimations
 
      * @param a
      * @param b

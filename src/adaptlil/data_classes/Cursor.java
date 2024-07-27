@@ -1,4 +1,4 @@
-package data_classes;
+package adaptlil.data_classes;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 

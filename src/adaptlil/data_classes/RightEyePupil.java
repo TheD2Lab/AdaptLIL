@@ -1,8 +1,8 @@
-package data_classes;
+package adaptlil.data_classes;
 
 import adaptlil.annotations.IgnoreWekaAttribute;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import interpolation.Interpolation;
+import adaptlil.interpolation.Interpolation;
 
 public class RightEyePupil {
 
@@ -45,7 +45,7 @@ public class RightEyePupil {
     }
 
     /**
-     * TODO, implement more accurate interpolation, right now we will do a simple linear inteprolation n diameters
+     * TODO, implement more accurate adaptlil.interpolation, right now we will do a simple linear inteprolation n diameters
      * https://ieeexplore.ieee.org/document/9129915
      * https://www.mathworks.com/help/matlab/ref/pchip.html
      * @param a

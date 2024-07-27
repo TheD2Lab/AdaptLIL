@@ -1,4 +1,4 @@
-package geometry;
+package adaptlil.data_classes.geometry;
 
 public class Cartesian2D {
     protected float x;

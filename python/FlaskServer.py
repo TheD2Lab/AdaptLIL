@@ -18,7 +18,7 @@ app = Flask(__name__)
 
 class DeepLearningClassifierEndpoint:
     def __init__(self):
-        self.modelDir = os.path.join('models')
+        self.modelDir = os.path.join('deep_learning_models')
         self.modelName = None
         pass
 

@@ -1,7 +1,4 @@
-package interpolation;
-
-import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
-import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
+package adaptlil.interpolation;
 
 public class Interpolation {
     public Interpolation() {}

@@ -1,6 +1,6 @@
 package adaptlil.gazepoint.api;
 
-import ontomap.OntoMapCsv;
+import adaptlil.gazepoint.excel.OntoMapCsv;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;

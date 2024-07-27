@@ -1,8 +1,8 @@
-package ontomap;
+package adaptlil.gazepoint.excel;
 
 import adaptlil.annotations.IgnoreWekaAttribute;
-import data_classes.Fixation;
-import data_classes.Saccade;
+import adaptlil.data_classes.Fixation;
+import adaptlil.data_classes.Saccade;
 
 import java.util.List;
 

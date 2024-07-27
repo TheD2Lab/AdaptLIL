@@ -1,9 +1,9 @@
 package adaptlil;
 
 import adaptlil.annotations.IgnoreWekaAttribute;
-import ontomap.GazeMetrics;
-import data_classes.Fixation;
-import data_classes.Saccade;
+import adaptlil.gazepoint.excel.GazeMetrics;
+import adaptlil.data_classes.Fixation;
+import adaptlil.data_classes.Saccade;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import adaptlil.gazepoint.api.recv.RecXml;
@@ -51,7 +51,7 @@ public class GazeWindow implements Component {
 
 
     /**
-     * Linear interpolation to fill in any values that may be flagged as invalid by the eyetracker. This applies to all attributes in the RecXmlObject
+     * Linear adaptlil.interpolation to fill in any values that may be flagged as invalid by the eyetracker. This applies to all attributes in the RecXmlObject
      */
     public void interpolateMissingValues() {
         int invalidIndex = -1;
@@ -84,7 +84,7 @@ public class GazeWindow implements Component {
                     invalidIndex = i;
                 }
 
-                //Add to list of invalid objects for interpolation
+                //Add to list of invalid objects for adaptlil.interpolation
                 invalidObjects.add(this.gazeBuffer[i]);
             }
 

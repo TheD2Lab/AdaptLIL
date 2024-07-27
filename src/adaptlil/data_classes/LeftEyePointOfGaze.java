@@ -1,46 +1,49 @@
-package data_classes;
+package adaptlil.data_classes;
 
 import adaptlil.annotations.IgnoreWekaAttribute;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import interpolation.Interpolation;
+import adaptlil.interpolation.Interpolation;
+import adaptlil.serialization_helpers.IntToBooleanDeserializer;
 
-public class RightEyePointOfGaze {
+public class LeftEyePointOfGaze {
+
 
     //Default constructor for jackson
-    public RightEyePointOfGaze() {}
+    public LeftEyePointOfGaze() {}
 
     /**
      *
-     * @param x The X-coordinate of the right eye POG, as a fraction of the screen size.
-     * @param y The Y-coordinate of the right eye POG, as a fraction of the screen size.
+     * @param x The X-coordinate of the left eye POG, as a fraction of the screen size.
+     * @param y The Y-coordinate of the left eye POG, as a fraction of the screen size.
      * @param isValid Flag that details if the tracker data is valid or not
      */
-    public RightEyePointOfGaze(double x, double y, boolean isValid) {
+    public LeftEyePointOfGaze(double x, double y, boolean isValid) {
         this.x = x;
         this.y = y;
         this.isValid = isValid;
     }
 
-    @JacksonXmlProperty(isAttribute = true, localName = "RPOGX")
+    @JacksonXmlProperty(isAttribute = true, localName = "LPOGX")
     private double x;
-    @JacksonXmlProperty(isAttribute = true, localName = "RPOGY")
+    @JacksonXmlProperty(isAttribute = true, localName = "LPOGY")
     private double y;
-
     @IgnoreWekaAttribute
-    @JacksonXmlProperty(isAttribute = true, localName = "RPOGV")
+    @JsonDeserialize(using = IntToBooleanDeserializer.class)
+    @JacksonXmlProperty(isAttribute = true, localName = "LPOGV")
     private boolean isValid;
 
     /**
-     * The X-coordinate of the right eye POG, as a fraction of the screen size.
-     * @param x X-coordinate of the right eye POG, as a fraction of the screen size.
+     * The X-coordinate of the left eye POG, as a fraction of the screen size.
+     * @param x X-coordinate of the left eye POG, as a fraction of the screen size.
      */
     public void setX(double x) {
         this.x = x;
     }
 
     /**
-     * The Y-coordinate of the right eye POG, as a fraction of the screen size.
-     * @param y Y-coordinate of the right eye POG, as a fraction of the screen size.
+     * The Y-coordinate of the left eye POG, as a fraction of the screen size.
+     * @param y Y-coordinate of the left eye POG, as a fraction of the screen size.
      */
 
     public void setY(double y) {
@@ -56,7 +59,7 @@ public class RightEyePointOfGaze {
     }
 
     /**
-     * The X-coordinate of the right eye POG, as a fraction of the screen size.
+     * The X-coordinate of the left eye POG, as a fraction of the screen size.
      * @return double
      */
     public double getX() {
@@ -64,7 +67,7 @@ public class RightEyePointOfGaze {
     }
 
     /**
-     * The Y-coordinate of the right eye POG, as a fraction of the screen size.
+     * The Y-coordinate of the left eye POG, as a fraction of the screen size.
      * @return double
      */
     public double getY() {
@@ -85,20 +88,20 @@ public class RightEyePointOfGaze {
      * @param steps
      * @return
      */
-    public RightEyePointOfGaze[] interpolate(RightEyePointOfGaze a, RightEyePointOfGaze b, int steps) {
+    public LeftEyePointOfGaze[] interpolate(LeftEyePointOfGaze a, LeftEyePointOfGaze b, int steps) {
         Interpolation interpolation = new Interpolation();
-        RightEyePointOfGaze[] rightEyeInterpols = new RightEyePointOfGaze[steps];
+        LeftEyePointOfGaze[] leftEyeInterpols = new LeftEyePointOfGaze[steps];
         double[] aCoords = new double[]{a.getX(), a.getY()};
         double[] bCoords = new double[]{b.getX(), b.getY()};
         double[][] interpolCoords = interpolation.interpolate(aCoords, bCoords, steps);
 
         for (int i = 0; i < steps; ++i) {
-            RightEyePointOfGaze c = new RightEyePointOfGaze();
+            LeftEyePointOfGaze c = new LeftEyePointOfGaze();
             c.setX(interpolCoords[i][0]);
             c.setY(interpolCoords[i][1]);
             c.setValid(true);
-            rightEyeInterpols[i] = c;
+            leftEyeInterpols[i] = c;
         }
-        return rightEyeInterpols;
+        return leftEyeInterpols;
     }
 }

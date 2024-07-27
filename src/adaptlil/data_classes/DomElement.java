@@ -1,6 +1,6 @@
-package data_classes;
+package adaptlil.data_classes;
 
-import geometry.Shape;
+import adaptlil.data_classes.geometry.Shape;
 
 public class DomElement {
     private String id;

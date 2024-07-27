@@ -1,4 +1,4 @@
-package geometry;
+package adaptlil.data_classes.geometry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

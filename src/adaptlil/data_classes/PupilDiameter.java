@@ -1,8 +1,8 @@
-package data_classes;
+package adaptlil.data_classes;
 
 import adaptlil.annotations.IgnoreWekaAttribute;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import interpolation.Interpolation;
+import adaptlil.interpolation.Interpolation;
 
 public class PupilDiameter {
 

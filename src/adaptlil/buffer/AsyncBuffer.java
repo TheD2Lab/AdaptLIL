@@ -2,6 +2,10 @@ package adaptlil.buffer;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Generically typed buffer that supports Asynchronous operations.
+ * @param <T>
+ */
 public class AsyncBuffer<T> {
     final LinkedList<T> dataQueue = new LinkedList<>();
     private ReentrantLock reentrantLock;
@@ -47,7 +51,25 @@ public class AsyncBuffer<T> {
         }
         return dataFromQueue;
     }
+    /**
+     * Flush the queue
+     */
+    public void flush() {
+        synchronized(this.dataQueue) {
+            this.reentrantLock.lock();
+            dataQueue.clear();
+            this.reentrantLock.unlock();
+        }
+    }
 
+    public int size() {
+        synchronized (this.dataQueue) {
+            this.reentrantLock.lock();
+            int size = this.dataQueue.size();
+            this.reentrantLock.unlock();
+            return size;
+        }
+    }
     public boolean isEmpty() {
         return this.dataQueue.isEmpty();
     }

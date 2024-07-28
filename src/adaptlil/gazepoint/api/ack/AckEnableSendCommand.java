@@ -6,12 +6,21 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import adaptlil.serialization_helpers.IntToBooleanDeserializer;
 
 @JacksonXmlRootElement(localName = "ACK")
-public class AckEnableSendCommand  extends AckXmlObject {
+/**
+ * Serialization class to convert Gazepoint <ACK></ACK> to plain old java objects.
+ */
+public class AckEnableSendCommand  extends AckXml {
 
     @JsonDeserialize(using = IntToBooleanDeserializer.class)
     @JacksonXmlProperty(isAttribute = true, localName ="STATE")
     public Boolean state;
 
+
+    /**
+     * Constrcutor 
+     * @param id
+     * @param state
+     */
     public AckEnableSendCommand(String id, boolean state) {
         super(id);
         this.state = state;

@@ -3,7 +3,7 @@ package adaptlil.gazepoint.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import adaptlil.gazepoint.api.ack.AckXmlObject;
+import adaptlil.gazepoint.api.ack.AckXml;
 import adaptlil.gazepoint.api.recv.*;
 
 import java.util.ArrayList;
@@ -31,15 +31,15 @@ public class GazeApiCommands {
      * the command will be.
      * @return
      */
-    public static List<Class<? extends RecXmlObject>> getRecCommands() {
-        ArrayList<Class<? extends RecXmlObject>> recCommandList = new ArrayList<>();
-        recCommandList.add(RecXmlObject.class);
+    public static List<Class<? extends RecXml>> getRecCommands() {
+        ArrayList<Class<? extends RecXml>> recCommandList = new ArrayList<>();
+        recCommandList.add(RecXml.class);
         return recCommandList;
     }
 
-    public static List<Class<? extends AckXmlObject>> getAckCommands() {
-        ArrayList<Class<? extends AckXmlObject>> ackCommandList = new ArrayList<>();
-        ackCommandList.add(AckXmlObject.class);
+    public static List<Class<? extends AckXml>> getAckCommands() {
+        ArrayList<Class<? extends AckXml>> ackCommandList = new ArrayList<>();
+        ackCommandList.add(AckXml.class);
         return ackCommandList;
     }
 
@@ -54,24 +54,24 @@ public class GazeApiCommands {
      * @return
      */
     public static XmlObject mapToXmlObject(String xml) {
-        RecXmlObject recXmlObject;
+        RecXml recXml;
 
-        for (Class<? extends RecXmlObject> recXmlClass : GazeApiCommands.getRecCommands()) {
+        for (Class<? extends RecXml> recXmlClass : GazeApiCommands.getRecCommands()) {
             try {
-                recXmlObject = xmlMapper.readValue(xml, recXmlClass);
+                recXml = xmlMapper.readValue(xml, recXmlClass);
                 //If we reach here, no exception throw, return object as it found a match
-                return recXmlObject;
+                return recXml;
             } catch (JsonProcessingException e) {
                 //Do nothing, continue trying to parse
                 //Not optimal but hey, let's just get it working
             }
         }
 
-        for (Class<? extends AckXmlObject> ackXmlClass : GazeApiCommands.getAckCommands()) {
+        for (Class<? extends AckXml> ackXmlClass : GazeApiCommands.getAckCommands()) {
             try {
-                AckXmlObject ackXmlObject = xmlMapper.readValue(xml, ackXmlClass);
+                AckXml ackXml = xmlMapper.readValue(xml, ackXmlClass);
                 //Finally found w.o exception being thrown
-                return ackXmlObject;
+                return ackXml;
             } catch (JsonProcessingException e) {
                 //Do nothing continue searching for a matching ackXml Object
             }

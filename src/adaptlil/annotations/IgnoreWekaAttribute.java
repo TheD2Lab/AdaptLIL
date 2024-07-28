@@ -1,3 +1,4 @@
+
 package adaptlil.annotations;
 
 import java.lang.annotation.ElementType;
@@ -7,6 +8,10 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface IgnoreWekaAttribute {
+/**
+ * Annotation class used to ignore auto conversion to WEKA attributes.
+ */
 
+public @interface IgnoreWekaAttribute {
+    //Intentionally left empty
 }

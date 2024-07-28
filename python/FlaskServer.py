@@ -18,13 +18,13 @@ app = Flask(__name__)
 
 class DeepLearningClassifierEndpoint:
     def __init__(self):
-        self.modelDir = os.path.join('models')
+        self.modelDir = os.path.join('deep_learning_models')
         self.modelName = None
         pass
 
     def loadModel(self, modelName):
         self.modelName = modelName
-        self.model = tf.keras.models.load_model(os.path.join(self.modelDir, modelName))
+        self.model = tf.keras.models.load_model(os.path.join(self.modelDir, modelName), compile=False)
 
     def predict(self, data):
         if (self.model):

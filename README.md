@@ -23,7 +23,7 @@ mvn package
 ```
 4. The backend is now compiled and can be ran with:
 ```
-java -jar target/iav-ontology-*.0-bin.jar
+java -jar target/adaptlil-*.0-bin.jar
 ```
 5. Launch and calibrate gazepoint
 6. Open the frontend visualization located in web/index.html

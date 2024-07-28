@@ -11,7 +11,7 @@
     <properties>
         <exec.mainClass>MNISTCUDNN</exec.mainClass>
         <dl4j-master.version>1.0.0-M2.1</dl4j-master.version>
-        <logback.version>1.2.3</logback.version>
+        <logback.version>1.2.13</logback.version>
         <nd4j.backend>nd4j-native</nd4j.backend>
         <nd4j.version>1.0.0-M2.1</nd4j.version>
         <jersey.version>3.1.2</jersey.version>
@@ -181,17 +181,12 @@
             <artifactId>javaee-api</artifactId>
             <version>8.0.1</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.nd4j</groupId>-->
-<!--            <artifactId>nd4j-cuda-11.6</artifactId>-->
-<!--            <version>1.0.0-M2.1</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.nd4j</groupId>-->
-<!--            <artifactId>nd4j-cuda-11.6</artifactId>-->
-<!--            <version>1.0.0-M2.1</version>-->
-<!--            <classifier>${os.detected.arch}-cudnn</classifier>-->
-<!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math4-core -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math4-core</artifactId>
+            <version>4.0-beta1</version>
+        </dependency>
     </dependencies>
 
     <build>

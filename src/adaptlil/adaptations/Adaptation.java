@@ -1,9 +1,12 @@
 package adaptlil.adaptations;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 
+/**
+ * Abstract class for Adaptations. When making an adaptation in the AdaptLIL Architecture, following this abstract
+ * class structure allows for an easier implementation with the rest of the system.
+ */
 public abstract class Adaptation {
 
     private String type;
@@ -16,6 +19,13 @@ public abstract class Adaptation {
     private boolean hasFlipped = false;
 
 
+    /**
+     *
+     * @param type
+     * @param state
+     * @param styleConfig A map containing CSS style name and it's corresponding string value.
+     * @param strength
+     */
     public Adaptation(String type, boolean state, Map<String, String> styleConfig, double strength) {
         this.type = type;
         this.state = state;
@@ -27,9 +37,23 @@ public abstract class Adaptation {
         this.strength = strength;
     }
 
+    /**
+     * Used by mediator to flag that the Adaptation is currently selected and under observation for changes
+     * @param beingObservedByMediator
+     */
     public void setBeingObservedByMediator(boolean beingObservedByMediator) {
         isBeingObservedByMediator = beingObservedByMediator;
     }
+
+    public void flipDirection() {
+        this.hasFlipped = !this.hasFlipped;
+    }
+
+    /**
+     * Applies style change as specified by the stepAmount
+     * @param stepAmount
+     */
+    public abstract void applyStyleChange(double stepAmount);
 
     public void setType(String type) {
         this.type = type;
@@ -49,6 +73,10 @@ public abstract class Adaptation {
 
     public abstract Map<String, String> getDefaultStyleConfig();
 
+    /**
+     *
+     * @return
+     */
     @JsonProperty("isBeingObservedByMediator")
     public boolean isBeingObservedByMediator() {
         return isBeingObservedByMediator;
@@ -82,14 +110,5 @@ public abstract class Adaptation {
         return hasFlipped;
     }
 
-    public void flipDirection() {
-        this.hasFlipped = !this.hasFlipped;
-    }
 
-    public void applyStyleChange(double stepAmount) {
-        if (!hasFlipped)
-            this.setStrength(this.getStrength() + stepAmount);
-        else
-            this.setStrength(this.getStrength() - stepAmount);
-    }
 }

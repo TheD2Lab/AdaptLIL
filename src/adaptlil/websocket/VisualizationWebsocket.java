@@ -60,7 +60,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
       try {
           if (invokeRequest.name.equals("adaptation")) {
               AdaptationInvokeRequestModelWs adaptationInvokeRequest = (AdaptationInvokeRequestModelWs) invokeRequest;
-              Main.logFile.logLine("adaptation invoke," +adaptationInvokeRequest.adaptation.getType()+ "," + adaptationInvokeRequest.adaptation.getStrength()+","+ System.currentTimeMillis());
+              Main.adaptationLogFile.logLine("adaptation invoke," +adaptationInvokeRequest.adaptation.getType()+ "," + adaptationInvokeRequest.adaptation.getStrength()+","+ System.currentTimeMillis());
               this.send(this.objectMapper.writeValueAsString(adaptationInvokeRequest));
           }
       } catch (JsonProcessingException e) {

@@ -9,7 +9,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import adaptlil.GazeWindow;
 import adaptlil.websocket.VisualizationWebsocket;
 import adaptlil.gazepoint.api.GazepointSocket;
-import adaptlil.gazepoint.api.recv.RecXmlObject;
+import adaptlil.gazepoint.api.recv.RecXml;
 import adaptlil.http.KerasServerCore;
 import adaptlil.websocket.request.AdaptationInvokeRequestModelWs;
 
@@ -18,6 +18,9 @@ import java.util.*;
 /**
  * Loosely follows Mediator/Facade design pattern of a subsystem of components. It directs and controls how the adaptovis.adaptations are invoked and altered, how they are sent to the
  * frontend, and the classification that occurs by analyzing the gaze window.
+ *
+ * TODO:
+ * Tidy up to better map # classifications/conditions -> rule-based selection process.
  */
 public class AdaptationMediator extends Mediator {
     private VisualizationWebsocket websocket;
@@ -80,10 +83,10 @@ public class AdaptationMediator extends Mediator {
                 this.gazepointSocket.getGazeDataQueue().flush();
             }
 
-            RecXmlObject recXmlObject = this.gazepointSocket.readGazeDataFromBuffer();
+            RecXml recXml = this.gazepointSocket.readGazeDataFromBuffer();
 
             //Add to windows for task
-            this.gazeWindow.add(recXmlObject);
+            this.gazeWindow.add(recXml);
 
 
             if (gazeWindow.isFull()) { //Likely change to a time series roll
@@ -113,7 +116,7 @@ public class AdaptationMediator extends Mediator {
                     Double probability = kerasServerCore.predict(classificationInput).getOutput().getDouble(0);
                     Integer classificationResult = probability >= 0.5 ? 1 : 0;
                             //kerasServerCore.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
-                    Main.logFile.logLine("Prediction," +probability + "," +classificationResult+","+ System.currentTimeMillis());
+                    Main.adaptationLogFile.logLine("Prediction," +probability + "," +classificationResult+","+ System.currentTimeMillis());
                     System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
                     classifications[classificationIndex++] = classificationResult;
                     Integer participantWrongOrRight = null;
@@ -128,7 +131,7 @@ public class AdaptationMediator extends Mediator {
                             if (classifications[i] == 1)
                                 numClassOne++;
                         System.out.println("# class of 1: " + numClassOne);
-                        Main.logFile.logLine("#Classifications," +numClassOne + "/5,"+ System.currentTimeMillis());
+                        Main.adaptationLogFile.logLine("#Classifications," +numClassOne + "/5,"+ System.currentTimeMillis());
 
                         score = (double) numClassOne / classifications.length;
                         this.invokeAdaptation(score);

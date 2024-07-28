@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.bytedeco:librealsense:1.12.4-1.5.7" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.bytedeco" artifactId="librealsense" version="1.12.4-1.5.7" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/librealsense/1.12.4-1.5.7/librealsense-1.12.4-1.5.7.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/librealsense/1.12.4-1.5.7/librealsense-1.12.4-1.5.7-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/librealsense/1.12.4-1.5.7/librealsense-1.12.4-1.5.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

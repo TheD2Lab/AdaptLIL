@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.bytedeco:javacpp:1.5.9" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.bytedeco" artifactId="javacpp" version="1.5.9" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.9/javacpp-1.5.9.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.9/javacpp-1.5.9-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.9/javacpp-1.5.9-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

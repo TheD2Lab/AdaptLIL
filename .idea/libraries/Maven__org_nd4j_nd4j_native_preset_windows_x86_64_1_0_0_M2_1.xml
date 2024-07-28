@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.nd4j:nd4j-native-preset:windows-x86_64:1.0.0-M2.1" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.nd4j" artifactId="nd4j-native-preset" version="1.0.0-M2.1" classifier="windows-x86_64" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/nd4j/nd4j-native-preset/1.0.0-M2.1/nd4j-native-preset-1.0.0-M2.1-windows-x86_64.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/nd4j/nd4j-native-preset/1.0.0-M2.1/nd4j-native-preset-1.0.0-M2.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/nd4j/nd4j-native-preset/1.0.0-M2.1/nd4j-native-preset-1.0.0-M2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

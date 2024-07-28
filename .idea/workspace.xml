@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="SCOPE_TYPE" value="8" />
+    <option name="CUSTOM_SCOPE_NAME" value="Unnamed" />
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="cd65def4-2429-4792-a15e-515e2581d93f" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="NamedScopeManager">
+    <scope name="Src" pattern="file[adaptlil]:src/adaptations/*||file[adaptlil]:src/analysis/*||file[adaptlil]:src/analysis/data_classification/*||file[adaptlil]:src/analysis/ontomap/*||file[adaptlil]:src/data_classes/*||file[adaptlil]:src/geometry/*||file[adaptlil]:src/interpolation/*||file[adaptlil]:src/server/*||file[adaptlil]:src/server/buffer/*||file[adaptlil]:src/server/gazepoint/api/*||file[adaptlil]:src/server/gazepoint/api/ack/*||file[adaptlil]:src/server/gazepoint/api/get/*||file[adaptlil]:src/server/gazepoint/api/recv/*||file[adaptlil]:src/server/gazepoint/api/set/*||file[adaptlil]:src/server/http/*||file[adaptlil]:src/server/http/endpoints/*||file[adaptlil]:src/server/http/request/*||file[adaptlil]:src/server/http/response/*||file[adaptlil]:src/server/serialization_helpers/*||file[adaptlil]:src/server/websocket/request/*||file[adaptlil]:src/server/websocket/response/*||file[adaptlil]:src/tests/AOI_tests/*||file[adaptlil]:src/tests/AOI_tests/expected_output/*||file[adaptlil]:src/wekaext/*||file[adaptlil]:src/wekaext/annotations/*||file[adaptlil]:python/*||file[adaptlil]:src/adaptations//*||file[adaptlil]:src/analysis//*||file[adaptlil]:src/analysis/data_classification//*||file[adaptlil]:src/analysis/ontomap//*||file[adaptlil]:src/data_classes//*||file[adaptlil]:src/geometry//*||file[adaptlil]:src/interpolation//*||file[adaptlil]:src/server//*||file[adaptlil]:src/server/buffer//*||file[adaptlil]:src/server/gazepoint/api//*||file[adaptlil]:src/server/gazepoint/api/ack//*||file[adaptlil]:src/server/gazepoint/api/get//*||file[adaptlil]:src/server/gazepoint/api/recv//*||file[adaptlil]:src/server/gazepoint/api/set//*||file[adaptlil]:src/server/http//*||file[adaptlil]:src/server/http/endpoints//*||file[adaptlil]:src/server/http/request//*||file[adaptlil]:src/server/http/response//*||file[adaptlil]:src/server/serialization_helpers//*||file[adaptlil]:src/server/websocket/request//*||file[adaptlil]:src/server/websocket/response//*||file[adaptlil]:src/tests/AOI_tests//*||file[adaptlil]:src/tests/AOI_tests/expected_output//*||file[adaptlil]:src/wekaext//*||file[adaptlil]:src/wekaext/annotations//*||file[adaptlil]:python//*" />
+    <scope name="Unnamed" pattern="src:adaptlil..*" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="2jrLinyePIBxooDcCx8SzVA4zGR" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "F:/adaptlil/src",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.18034.62" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.18034.62" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="cd65def4-2429-4792-a15e-515e2581d93f" name="Changes" comment="" />
+      <created>1722140379629</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1722140379629</updated>
+      <workItem from="1722140381650" duration="861000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

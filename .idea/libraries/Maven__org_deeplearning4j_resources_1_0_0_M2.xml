@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.deeplearning4j:resources:1.0.0-M2" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.deeplearning4j" artifactId="resources" version="1.0.0-M2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/deeplearning4j/resources/1.0.0-M2/resources-1.0.0-M2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/deeplearning4j/resources/1.0.0-M2/resources-1.0.0-M2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/deeplearning4j/resources/1.0.0-M2/resources-1.0.0-M2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: com.github.fommil.netlib:netlib-native_ref-win-i686:natives:1.1" type="java-imported" external-system-id="Maven">
+    <properties groupId="com.github.fommil.netlib" artifactId="netlib-native_ref-win-i686" version="1.1" classifier="natives" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

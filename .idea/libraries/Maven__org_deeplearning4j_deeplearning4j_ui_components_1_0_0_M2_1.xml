@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.deeplearning4j:deeplearning4j-ui-components:1.0.0-M2.1" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.deeplearning4j" artifactId="deeplearning4j-ui-components" version="1.0.0-M2.1" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/deeplearning4j/deeplearning4j-ui-components/1.0.0-M2.1/deeplearning4j-ui-components-1.0.0-M2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/deeplearning4j/deeplearning4j-ui-components/1.0.0-M2.1/deeplearning4j-ui-components-1.0.0-M2.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/deeplearning4j/deeplearning4j-ui-components/1.0.0-M2.1/deeplearning4j-ui-components-1.0.0-M2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

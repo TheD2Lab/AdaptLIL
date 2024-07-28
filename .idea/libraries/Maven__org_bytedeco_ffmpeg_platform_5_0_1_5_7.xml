@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.bytedeco:ffmpeg-platform:5.0-1.5.7" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.bytedeco" artifactId="ffmpeg-platform" version="5.0-1.5.7" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg-platform/5.0-1.5.7/ffmpeg-platform-5.0-1.5.7.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg-platform/5.0-1.5.7/ffmpeg-platform-5.0-1.5.7-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg-platform/5.0-1.5.7/ffmpeg-platform-5.0-1.5.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.bytedeco:openblas:ios-arm64:0.3.23-1.5.9" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.bytedeco" artifactId="openblas" version="0.3.23-1.5.9" classifier="ios-arm64" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/openblas/0.3.23-1.5.9/openblas-0.3.23-1.5.9-ios-arm64.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/openblas/0.3.23-1.5.9/openblas-0.3.23-1.5.9-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/openblas/0.3.23-1.5.9/openblas-0.3.23-1.5.9-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

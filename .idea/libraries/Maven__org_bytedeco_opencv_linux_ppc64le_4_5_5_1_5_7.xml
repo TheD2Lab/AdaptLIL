@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.bytedeco:opencv:linux-ppc64le:4.5.5-1.5.7" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.bytedeco" artifactId="opencv" version="4.5.5-1.5.7" classifier="linux-ppc64le" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/opencv/4.5.5-1.5.7/opencv-4.5.5-1.5.7-linux-ppc64le.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/opencv/4.5.5-1.5.7/opencv-4.5.5-1.5.7-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/opencv/4.5.5-1.5.7/opencv-4.5.5-1.5.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

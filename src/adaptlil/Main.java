@@ -23,7 +23,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -38,8 +37,8 @@ public class Main {
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
     public static double currentTime = System.currentTimeMillis();
-    public static SimpleLogger adaptationLogFile = new SimpleLogger(new File("AdaptationOutput_" +currentTime));
-    public static SimpleLogger runTimeLogfile = new SimpleLogger(new File("RunTime"+currentTime));
+    public static SimpleLogger adaptationLogFile;
+    public static SimpleLogger runTimeLogfile;
     public static boolean hasKerasServerAckd = false;
     public static String modelName = "transformer_model_channels.h5";
     public static String gazepointHostName = "localhost";
@@ -50,15 +49,17 @@ public class Main {
 
     public static void main(String[] args) {
         preloadND4J();
+        Main.initLoggers();
+
+        //TODO
+        //Replace with python kill command.
         Thread printingHook = new Thread(() -> Main.ShutDownFunction());
         Runtime.getRuntime().addShutdownHook(printingHook);
 
-        adaptationLogFile.logLine("App Ran at," + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))) + "," + System.currentTimeMillis());
+        adaptationLogFile.logLine("App Ran at," + adaptationLogFile.getDateTimeStamp() + "," + System.currentTimeMillis());
         runTimeLogfile.printAndLog("Beginning GP3 Real-Time Prototype Stream");
 
         //Give adaptation mediator the keras endpoint
-        runTimeLogfile.printAndLog("Loaded keras model : " + modelName);
-        runTimeLogfile.printAndLog("Starting grizzly HTTP server");
         Main.initHttpServerAndWebSocketPort();
 
         runTimeLogfile.printAndLog("returned back to main thread after init http --- locking thread");
@@ -94,6 +95,23 @@ public class Main {
         }
     }
 
+
+    /**
+     * Creates folder for loggers and intializes them.
+     * resulting directory /logs/System.currentTimeMillis()
+     */
+    private static void initLoggers() {
+        Long currentTime = System.currentTimeMillis();
+        File logDir = new File(Paths.get("logs", currentTime.toString()).toString());
+
+
+        if (logDir.mkdirs()) {
+            Main.adaptationLogFile = new SimpleLogger(new File(Paths.get(logDir.toString(), "AdaptationOutput_" + currentTime).toString()));
+            Main.runTimeLogfile = new SimpleLogger(new File(Paths.get(logDir.toString(), "RunTime" + currentTime).toString()));
+        } else {
+            throw new RuntimeException("Exception occured making the directory for logging");
+        }
+    }
     
 
     public static void execKerasServerAck() {
@@ -107,21 +125,17 @@ public class Main {
             //Make POST request to keras endpoint
             kerasServerCore.loadKerasModel(modelName);
 
-            runTimeLogfile.printAndLog("Initialized HTTP Server & WebSocket port");
-            runTimeLogfile.printAndLog("Starting gp3 socket");
-            GazepointSocket gazepointSocket = initGP3Socket(simulateGazepointServer);
-            runTimeLogfile.printAndLog("Initializing VisualizationWebsocket");
+            GazepointSocket gazepointSocket = initGazepointSocket(simulateGazepointServer);
             VisualizationWebsocket visualizationWebsocket = initVisualizationWebsocket();
-            runTimeLogfile.printAndLog(" initialized VisualizationWebsocket");
-            adaptationLogFile.logLine("Websocket Connected at," + Main.getDateTimeStamp() + "," + System.currentTimeMillis());
+            adaptationLogFile.logLine("Websocket Connected at," + adaptationLogFile.getDateTimeStamp() + "," + System.currentTimeMillis());
 
 
             runTimeLogfile.printAndLog("Starting gaze window");
             GazeWindow gazeWindow = initGazeWindow(gazeWindowSizeInMilliseconds);
             runTimeLogfile.printAndLog("Initialized gaze window");
             runTimeLogfile.printAndLog("Building AdaptationMediator");
-            AdaptationMediator adaptationMediator = initAdapationMediator(visualizationWebsocket, gazepointSocket, kerasServerCore, gazeWindow);
-            adaptationLogFile.logLine("Mediator started at: " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))) + System.currentTimeMillis());
+            AdaptationMediator adaptationMediator = initAdaptationMediator(visualizationWebsocket, gazepointSocket, kerasServerCore, gazeWindow);
+            adaptationLogFile.logLine("Mediator started at: " + adaptationLogFile.getDateTimeStamp() + "," + System.currentTimeMillis());
 
             runTimeLogfile.printAndLog("Constructed AdaptationMediator");
             runTimeLogfile.printAndLog("Main thread access goes to adaptationMediator.");
@@ -182,6 +196,8 @@ public class Main {
      * https://javaee.github.io/grizzly/websockets.html
      */
     public static HttpServer initHttpServerAndWebSocketPort() {
+        runTimeLogfile.printAndLog("Starting grizzly HTTP server");
+
         URI uri = UriBuilder.fromUri("http://" + url).port(port).build();
 
         ResourceConfig rc = new ResourceConfig().packages("adaptlil.http.endpoints");
@@ -191,12 +207,11 @@ public class Main {
 
         final WebSocketAddOn addon = new WebSocketAddOn();
 
-
         server.getListener("grizzly").registerAddOn(addon);
 
         try {
             server.start();
-            runTimeLogfile.printAndLog("Websocket started on  " + url + ":" + port);
+            runTimeLogfile.printAndLog("Http Server started on  " + url + ":" + port);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -205,27 +220,36 @@ public class Main {
     }
 
     public static VisualizationWebsocket initVisualizationWebsocket() {
+        runTimeLogfile.printAndLog("Initializing VisualizationWebsocket");
 
         VisualizationWebsocket visWebSocket = new VisualizationWebsocket();
         WebSocketEngine.getEngine().register("", "/gaze", visWebSocket);
+
+        runTimeLogfile.printAndLog(" initialized VisualizationWebsocket");
+
         return visWebSocket;
 
     }
 
-    public static GazepointSocket initGP3Socket(boolean simulateGazepointServer) throws IOException, CsvValidationException {
-        XmlMapper mapper = new XmlMapper();
-        Path curPath = Paths.get("");
+    public static GazepointSocket initGazepointSocket(boolean simulateGazepointServer) throws IOException, CsvValidationException {
+        runTimeLogfile.printAndLog("Starting Socket to connect to Gazepoint eye tracker");
 
-        File gazeFile = new File(curPath.resolve("User 0_all_gaze.csv").toAbsolutePath().toString());
+        XmlMapper mapper = new XmlMapper();
+
         if (simulateGazepointServer) {
+            Path curPath = Paths.get("");
+
+            File gazeFile = new File(curPath.resolve("User 0_all_gaze.csv").toAbsolutePath().toString());
+
             GazepointSimulationServer simulationServer = new GazepointSimulationServer(gazepointHostName, gazepointPort, gazeFile, true);
             Thread serverSimThread = new Thread(simulationServer);
             serverSimThread.start();
         }
+
         GazepointSocket gazepointSocket = new GazepointSocket(gazepointHostName, gazepointPort);
         gazepointSocket.connect();
-        runTimeLogfile.printAndLog("Connected to GP3");
-        runTimeLogfile.printAndLog("Starting Data Stream via thread");
+        runTimeLogfile.printAndLog("Connected to gazepoint eye tracker");
+
         gazepointSocket.startGazeDataStream();
         gazepointSocket.writeToGazepointSocket((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true))));
 
@@ -238,7 +262,7 @@ public class Main {
         return new GazeWindow(windowSizeInMilliseconds);
     }
 
-    public static AdaptationMediator initAdapationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, KerasServerCore kerasServerCore, GazeWindow window) {
+    public static AdaptationMediator initAdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, KerasServerCore kerasServerCore, GazeWindow window) {
         return new AdaptationMediator(websocket, gazepointSocket, kerasServerCore, window, Main.numSequencesForClassification);
     }
 
@@ -253,12 +277,4 @@ public class Main {
 
     }
 
-
-    /**
-     * Return the current date and time formatted to yyyy-mm-dd hh:mm:ss
-     * @return
-     */
-    private static String getDateTimeStamp() {
-        return (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis()))));
-    }
 }

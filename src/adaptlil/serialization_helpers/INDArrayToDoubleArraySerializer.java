@@ -9,31 +9,14 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class INDArraySerializer extends JsonSerializer<INDArray> {
 
-    byte[] toByteArray(double val) {
-        byte[] bytes = new byte[8];
-        ByteBuffer.wrap(bytes).putDouble(val);
-        return bytes;
-    }
+/**
+ * Serializes an INDArray to a byte array
+ */
+public class INDArrayToDoubleArraySerializer extends JsonSerializer<INDArray> {
 
-    //TODO comment
-    byte[] toByteArray(double[] vals) {
-        byte[] byteVals = new byte[vals.length * 8];
-        int k = 0;
-        for (int i = 0; i < vals.length; ++i) {
-            byte[] valToBytes = toByteArray(vals[i]);
-            for (int j = 0; j < valToBytes.length; ++j) {
-
-                byteVals[k] = valToBytes[j];
-                ++k;
-            }
-        }
-        return byteVals;
-    }
     /**
      * Converts an INDArray to a byte array for serialization by Jackson
      * @param indArray Value to serialize; can <b>not</b> be null.
@@ -55,7 +38,6 @@ public class INDArraySerializer extends JsonSerializer<INDArray> {
         //byte[] byteArray = internalDataBuffer.asBytes();
         double[] doubles = internalDataBuffer.asDouble();
         System.out.println(Arrays.toString(doubles));
-        byte[] bytes = this.toByteArray(doubles);
 
         jsonGenerator.writeArray(doubles, 0, doubles.length);
 

@@ -22,16 +22,19 @@ import java.util.Set;
 public class VisualizationWebsocket extends WebSocketApplication implements Component {
 
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     protected boolean hasResponded = false;
     private AdaptationMediator mediator;
 
 
+    /**
+     * Constructs websocket object.
+     */
     public VisualizationWebsocket() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
     }
+
 
     /**
      * Calls parent method onConnect
@@ -40,6 +43,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
     public void onConnect(WebSocket socket) {
         super.onConnect(socket);
     }
+
 
     /**
      * Listener/method invoked when socket receives a message.
@@ -50,6 +54,7 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
     public void onMessage(WebSocket socket, String msg) {
         this.hasResponded = true;
     }
+
 
     /**
      * Use this to send adaptovis.adaptations to the frontend
@@ -79,12 +84,15 @@ public class VisualizationWebsocket extends WebSocketApplication implements Comp
         }
     }
 
-    public Set<WebSocket> getWebSockets() {
-        return super.getWebSockets();
-    }
+
     public void onClose(WebSocket socket, DataFrame frame) {
         super.onClose(socket, frame);
-        System.out.println("Closing session...");
+        Main.runTimeLogfile.printAndLog("Closing session...");
+    }
+
+
+    public Set<WebSocket> getWebSockets() {
+        return super.getWebSockets();
     }
 
     @Override

@@ -1,10 +1,11 @@
 package adaptlil;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class SimpleLogger {
     private File outputfile;
-    private BufferedInputStream inputStream;
     private BufferedWriter outputWriter;
 
     /**
@@ -36,21 +37,39 @@ public class SimpleLogger {
     }
 
     /**
-     * Print to System.out and log the line argument in this SimpleLogger's file.
+     * Print line to System.out and log the line in this SimpleLogger's file w/ option to disable prependTimestamp.
      * @param line
      */
-    public void printAndLog(String line) {
-        this.printAndLog(line, System.out);
+    public void printAndLog(String line, boolean disablePrependedTimestamp) {
+        this.printAndLog(line, System.out, disablePrependedTimestamp);
     }
 
     /**
-     *
+     * Prepends timestamp and print line to System.out and log the line in this SimpleLogger's file.
+     * @param line
+     */
+    public void printAndLog(String line) {
+        this.printAndLog(line, System.out, true);
+    }
+    /**
+     * Prints w/ timestamp prepended
      * @param line String to output to the stream and to log in SimpleLogger's log file
      * @param outStream Specify Printstream to output line to
      */
-    public void printAndLog(String line, PrintStream outStream) {
-        this.logLine(line);
+    private void printAndLog(String line, PrintStream outStream, boolean disablePrependTimestamp) {
+        if (disablePrependTimestamp)
+            this.logLine("["+System.currentTimeMillis() + '|' + this.getDateTimeStamp() + "]:" + line);
+        else
+            this.logLine(line);
         outStream.println(line);
+    }
+
+    /**
+     * Return the current date and time formatted to yyyy-mm-dd hh:mm:ss
+     * @return
+     */
+    public String getDateTimeStamp() {
+        return (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis()))));
     }
 
 }

@@ -1,3 +1,6 @@
+The purpose of using poetry is to "Freeze" the modules here. If you need to update the dependencies, you're going to have a bad time.
+
+
 Sorry for the mess that is the training of this model.
 Anyways, here is the newsetup for the final design change.
 Architecture:

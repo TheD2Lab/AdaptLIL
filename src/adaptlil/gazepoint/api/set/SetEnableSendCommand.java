@@ -7,7 +7,8 @@ import adaptlil.serialization_helpers.BooleanToIntSerializer;
 
 @JacksonXmlRootElement(localName = "SET")
 /**
- * Used to tell gazepoint device to send specified data.
+ * Used to tell gazepoint device to send specified data in the form
+ * <SET id="SetEnableSendCommand.id" state=setEnableSendCommand.state"></SET>
  */
 public class SetEnableSendCommand extends SetCommand {
 
@@ -17,6 +18,14 @@ public class SetEnableSendCommand extends SetCommand {
 
     public SetEnableSendCommand() {}
 
+
+    /**
+     * Used to tell gazepoint device to send specified data in the form
+     * <SET id="SetEnableSendCommand.id" state=setEnableSendCommand.state"></SET>
+     * Using this command will enable the remaining <REC></REC> packets to contain the specified attribute via 'id' argument.
+     * @param id
+     * @param state
+     */
     public SetEnableSendCommand(String id, Boolean state) {
         super(id);
         this.state = state;

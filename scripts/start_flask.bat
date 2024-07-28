@@ -1,7 +1,9 @@
 ECHO ON
 ECHO "Starting python server via batch script"
-CALL conda activate gaze_metrics
-ECHO "calling python"
-CALL python python/FlaskServer.py
+CALL cd python
+ECHO "Updating poetry dependencies"
+CALL python -m poetry update
+ECHO "Starting flask server"
+CALL python -m poetry run python FlaskServer.py
 PAUSE
-ECHO "exiting script?"
+ECHO "Flask server initialized."

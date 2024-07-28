@@ -2,6 +2,9 @@ package adaptlil.gazepoint.excel;
 
 import java.io.File;
 
+/**
+ * Data structure class used to generate training data for deep learning models.
+ */
 public class Participant {
     private String id;
     private String visType;

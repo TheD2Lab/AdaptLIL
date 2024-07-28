@@ -77,12 +77,14 @@ public class GazeMetrics {
     public Double maxRelativeDegree = 0.0;
 
 
-
+    /**
+     * Constructor to calculate descriptive metrics for the specified fixations and saccades
+     * @param fixations
+     * @param saccades
+     */
     public GazeMetrics(List<Fixation> fixations, List<Saccade> saccades) {
-
         this.fixations = fixations;
         this.saccades = saccades;
-
         this.calculateDescriptiveMetrics();
 
     }

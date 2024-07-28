@@ -24,7 +24,7 @@ class DeepLearningClassifierEndpoint:
 
     def loadModel(self, modelName):
         self.modelName = modelName
-        self.model = tf.keras.models.load_model(os.path.join(self.modelDir, modelName))
+        self.model = tf.keras.models.load_model(os.path.join(self.modelDir, modelName), compile=False)
 
     def predict(self, data):
         if (self.model):

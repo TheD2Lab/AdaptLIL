@@ -15,7 +15,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * This is a hacky one time use to make training data for participants. This is really messy. please dont read it.
+ * This is a hacky one time use to make training data for participants. This file is for historic purposes and data replication.
+ * This is not intended for main use as it pertains to creating data for the deep learning model and is dependent on
+ * your goals.
  */
 public class OntoMapCsv {
 
@@ -35,20 +37,6 @@ public class OntoMapCsv {
                 "P57",
                 "P75",
                 "P66"
-//                "P43", //4 min on conf, 8 on anat
-//                "P51", //Spent 10 min in total
-//                "P63", //very poor eval score.
-//                "P52",
-//                "P48",
-//                "P54",
-//                "P78",
-//                "P15",
-//                "P67",
-//                "P77",
-//                "P69",
-//                "P13",
-//                "P37",
-//                "P35"
         );
     }
 
@@ -69,7 +57,7 @@ public class OntoMapCsv {
      * Excludes the discarded participants.
      * @param dir
      * @param isGazePointFolder
-     * @param filterForLinkedList
+     * @param filter
      * @return
      */
     private static Map<String, List<File>> mapParticipantsToStudyData(String dir, boolean isGazePointFolder, String filter) {
@@ -318,11 +306,7 @@ public class OntoMapCsv {
             GazeWindow participantWindow = new GazeWindow(windowSizeInMilliseconds);
 
 
-            File[] answersFiles = new File[]{
-                    p.getAnatomyAnswersFile()
-//            };
-                    ,
-                    p.getConfAnswersFile()};
+            File[] answersFiles = new File[]{ p.getAnatomyAnswersFile(), p.getConfAnswersFile() };
 
             for (File answerFile : answersFiles){
                 List<String> timeCutoffs = new ArrayList<>();
@@ -349,7 +333,7 @@ public class OntoMapCsv {
                 answersFileReader = new FileReader(answerFile);
                 answersCsvReader = new CSVReader(answersFileReader);
                 answersCsvReader.readNext(); //Skip first line.
-                System.out.println("time to completE: " + timeToComplete);
+
                 if (timeToComplete < 14)
                     continue;
 
@@ -369,11 +353,6 @@ public class OntoMapCsv {
                 answersFileReader.close();
                 answersCsvReader.close();
 
-                //Read fixation file
-                //@Nick
-                //TODO move this over to a method
-                //Input: fixxationFile, timecutoffs, wrong or rights, numWrong/numRight (validation)
-                //Output: Instance (train or test depends on participant id)
                 FileReader fixationFileReader = new FileReader(answerFile.equals(p.getAnatomyAnswersFile()) ? p.getAnatomyGazeFile() : p.getConfGazeFile());
                 CSVReader fixationCsvReader = new CSVReader(fixationFileReader);
 
@@ -391,7 +370,6 @@ public class OntoMapCsv {
 
 
                     boolean incrementCurrentQuestionIndexAfterLoopLogic = false;
-//                    System.out.println("timeCutOff: " + timeCutoff);
                     RecXml recXml = OntoMapCsv.getRecXmlObjectFromCells(headerRow, cells);
                     ++totalNumPackets;
                     //If we have any invalid flags, should we discard?

@@ -9,6 +9,7 @@ import adaptlil.data_classes.*;
 import adaptlil.gazepoint.api.XmlObject;
 import adaptlil.serialization_helpers.IntToBooleanDeserializer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -614,10 +615,24 @@ public class RecXml extends XmlObject {
     public void setTime(Double time) {
         this.time = time;
     }
-	
-    public RecXml[] interpolate(RecXml first, RecXml last, List<RecXml> unmodified, int steps){
+
+
+    /**
+     * Interpolates all data attributes of a RECXml object. This means if the packets contained BestPointofGaze and PupilDiameter,
+     * this function will interpolate those two attributes between the first packet and the last packet.
+     * @param first
+     * @param last
+     * @param packetsBetweenFirstAndLast Optional array. If only a few attributes of the packets between first and last are marked as invalid, we can
+     *                                   use this function to interpolate on those marked as invalid. Otherwise, if we leave this as null,
+     *                                   this function will interpolate ALL attributes for ALL packets between first and last.
+     * @param steps
+     * @return
+     */
+    public RecXml[] interpolate(RecXml first, RecXml last, List<RecXml> packetsBetweenFirstAndLast, int steps){
         RecXml[] interpolationObjs = new RecXml[steps];
         BestPointOfGaze[] bestPointOfGazes;
+
+
         if (first.getBestPointOfGaze() != null && last.getBestPointOfGaze() != null)
             bestPointOfGazes = first.getBestPointOfGaze().interpolate(first.getBestPointOfGaze(), last.getBestPointOfGaze(), steps);
         else
@@ -664,44 +679,44 @@ public class RecXml extends XmlObject {
 
         //Only interpolate on data attributes that are not valid
         for (int i = 0; i < steps; ++i) {
-            RecXml interpolatedRec = unmodified.get(i);
+            RecXml interpolatedRec = packetsBetweenFirstAndLast.get(i);
 
-            if ((unmodified.get(i).getFixation() == null || !unmodified.get(i).getFixation().isValid())) {
+            if ((packetsBetweenFirstAndLast.get(i).getFixation() == null || !packetsBetweenFirstAndLast.get(i).getFixation().isValid())) {
                 if (fixations != null)
                     interpolatedRec.setFixation(fixations[i]);
                 else
                     interpolatedRec.setFixation(null);
             }
 
-            if ((unmodified.get(i).getBestPointOfGaze() == null || !unmodified.get(i).getBestPointOfGaze().isValid())) {
+            if ((packetsBetweenFirstAndLast.get(i).getBestPointOfGaze() == null || !packetsBetweenFirstAndLast.get(i).getBestPointOfGaze().isValid())) {
                 if (bestPointOfGazes != null)
                     interpolatedRec.setBestPointOfGaze(bestPointOfGazes[i]);
                 else
                     interpolatedRec.setBestPointOfGaze(null);
             }
 
-            if ((unmodified.get(i).getLeftEyePupil() == null || !unmodified.get(i).getLeftEyePupil().isValid())) {
+            if ((packetsBetweenFirstAndLast.get(i).getLeftEyePupil() == null || !packetsBetweenFirstAndLast.get(i).getLeftEyePupil().isValid())) {
                 if (leftEyePupils != null)
                     interpolatedRec.setLeftEyePupil(leftEyePupils[i]);
                 else
                     interpolatedRec.setLeftEyePupil(null);
             }
 
-            if ((unmodified.get(i).getRightEyePupil() == null || !unmodified.get(i).getRightEyePupil().isValid())) {
+            if ((packetsBetweenFirstAndLast.get(i).getRightEyePupil() == null || !packetsBetweenFirstAndLast.get(i).getRightEyePupil().isValid())) {
                 if (rightEyePupils != null)
                     interpolatedRec.setRightEyePupil(rightEyePupils[i]);
                 else
                     interpolatedRec.setRightEyePupil(null);
             }
 
-            if ((unmodified.get(i).getLeftEyePointOfGaze() == null || !unmodified.get(i).getLeftEyePointOfGaze().isValid())) {
+            if ((packetsBetweenFirstAndLast.get(i).getLeftEyePointOfGaze() == null || !packetsBetweenFirstAndLast.get(i).getLeftEyePointOfGaze().isValid())) {
                 if (leftEyePointOfGazes != null)
                     interpolatedRec.setLeftEyePointOfGaze(leftEyePointOfGazes[i]);
                 else
                     interpolatedRec.setLeftEyePupil(null);
             }
 
-            if ((unmodified.get(i).getRightEyePointOfGaze() == null || !unmodified.get(i).getRightEyePointOfGaze().isValid())) {
+            if ((packetsBetweenFirstAndLast.get(i).getRightEyePointOfGaze() == null || !packetsBetweenFirstAndLast.get(i).getRightEyePointOfGaze().isValid())) {
                 if (rightEyePointOfGazes != null)
                     interpolatedRec.setRightEyePointOfGaze(rightEyePointOfGazes[i]);
                 else
@@ -709,8 +724,8 @@ public class RecXml extends XmlObject {
             }
 
             //This one will lead to reduced accuracy(though we don't use it in the current application)
-            //If someone stumbles upon this code, the ideal solution is to go into th einterpolation and have it only interpolate on left eye/right eye valid.
-            if (pupilDiameters != null  && ( unmodified.get(i).getPupilDiameter()== null || !unmodified.get(i).getPupilDiameter().isLeftEyeValid() || !unmodified.get(i).getPupilDiameter().isRightEyeValid())) {
+            //If someone stumbles upon this code, the ideal solution is to go into the interpolation and have it only interpolate on left eye/right eye valid.
+            if (pupilDiameters != null  && ( packetsBetweenFirstAndLast.get(i).getPupilDiameter()== null || !packetsBetweenFirstAndLast.get(i).getPupilDiameter().isLeftEyeValid() || !packetsBetweenFirstAndLast.get(i).getPupilDiameter().isRightEyeValid())) {
                 interpolatedRec.setPupilDiameter(pupilDiameters[i]);
             }
             

@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Main {
-    public static Main serverMain; //Singleton, keeps server alive
 
     public static final String url = "localhost";
     public static final int port = 8080;
@@ -38,11 +37,13 @@ public class Main {
     public static float gazeWindowSizeInMilliseconds = 1000;
     public static int numSequencesForClassification = 2;
     static boolean simulateGazepointServer = true;
-
-    public static SimpleLogger logFile = new SimpleLogger(new File("AdaptationOutput_" +System.currentTimeMillis()+".txt"));
+    public static double currentTime = System.currentTimeMillis();
+    public static SimpleLogger adaptationLogFile = new SimpleLogger(new File("AdaptationOutput_" +currentTime));
+    public static SimpleLogger runTimeLogfile = new SimpleLogger(new File("RunTime"+currentTime));
     public static boolean hasKerasServerAckd = false;
     public static String modelName = "transformer_model_channels.h5";
-
+    public static String gazepointHostName = "localhost";
+    public static int gazepointPort = 4242;
 
     //Used to block main thread from making a keras server load_modal before receiving an ACK
     public static final ReentrantLock mainThreadLock = new ReentrantLock();
@@ -52,16 +53,15 @@ public class Main {
         Thread printingHook = new Thread(() -> Main.ShutDownFunction());
         Runtime.getRuntime().addShutdownHook(printingHook);
 
-        logFile.logLine("App Ran at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
-        System.out.println("Beginning GP3 Real-Time Prototype Stream");
-        serverMain = new Main();
+        adaptationLogFile.logLine("App Ran at," + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))) + "," + System.currentTimeMillis());
+        runTimeLogfile.printAndLog("Beginning GP3 Real-Time Prototype Stream");
 
         //Give adaptation mediator the keras endpoint
-        System.out.println("Loaded keras model : " + modelName);
-        System.out.println("Starting grizzly HTTP server");
-        serverMain.initHttpServerAndWebSocketPort();
+        runTimeLogfile.printAndLog("Loaded keras model : " + modelName);
+        runTimeLogfile.printAndLog("Starting grizzly HTTP server");
+        Main.initHttpServerAndWebSocketPort();
 
-        System.out.println("returned back to main thread after init http --- locking thread");
+        runTimeLogfile.printAndLog("returned back to main thread after init http --- locking thread");
 
         try {
 
@@ -69,9 +69,9 @@ public class Main {
             Runnable runnable = ()-> {
                 long pid = 0;
                 try {
-                    System.out.println("starting keras server....");
+                    runTimeLogfile.printAndLog("starting keras server....");
                     pid = startKerasServer();
-                    System.out.println("pid: " + pid);
+                    runTimeLogfile.printAndLog("pid: " + pid);
                     Runtime.getRuntime().addShutdownHook(new KillPidThread(pid));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -86,7 +86,7 @@ public class Main {
                 while (!Main.hasKerasServerAckd) {
                     Main.mainThreadLock.wait();
                 }
-                System.out.println("retained access");
+                runTimeLogfile.printAndLog("retained access");
                 execKerasServerAck();
             }
         } catch (InterruptedException e) {
@@ -100,55 +100,62 @@ public class Main {
 
         try {
 
-            System.out.println("Started python server.");
-            System.out.println("Loading Classification Model: " + modelName);
+            runTimeLogfile.printAndLog("Started python server.");
+            runTimeLogfile.printAndLog("Loading Classification Model: " + modelName);
             KerasServerCore kerasServerCore = new KerasServerCore(pythonServerURL, pythonServerPort);
 
             //Make POST request to keras endpoint
             kerasServerCore.loadKerasModel(modelName);
 
-            System.out.println("Initialized HTTP Server & WebSocket port");
-            System.out.println("Starting gp3 socket");
+            runTimeLogfile.printAndLog("Initialized HTTP Server & WebSocket port");
+            runTimeLogfile.printAndLog("Starting gp3 socket");
             GazepointSocket gazepointSocket = initGP3Socket(simulateGazepointServer);
-            System.out.println("Initializing VisualizationWebsocket");
+            runTimeLogfile.printAndLog("Initializing VisualizationWebsocket");
             VisualizationWebsocket visualizationWebsocket = initVisualizationWebsocket();
-            System.out.println(" initialized VisualizationWebsocket");
-            logFile.logLine("Websocket Connected at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
+            runTimeLogfile.printAndLog(" initialized VisualizationWebsocket");
+            adaptationLogFile.logLine("Websocket Connected at," + Main.getDateTimeStamp() + "," + System.currentTimeMillis());
 
 
-            System.out.println("Starting gaze window");
+            runTimeLogfile.printAndLog("Starting gaze window");
             GazeWindow gazeWindow = initGazeWindow(gazeWindowSizeInMilliseconds);
-            System.out.println("Initialized gaze window");
-            System.out.println("Building AdaptationMediator");
+            runTimeLogfile.printAndLog("Initialized gaze window");
+            runTimeLogfile.printAndLog("Building AdaptationMediator");
             AdaptationMediator adaptationMediator = initAdapationMediator(visualizationWebsocket, gazepointSocket, kerasServerCore, gazeWindow);
-            logFile.logLine("Mediator started at: " + System.currentTimeMillis() + ", " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))));
+            adaptationLogFile.logLine("Mediator started at: " + (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis())))) + System.currentTimeMillis());
 
-            System.out.println("Constructed AdaptationMediator");
-            System.out.println("Main thread access goes to adaptationMediator.");
-            System.out.println("Sever stays alive by waiting for input so type anything to exit");
+            runTimeLogfile.printAndLog("Constructed AdaptationMediator");
+            runTimeLogfile.printAndLog("Main thread access goes to adaptationMediator.");
+            runTimeLogfile.printAndLog("Sever stays alive by waiting for input so type anything to exit");
             boolean runAdaptations = true;
             adaptationMediator.start();
-        } catch (IOException | CsvValidationException e) {
-            throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
+        } catch (IOException | CsvValidationException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<String> readProcessOutput(Process p) throws IOException { return readProcessOutput(p, false);}
 
-    public static List<String> readProcessOutput(Process p, boolean debug) throws IOException {
+
+    /**
+     * TODO
+     * This method and the next are confusing in terms of launch script.
+     * Needs to be cleaned up and tested.
+     * I believe this is used to output batch script strings
+     * Which if that is the case, we can still use it.
+     *
+     * @param p
+     * @throws IOException
+     */
+    public static void readProcessOutput(Process p) throws IOException {
         ArrayList<String> resultStrings = new ArrayList<>();
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        System.out.println("hi");
         String line = "";
-        while (true) {
+        while (line != null) {
             line = r.readLine();
-            resultStrings.add(line);
-            if (line == null) { break; }
-            System.out.println(line);
+            if (line != null) {
+                resultStrings.add(line);
+                runTimeLogfile.printAndLog(line);
+            }
         }
-        return resultStrings;
     }
 
 
@@ -159,7 +166,7 @@ public class Main {
      */
     public static long startKerasServer() throws IOException {
         //Start keras server from python script and wait for ACK from python that the server started.
-        System.out.println("Starting python server..");
+        runTimeLogfile.printAndLog("Starting python server..");
 
         //Launch batch script to start Python server.
         ProcessBuilder initPythonPBuilder = new ProcessBuilder( "scripts/start_flask.bat");
@@ -167,7 +174,7 @@ public class Main {
         initPythonPBuilder.redirectErrorStream(true);
 
         Process p = initPythonPBuilder.start();
-        serverMain.readProcessOutput(p);
+        Main.readProcessOutput(p);
         return p.pid();
     }
 
@@ -189,7 +196,7 @@ public class Main {
 
         try {
             server.start();
-            System.out.println("Websocket started on  " + url + ":" + port);
+            runTimeLogfile.printAndLog("Websocket started on  " + url + ":" + port);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -207,20 +214,18 @@ public class Main {
 
     public static GazepointSocket initGP3Socket(boolean simulateGazepointServer) throws IOException, CsvValidationException {
         XmlMapper mapper = new XmlMapper();
-        String gp3Hostname = "localhost";
-        int gp3Port = 4242;
         Path curPath = Paths.get("");
 
         File gazeFile = new File(curPath.resolve("User 0_all_gaze.csv").toAbsolutePath().toString());
         if (simulateGazepointServer) {
-            GazepointSimulationServer simulationServer = new GazepointSimulationServer(gp3Hostname, gp3Port, gazeFile, true);
+            GazepointSimulationServer simulationServer = new GazepointSimulationServer(gazepointHostName, gazepointPort, gazeFile, true);
             Thread serverSimThread = new Thread(simulationServer);
             serverSimThread.start();
         }
-        GazepointSocket gazepointSocket = new GazepointSocket(gp3Hostname, gp3Port);
+        GazepointSocket gazepointSocket = new GazepointSocket(gazepointHostName, gazepointPort);
         gazepointSocket.connect();
-        System.out.println("Connected to GP3");
-        System.out.println("Starting Data Stream via thread");
+        runTimeLogfile.printAndLog("Connected to GP3");
+        runTimeLogfile.printAndLog("Starting Data Stream via thread");
         gazepointSocket.startGazeDataStream();
         gazepointSocket.writeToGazepointSocket((mapper.writeValueAsString(new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true))));
 
@@ -246,5 +251,14 @@ public class Main {
 
     public static void ShutDownFunction() {
 
+    }
+
+
+    /**
+     * Return the current date and time formatted to yyyy-mm-dd hh:mm:ss
+     * @return
+     */
+    private static String getDateTimeStamp() {
+        return (new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format((new Date(System.currentTimeMillis()))));
     }
 }

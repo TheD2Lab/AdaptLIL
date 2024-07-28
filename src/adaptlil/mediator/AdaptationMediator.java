@@ -16,7 +16,7 @@ import adaptlil.websocket.request.AdaptationInvokeRequestModelWs;
 import java.util.*;
 
 /**
- * Loosely follows Mediator/Facade design pattern of a subsystem of components. It directs and controls how the adaptovis.adaptations are invoked and altered, how they are sent to the
+ * Loosely follows Mediator design pattern of a subsystem of components. It directs and controls how the adaptlil.adaptations are invoked and altered, how they are sent to the
  * frontend, and the classification that occurs by analyzing the gaze window.
  *
  * TODO:
@@ -37,8 +37,6 @@ public class AdaptationMediator extends Mediator {
     private double thresholdForInvokation;
     private double increaseStrengthThresh = 0.41; //TODO replace w/ # classifications
     private double remainThresh = 0.6; //TODO replace w/ # classifications
-    private double smallChangeThreshold = 0.20; // TODO replace w/ # classifications
-    private double bigChangeThreshold = 0.30; //TODO replace w/ # classifications
 
     private int numSequencesForClassification;
     private int newAdaptationStartSequenceIndex = 0;
@@ -56,19 +54,22 @@ public class AdaptationMediator extends Mediator {
         this.numSequencesForClassification = numSequencesForClassification;
     }
 
+
+    /**
+     * Starts the entire adaptation mediator process. GazeWindow data will be collected, predicted on, then processed through rule-based selection process and finally an adaptation
+     * will be invoked.
+     */
     public void start() {
         this.websocket.setMediator(this);
         this.gazepointSocket.setMediator(this);
-
-        //this.classifierModel.setMediator(this);
         this.gazeWindow.setMediator(this);
+
         boolean runAdapations = true;
         int numAttributes = 8;
         int frameCount = 0;
-        //Does this also need to run async? I think so.
-        //This will work as the synchronization between all objects as well.
+
         List<INDArray> gazeWindowINDArrays = new ArrayList<>(this.numSequencesForClassification);
-        System.out.println("mediator started");
+        Main.runTimeLogfile.printAndLog("mediator started");
         int[] classifications = new int[5];
         int classificationIndex = 0;
         while (runAdapations) {
@@ -77,68 +78,39 @@ public class AdaptationMediator extends Mediator {
             if (this.websocket.getWebSockets().isEmpty())
                 continue;
 
-            if (frameCount == 0) {
-
-                //Flush the gaze queue to make sure data is fresh!
+            if (frameCount == 0) //Flush the gaze queue to make sure data is fresh!
                 this.gazepointSocket.getGazeDataQueue().flush();
-            }
 
             RecXml recXml = this.gazepointSocket.readGazeDataFromBuffer();
 
             //Add to windows for task
             this.gazeWindow.add(recXml);
 
+            if (gazeWindow.isFull()) {
+                Main.runTimeLogfile.printAndLog("Gaze window full");
 
-            if (gazeWindow.isFull()) { //Likely change to a time series roll
-                //Verify this operation does not slow the real time significantly
                 gazeWindow.interpolateMissingValues();
-                System.out.println("Gaze window full");
-                //Get classification
+                gazeWindowINDArrays.add(gazeWindow.toINDArray(false));
 
-                //Request if Participant has finished a question and get their answer
-                //Must be recent and contained within the current window.
-                //Get last time used and current time.
-                INDArray gazeWindowInput = gazeWindow.toINDArray(false);
-                gazeWindowINDArrays.add(gazeWindowInput);
                 if (gazeWindowINDArrays.size() == this.numSequencesForClassification) {
                     this.curSequenceIndex++;
-                    System.out.println("Predicting...");
-                    //Error (can only insert a scalar in to another scalar
-                    //Find way to join
-                    INDArray classificationInput = Nd4j.stack(0, gazeWindowINDArrays.get(0), gazeWindowINDArrays.get(1)).reshape(
-                            new int[]{1, //Only feed 1 block of sequences at a time.
-                                    this.numSequencesForClassification, // Num sequences to feed\
+                    Main.runTimeLogfile.printAndLog("Predicting...");
 
-                                    (int) gazeWindowINDArrays.get(0).shape()[0], //Num attributes per sequence
+                    INDArray classificationInput = this.formatGazeWindowsToModelInput(gazeWindowINDArrays);
+                    int taskSuccessClassification = this.classifyTaskSuccess(classificationInput);
 
-                            });
-
-                    Double probability = kerasServerCore.predict(classificationInput).getOutput().getDouble(0);
-                    Integer classificationResult = probability >= 0.5 ? 1 : 0;
-                            //kerasServerCore.output(classificationInput)[0].getDouble(0) >= 0.5 ? 1 : 0;
-                    Main.adaptationLogFile.logLine("Prediction," +probability + "," +classificationResult+","+ System.currentTimeMillis());
-                    System.out.println("Sequence: " + classificationIndex + " predicted as: " + classificationResult);
-                    classifications[classificationIndex++] = classificationResult;
-                    Integer participantWrongOrRight = null;
-                    Float taskCompletionTime = null; //grab from websocket
+                    Main.runTimeLogfile.printAndLog("Sequence: " + classificationIndex + " predicted as: " + taskSuccessClassification);
+                    classifications[classificationIndex++] = taskSuccessClassification;
 
                     if (classificationIndex == classifications.length) {
-                        System.out.println("# of classifications to begin intervention has occured : " + classificationIndex);
-
-                        double score = 0.0;
-                        int numClassOne = 0;
-                        for (int i = 0; i < classifications.length; ++i)
-                            if (classifications[i] == 1)
-                                numClassOne++;
-                        System.out.println("# class of 1: " + numClassOne);
-                        Main.adaptationLogFile.logLine("#Classifications," +numClassOne + "/5,"+ System.currentTimeMillis());
-
-                        score = (double) numClassOne / classifications.length;
-                        this.invokeAdaptation(score);
+                        Main.runTimeLogfile.printAndLog("# of classifications to begin intervention has occured : " + classificationIndex);
+                        this.countTaskSuccessPredictionsAndInvokeAdaptation(classifications);
                         classificationIndex = 0;
                     }
+
                     gazeWindowINDArrays.clear();
                 }
+
                 gazeWindow.flush();
             } else { //Do nothing, loopback
                 continue;
@@ -148,13 +120,76 @@ public class AdaptationMediator extends Mediator {
 
     }
 
-    public void invokeNewAdaptation() {
-        Adaptation nextAdaptation = getNewAdaptation();
+
+    /**
+     * Counts # task success predictions and runs through the rule-based adaptation selection
+     * @param classifications
+     */
+    private void countTaskSuccessPredictionsAndInvokeAdaptation(int[] classifications) {
+        int numClassOne = this.countTaskSuccess(classifications);
+        Main.runTimeLogfile.printAndLog("# class of 1: " + numClassOne);
+        Main.adaptationLogFile.logLine("#Classifications," +numClassOne + "/5,"+ System.currentTimeMillis());
+        this.runRuleBasedAdaptationSelectionProcess((double) numClassOne / classifications.length);
+    }
+
+
+    /**
+     * Counts Number of task success ocurrences (i.e. classification[i] == 1)
+     * @param classifications
+     * @return
+     */
+    private int countTaskSuccess(int[] classifications) {
+        int numClassOne = 0;
+        for (int classification : classifications)
+            if (classification == 1)
+                numClassOne++;
+        return numClassOne;
+    }
+
+
+    /**
+     * Classifies user's task success by sending the input to the python server and subsequently the deep learning model.
+     * @param input  shape=(1,this.numSequencesForClassification, Gaze Attributes)
+     * @return
+     */
+    public int classifyTaskSuccess(INDArray input) {
+        Double probability = kerasServerCore.predict(input).getOutput().getDouble(0);
+        int classificationResult = probability >= 0.5 ? 1 : 0 ;
+
+        Main.adaptationLogFile.logLine("Prediction," +probability + "," +classificationResult+","+ System.currentTimeMillis());
+
+        return classificationResult;
+    }
+
+
+    /**
+     * Formats collected gazewindows into the deep learning model's input format. Uses INDArray for better performance.
+     * @param gazeWindows
+     * @return
+     */
+    public INDArray formatGazeWindowsToModelInput(List<INDArray> gazeWindows) {
+        INDArray unshapedData = Nd4j.stack(0, gazeWindows.get(0), gazeWindows.get(1));
+
+        return unshapedData.reshape(
+                new int[] {
+                        1, //Only feed 1 block of sequences at a time.
+                        this.numSequencesForClassification, // Num sequences to feed\
+                        (int) gazeWindows.get(0).shape()[0], //Num attributes per sequence
+                }
+            );
+    }
+
+
+    /**
+     * Invokes a new type of adaptation and resets the state of the previous adaptation (so that if it circles back it starts at its default state)
+     */
+    public void invokeNewAdaptationType() {
+        Adaptation nextAdaptation = this.getNewAdaptation();
         if (this.observedAdaptation != null) {
             this.observedAdaptation.setBeingObservedByMediator(false);
             //Cycle through if we pick the same one as is being observed.
             while (nextAdaptation.getType().equals(this.observedAdaptation.getType()))
-                nextAdaptation = getNewAdaptation();
+                nextAdaptation = this.getNewAdaptation();
         }
 
         this.observedAdaptation = nextAdaptation;
@@ -162,32 +197,47 @@ public class AdaptationMediator extends Mediator {
         this.currentAdaptations.put(observedAdaptation.getType(), observedAdaptation);
 
         this.newAdaptationStartSequenceIndex = this.curSequenceIndex;
-        //TODO
-        //Websocket, invoke new adaptation through message.
-        //TODO, figure out toggle to turn off other adaptovis.adaptations.
-        //Consider the following cases:
-        //multiple adaptovis.adaptations at once
-            //We don't have a situation where this arises yet.
-        //one adaptation running.
-            //toggle off the current observed
         this.websocket.invoke(new AdaptationInvokeRequestModelWs(this.observedAdaptation));
-        System.out.println("invoke new adaptation");
+        Main.runTimeLogfile.printAndLog("invoke new adaptation");
     }
 
-    public void invokeAdaptationChange() {
-        //Websocket
-        //Send over adaptation and the new config style.
-        this.websocket.invoke(new AdaptationInvokeRequestModelWs(this.observedAdaptation));
+    /**
+     * Get a new adaptation type
+     * @return
+     */
+    private Adaptation getNewAdaptation() {
+        Random rand = new Random();
+        List<Adaptation> adaptations = this.listOfAdaptations();
+        int randomAdaptationIndex = rand.nextInt(adaptations.size());
+
+        return adaptations.get(randomAdaptationIndex);
     }
 
-    public void invokeAdaptation(double curRiskScore) {
+    /**
+     * Returns the list of possible adaptation types.
+     * @return
+     */
+    public List<Adaptation> listOfAdaptations() {
+        ArrayList<Adaptation> adaptations = new ArrayList<>();
+        adaptations.add(new DeemphasisAdaptation(true, null, defaultStrength));
+        adaptations.add(new HighlightingAdaptation(true, null, defaultStrength));
+        return adaptations;
+    }
+
+
+    /**
+     * Rule-Based adaptation selection process that determines the appropriate action to take in terms of
+     * invoking a new adaptation type, adjusting adaptation strength, or doing nothing.
+     * @param curRiskScore
+     */
+    private void runRuleBasedAdaptationSelectionProcess(double curRiskScore) {
         double stepAmount = 0.25;
         int numSequencesSinceNewAdaptation = this.curSequenceIndex - this.newAdaptationStartSequenceIndex;
         int gracePeriodByNumSequences = 5 * 24; //120 second grace period before invoking a new adaptation.
         //Case 0
         if (curRiskScore <= 0.0 && (this.currentAdaptations.isEmpty() || numSequencesSinceNewAdaptation > gracePeriodByNumSequences)) {
-            this.invokeNewAdaptation();
-            System.out.println("Added new adaptation because score was zero: " + this.observedAdaptation.getType());
+            this.invokeNewAdaptationType();
+            Main.runTimeLogfile.printAndLog("Added new adaptation because score was zero: " + this.observedAdaptation.getType());
         } else if (curRiskScore > 0.0){ //Has adaptovis.adaptations, review the currently observed one.
             if (!this.currentAdaptations.isEmpty()) {  //Has an adaptation, we can review it and compare to the base line (presumed that it's always classifcations: [0_0,0_1,...,0_n]
 
@@ -197,13 +247,13 @@ public class AdaptationMediator extends Mediator {
                     if (this.observedAdaptation.hasFlipped() && (this.observedAdaptation.getStrength() <= 0.0 || this.observedAdaptation.getStrength() >= 1.0)) { //Cannot increase/decrease strenth of adaptation, must select a new one (c2.a)
                         this.observedAdaptation.flipDirection();
                         this.observedAdaptation.setStrength(defaultStrength);
-                        this.invokeNewAdaptation();
+                        this.invokeNewAdaptationType();
                     }
                     else if (!this.observedAdaptation.hasFlipped() && (this.observedAdaptation.getStrength() <= 0.0 || this.observedAdaptation.getStrength() >= 1.0)) //(c2.b)
                     {
                         this.observedAdaptation.flipDirection(); //Flip direction
                         this.observedAdaptation.applyStyleChange(stepAmount);
-                        this.invokeAdaptationChange();
+                        this.sendAdaptationToVisualization();
                     }
                     //or iterate over current adaptation
                 } else if (curRiskScore >= this.increaseStrengthThresh && curRiskScore <= this.remainThresh) { //Case 2
@@ -212,7 +262,7 @@ public class AdaptationMediator extends Mediator {
                     //If we can increase strength, do so in same direction
                     if (this.observedAdaptation.getStrength() > 0.0 && this.observedAdaptation.getStrength() <= 1.0) { //Not at max, increase adaptation strength (c2.a)
                         this.observedAdaptation.applyStyleChange(stepAmount);
-                        this.invokeAdaptationChange();
+                        this.sendAdaptationToVisualization();
                     } else { //(c2.b)
                         //Do nothing, reached max. Continue onwards.
                     }
@@ -220,40 +270,21 @@ public class AdaptationMediator extends Mediator {
                 }
             }
         }
-
     }
 
 
-    public Adaptation getNewAdaptation() {
-        Random rand = new Random();
-        List<Adaptation> adaptations = this.listOfAdaptations();
-        int randomAdaptationIndex = rand.nextInt(adaptations.size());
-
-        return adaptations.get(randomAdaptationIndex);
+    /**
+     * Sends the adaptation to the visualization/frontend via the websocket.
+     */
+    private void sendAdaptationToVisualization() {
+        this.websocket.invoke(new AdaptationInvokeRequestModelWs(this.observedAdaptation));
     }
 
-    public List<Adaptation> listOfAdaptations() {
-        ArrayList<Adaptation> adaptations = new ArrayList<>();
-        adaptations.add(new DeemphasisAdaptation(true, null, defaultStrength));
-        adaptations.add(new HighlightingAdaptation(true, null, defaultStrength));
-        return adaptations;
-    }
 
     public Adaptation getObservedAdaptation() {
         return this.observedAdaptation;
     }
 
-    /**
-     * Gets the last risk score for the currently observed adaptation
-     * @return
-     */
-    public double getLastRiskScore() {
-        if (this.currentAdaptations.isEmpty()) {
-            return 0.0;
-        } else {
-            return this.observedAdaptation.getScore();
-        }
-    }
     public VisualizationWebsocket getWebsocket() {
         return websocket;
     }

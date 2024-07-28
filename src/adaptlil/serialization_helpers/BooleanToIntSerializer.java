@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 
 import java.io.IOException;
 
+/**
+ * Quick Serialiation class that converts true/false to 1/0 for JSON serialization
+ */
 public class BooleanToIntSerializer extends JsonSerializer<Boolean> {
 
     @Override

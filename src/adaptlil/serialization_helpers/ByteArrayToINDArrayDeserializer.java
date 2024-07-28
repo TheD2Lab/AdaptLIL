@@ -10,6 +10,9 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.IOException;
 
+/**
+ * Unused but provides a starting point for deserializing an array of bytes into INDArray
+ */
 public class ByteArrayToINDArrayDeserializer extends JsonDeserializer<INDArray> {
     @Override
     public INDArray deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {

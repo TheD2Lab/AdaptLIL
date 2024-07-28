@@ -3,11 +3,11 @@ package adaptlil.http.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import adaptlil.serialization_helpers.INDArraySerializer;
+import adaptlil.serialization_helpers.INDArrayToDoubleArraySerializer;
 
 public class RequestPrediction extends  RequestModelHttp{
     @JsonProperty("data")
-    @JsonSerialize(using = INDArraySerializer.class)
+    @JsonSerialize(using = INDArrayToDoubleArraySerializer.class)
     public INDArray data;
 
     @JsonProperty("shape")

@@ -57,7 +57,7 @@ How to realtime gaze
 3) To read real-time data, GazepointSocket has a `gazeDataBuffer` method that you may pull from (thread safe)
    a) Please note, the it is a FIFO, if you need to get the most recent data, flush the buffer
    ```
-   gp3Socket.getGazeDataBuffer().flush()
+   gazepointSocket.getGazeDataBuffer().flush()
    ```
 
 There are a whole bunch of commands in the GazeApiCommands object, all serializable by a jackson mapper.

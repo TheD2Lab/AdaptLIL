@@ -1,6 +1,9 @@
 
 # About
-This repository contains both the backend and frontend of an intelligent adaptive ontological visualization (AdaptLIL). Integrated with Gazepoint Api, the visualization applies deep learning techniques to intelligently adapt a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve task success amon ontology mapping visualizations.
+This repository contains both the backend and frontend of an intelligent adaptive ontological visualization (AdaptLIL). Integrated with Gazepoint API, the visualization applies deep learning techniques to intelligently adapt a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve task success amon ontology mapping visualizations.
+
+# Java Docs
+See: [https://thed2lab.github.io/adaptLIL](https://thed2lab.github.io/adaptLIL/)
 
 # Requirements
 Eye Tracker w/ Gazepoint API implementation (or override the GazepointSocket with your own protocol)
@@ -46,7 +49,7 @@ How to realtime gaze
      ```
     import com.fasterxml.jackson.dataformat.xml.XmlMapper;
     XmlMapper mapper = new XmlMapper();
-    Gazepoint gazepointSocket = new GP3Socket(EYETRACKER_HOST, EYETRACKER_PORT);
+    GazepointSocket gazepointSocket = new GazepointSocket(EYETRACKER_HOST, EYETRACKER_PORT);
     gazepointSocket.connect();
     gazepointSocket.start(); //As per documentation sends the ENABLE_SEND_DATA and the transmission of eye gaze <REC> packets initiates
     SetCommand enableDataCommand = new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true); //Use GazeApiCommands consts to get the gazepoint API commands

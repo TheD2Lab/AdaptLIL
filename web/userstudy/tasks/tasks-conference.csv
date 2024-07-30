@@ -9,7 +9,7 @@ creation,Which class could "Attendee" (in the left ontology) be mapped to (in th
 identifying,Which class could "ConferenceDinner" (in the left ontology) be mapped to (in the right ontology)?,class,Conference_Banquet
 validation,"SecurityTopic" (in the left ontology) is mapped to "Research_Topic" (in the right ontology). Is this correct?,y/n,No
 validation,"Place" (in the left ontology) is mapped to "Location" (in the right ontology). Is this correct?,y/n,Yes
-identifying,"RejectedPaper" (in the left ontology) is mapped to "Assigned_Paper" (in the right ontology). Is this correct?,y/n,No
+validation,"RejectedPaper" (in the left ontology) is mapped to "Assigned_Paper" (in the right ontology). Is this correct?,y/n,No
 validation,"IndustryOrganization" (in the left ontology) is mapped to "Organisation" (in the right ontology). Is this correct?,y/n,No
 creation,Which class could "AcceptedPaper" (in the left ontology) be mapped to (in the right ontology)?,class,Accepted_Paper
 identifying,Can "Workshop" (in the left ontology) be mapped to another class (in the right ontology)?,y/n,Yes

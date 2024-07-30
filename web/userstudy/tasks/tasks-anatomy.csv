@@ -9,7 +9,7 @@ creation,Which class could "Heart" (in the left ontology) be mapped to (in the r
 identifying,What is "Skull" (in the left ontology) mapped to (in the right ontology)?,class,cranium
 validation,"Urinary_System_Part" (in the left ontology) is mapped to "muscle" (in the right ontology). Is this correct?,y/n,No
 validation,"Cheek" (in the left ontology) is mapped to "cuticle" (in the right ontology). Is this correct?,y/n,No
-identifying,"Mucus" (in the left ontology) is mapped to "nasal mucus" (in the right ontology). Is this correct?,y/n,No
+validation,"Mucus" (in the left ontology) is mapped to "nasal mucus" (in the right ontology). Is this correct?,y/n,No
 validation,"IndustryOrganization" (in the left ontology) is mapped to "Organisation" (in the right ontology). Is this correct?,y/n,No
 creation,Which class could "Lip" (in the left ontology) be mapped to (in the right ontology)?,class,lip
 identifying,Can "Arm" (in the left ontology) be mapped to another class (in the right ontology)?,y/n,Yes

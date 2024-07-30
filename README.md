@@ -1,17 +1,18 @@
 
 # About
-This repository contains both the backend and frontend of an intelligent adaptive ontological visualization (AdaptOVis). Integrated with Gazepoint Api, the visualization applies deep learning techniques to intelligently adapt a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve understanding of the ontology.
-Bear in mind, there may be a lot of why in the heck is it written this way code as this was a prototype on a 6-month crunch
-# Differences in original gazepoint-data-analysis repo.
-This repository implements the Gazepoint API for real-time gaze data analysis. It also builds the foundation for using gaze data to construct adaptive ontology visualizations (see OntoMapVisAdpative: https://github.com/TheD2Lab/OntoMapVisAdaptive). Lastly, there are data classes for gaze data metrics to enhance reusability of D2Lab experiments
+This repository contains both the backend and frontend of an intelligent adaptive ontological visualization (AdaptLIL). Integrated with Gazepoint Api, the visualization applies deep learning techniques to intelligently adapt a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve task success amon ontology mapping visualizations.
 
 # Requirements
-Eye Tracker compatabile with gazepoint
+Eye Tracker w/ Gazepoint API implementation (or override the GazepointSocket with your own protocol)
+
 Java 11 or greater
-Python 3.X
-    - Flask
-    - gevent
-    - TensorFlow
+
+Python 3.9
+- pip
+- Poetry
+
+CUDA 11+
+* Python server is setup with tensorflow and can use CUDA for GPU accelerated inference
 
 # Setup
 1. Ensure you have maven installed (https://maven.apache.org/download.cgi)
@@ -25,32 +26,44 @@ mvn package
 ```
 java -jar target/adaptlil-*.0-bin.jar
 ```
-5. Launch and calibrate gazepoint
-6. Open the frontend visualization located in web/index.html
-7. Continue to the link indented list (to be altered when study commences)
-8. At this point the websocket socket should now be connected
+To run the backend with a pre-recorded gaze file (simulation), run the command
+```
+java -jar target/adaptlil-*.0-bin.jar -useSimulation="SimulationFile.csv"
+```
+5. Navigate to python directory and install poetry
+```
+python -m pip install poetry
+python -m poetry install
+```
+6. Launch and calibrate gazepoint (Skip if using pre-recorded gaze file
+7. Open the frontend visualization located in web/index.html
+8. Continue to the link indented list (to be altered when study commences)
+9. At this point the websocket socket should now be connected
 
 # Gazepoint API
 How to realtime gaze
-1) Connect to the eye tracker using GP3Socket (To be renamed so it's more obvious)
+1) Connect to the eye tracker using GazepointSocket object
      ```
     import com.fasterxml.jackson.dataformat.xml.XmlMapper;
     XmlMapper mapper = new XmlMapper();
-    GP3Socket gp3Socket = new GP3Socket(gp3Hostname, gp3Port);
-    gp3Socket.connect();
-    gp3Socket.startGazeDataStream(); //As per documentation sends the ENABLE_SEND_DATA and the transmission of eye gaze <REC> packets initiates
+    Gazepoint gazepointSocket = new GP3Socket(EYETRACKER_HOST, EYETRACKER_PORT);
+    gazepointSocket.connect();
+    gazepointSocket.start(); //As per documentation sends the ENABLE_SEND_DATA and the transmission of eye gaze <REC> packets initiates
     SetCommand enableDataCommand = new SetEnableSendCommand(GazeApiCommands.ENABLE_SEND_POG_BEST, true); //Use GazeApiCommands consts to get the gazepoint API commands
     String gazeCommandBody = mapper.writeValueAsString(enableDataCommand);
-    gp3Socket.write(gazeCommandBody); 
+    gazepointSocket.write(gazeCommandBody); 
    ```
      Note: A good chunk of Gazepoint API commands are prewritten for XML serialization in the GazeApiCommands class.
-3) To read real-time data, GP3Socket has a `gazeDataBuffer` method that you may pull from.
+3) To read real-time data, GazepointSocket has a `gazeDataBuffer` method that you may pull from (thread safe)
    a) Please note, the it is a FIFO, if you need to get the most recent data, flush the buffer
    ```
    gp3Socket.getGazeDataBuffer().flush()
    ```
-4) Profit
-There are a whole bunch of commands in the GazeApiCommands object, all seriazable by a jackson mapper
+
+There are a whole bunch of commands in the GazeApiCommands object, all serializable by a jackson mapper.
+
+
+See: https://www.gazept.com/dl/Gazepoint_API_v2.0.pdf for reference.
 
 # Websocket
 The goal of implementing websocket is to invoke adaptive visualization changes into the OntoMap Visualization.
@@ -59,12 +72,14 @@ There is both an implementation of the ES6 WebSocket in the userstudy javascript
 To create and connect the backend to the frontend, first use the grizzly WebSocket object
 
 ```
-//Note, passing in gp3Socket will be deprecated as it was initially used for a very early prototype and never removed.
- VisualizationWebsocket visWebSocket = new VisualizationWebsocket(gp3Socket);
+import org.glassfish.grizzly.websockets.WebSocketEngine;
+VisualizationWebsocket visWebSocket = new VisualizationWebsocket();
 WebSocketEngine.getEngine().register("", "/gaze", visWebSocket);
 ```
 The VisualizationWebSocket object extends import org.glassfish.grizzly.websockets.WebSocketApplication and thus inherits from it.
-For a comprehensive overview, visit the grizzly documentation https://javadoc.io/doc/org.glassfish.grizzly/grizzly-http-all/3.0.1/org/glassfish/grizzly/websockets/WebSocketApplication.html
+For a comprehensive overview, visit the grizzly documentation 
+
+https://javadoc.io/doc/org.glassfish.grizzly/grizzly-http-all/3.0.1/org/glassfish/grizzly/websockets/WebSocketApplication.html
 
 In the case of VisWebSocket, the main concerns are: connecting to the frontend and sending an adaptation to it.
 
@@ -89,8 +104,6 @@ message body: {
 ```
 
 # Rendering Adaptation
-Rendering gets a bit hacky.
-
 Adaptations are received in JSON in the format:
 ```
 message body: {    
@@ -101,6 +114,19 @@ message body: {
         "state": true | false, //On/off 
         "strength": [0-1] 
     } 
+}
+```
+```
+function highlightNode(g, node, adaptation) {
+    let adaptiveFontWeight = Math.ceil(900 * adaptation.strength);
+    if (adaptiveFontWeight < 500)
+        adaptiveFontWeight = 500;
+
+    g.select('#n'+node.id)
+        .style('opacity', 1)
+        .select('text')
+        .style('font-weight', adaptiveFontWeight);
+
 }
 ```
 When new messages are received over the websocket they get thrown through a control-branch based on the 'type' attribute. This could be used to handle different types of messages but for the sake of the prototype, it's limited to invoke which triggers adaptations.
@@ -115,12 +141,37 @@ Where the visualizationMap is the current visualization (in our case, link-inden
 Since it is built on d3.js, elements are DOM. Therefore, to reflect adaptation updates, hover and click events must also be updated based on these values.
 # Loading a deep learning model
  ###
+Add your model to python/deep_learning_models 
  
+Navigate to env.yml and change model_name to your model name.
+
+Change EYETRACKER_REFRESH_RATE to the refresh rate you trained your model on
+
+Change the data shape in src/adaptlil/mediator/AdaptationMediator.java->formatGazeWindowsToModelInput
+to match the data shape of the input on your model. This shape is communicated to the python server so this is the only place
+you will need to update it.
+```
+    /**
+     * Formats collected gazewindows into the deep learning model's input format. Uses INDArray for better performance.
+     * @param gazeWindows
+     * @return
+     */
+    public INDArray formatGazeWindowsToModelInput(List<INDArray> gazeWindows) {
+        INDArray unshapedData = Nd4j.stack(0, gazeWindows.get(0), gazeWindows.get(1));
+
+        return unshapedData.reshape(
+                new int[] {
+                        1, //Only feed 1 block of sequences at a time.
+                        this.numSequencesForClassification, // Num sequences to feed\
+                        (int) gazeWindows.get(0).shape()[0], //Num attributes per sequence
+                }
+            );
+    }
+```
 # Adding a new adaptation
  ### Backend
 1) Navigate to src/adaptations
-2) Create a new Adaptation class
-3) Add a default style config
+2) Create a subclass of Adaptation
    4) What does this do?
    5) 
 4) Establish JSON structure and elements to

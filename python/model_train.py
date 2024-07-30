@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+from sklearn import kfold
 import model_helper as model_helper
 import numpy as np
 import model_helper
@@ -242,7 +242,7 @@ if __name__ == '__main__':
             # the model should train against only the participants train data to
             # have a representation of that person
             # then we retrain on the next person, so on and so forth.
-            model = model_conf.getModelConfig(timeSequences, numAttributes, windowSize)['transformer_model']
+            model_name,model = model_conf.getModelConfig(timeSequences, numAttributes, windowSize)['transformer_model']
             model.compile(optimizer='adam', loss=tf.keras.losses.BinaryCrossentropy(),
                           metrics=model_conf.get_metrics_for_model())
 
@@ -272,52 +272,52 @@ if __name__ == '__main__':
                 print_both("optimizer: " + optimizer)
             print_both("-------------------------------")
 
+            for train,test in split_enumerator:
+                weights = model_helper.get_weight_bias(y_part[train])
 
-            weights = model_helper.get_weight_bias(y_part[train])
+                print(x_part[train].shape)
+                hist = model.fit(
+                    x_part[train],
+                    y_part[train],
+                    # validation_data=(x_val, y_val),
+                    epochs=epochs,
+                    # class_weight=None if useLoo else weights,
+                    shuffle=shuffle,
+                    # batch_size=1,
+                    # callbacks=[callback]
+                )
+                scores = model.evaluate(x_part[test], y_part[test], verbose=0)
 
-            print(x_part[train].shape)
-            hist = model.fit(
-                x_part[train],
-                y_part[train],
-                # validation_data=(x_val, y_val),
-                epochs=epochs,
-                # class_weight=None if useLoo else weights,
-                shuffle=shuffle,
-                # batch_size=1,
-                # callbacks=[callback]
-            )
-            scores = model.evaluate(x_part[test], y_part[test], verbose=0)
+                histories.append(hist)
+                fold_scores.append(scores[1])
+                cur_tp_tn = 0
+                '''
+                Test on each fold.
+                '''
+                y_hat = model.predict(x_part[test])
 
-            histories.append(hist)
-            fold_scores.append(scores[1])
-            cur_tp_tn = 0
-            '''
-            Test on each fold.
-            '''
-            y_hat = model.predict(x_part[test])
-
-            y_hat = [(1.0 if y_pred >= 0.50 else 0.0) for y_pred in y_hat]
-            conf_matrix = sklearn.metrics.confusion_matrix(y_part[test], y_hat, labels=[1.0, 0.0])
-            true_pos = conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])
-            true_neg = conf_matrix[1][1] / (conf_matrix[1][0] + conf_matrix[1][1])
-            acc_rate = (conf_matrix[0][0] + conf_matrix[1][1]) / (conf_matrix[0][0] + conf_matrix[0][1] + conf_matrix[1][0] + conf_matrix[1][1])
-            print_both(conf_matrix)
-            curRatio = (true_pos + true_neg) / 2
-            if (curRatio > max_ratio):
-                max_ratio = curRatio
-            cur_tp_tn += ((true_pos + true_neg) / 2) / len(testDataParticipants)
-            print_both("Acc: " + str(acc_rate) + ", " + "tp: %: " + str(true_pos) + " tn: %: " + str(true_neg))
-            tp_rates.append(true_pos)
-            tn_rates.append(true_neg)
-            unseen_acc.append(acc_rate)
+                y_hat = [(1.0 if y_pred >= 0.50 else 0.0) for y_pred in y_hat]
+                conf_matrix = sklearn.metrics.confusion_matrix(y_part[test], y_hat, labels=[1.0, 0.0])
+                true_pos = conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])
+                true_neg = conf_matrix[1][1] / (conf_matrix[1][0] + conf_matrix[1][1])
+                acc_rate = (conf_matrix[0][0] + conf_matrix[1][1]) / (conf_matrix[0][0] + conf_matrix[0][1] + conf_matrix[1][0] + conf_matrix[1][1])
+                print_both(conf_matrix)
+                curRatio = (true_pos + true_neg) / 2
+                if (curRatio > max_ratio):
+                    max_ratio = curRatio
+                cur_tp_tn += ((true_pos + true_neg) / 2) / len(testDataParticipants)
+                print_both("Acc: " + str(acc_rate) + ", " + "tp: %: " + str(true_pos) + " tn: %: " + str(true_neg))
+                tp_rates.append(true_pos)
+                tn_rates.append(true_neg)
+                unseen_acc.append(acc_rate)
 
 
-            '''
-            Done fitting on multiple participants, time for real world data testing
-            '''
-            print_both("************************************")
-            print_both("--------FINISHED FITTING MODEL------")
-            print_both("************************************")
+                '''
+                Done fitting on multiple participants, time for real world data testing
+                '''
+                print_both("************************************")
+                print_both("--------FINISHED FITTING MODEL------")
+                print_both("************************************")
             for testPInd in range(0, len(testDataParticipants)):
                 testP = testDataParticipants[testPInd]
                 print_both('Testing on : ' + str(testP['fileName']))
@@ -362,21 +362,7 @@ if __name__ == '__main__':
         print_both("max ratio achieved: " + str(max_ratio))
 
         model_helper.plotLines({'tp%': tp_rates, 'tn%': tn_rates, 'acc%': unseen_acc, 'val fold acc%': fold_scores}, resultDir, unique_model_id)
-
         model.save(resultDir + "/" + unique_model_id + ".h5", save_format='h5')
-            # model.reset_states()
-            # tf.compat.v1.reset_default_graph()
-            # tf.keras.backend.clear_session()
-            # del model
-            #
-            #    all_models_stats.append({
-            #        'model_name': model_name, 'optimizer': str(type(optimizer).__name__) if type(optimizer) != type('') else optimizer,
-            #        'lr': str(tf.keras.backend.eval(optimizer.lr)) if (type(optimizer) != type('')) else '',
-            #        'accuracy': sum( sum(his['accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-            #        'val_accuracy': sum( sum(his['val_accuracy']) for his in histories_of_all_cross) / len(histories_of_all_cross),
-            #        'tp %': str(conf_matrix[0][0] / (conf_matrix[0][0] + conf_matrix[0][1])),
-            #        'tn %': str(conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0]))
-            #    })
 
     sorted_all_models_by_tp_and_tn = OrderedDict(sorted(all_models_by_tp_and_tn.items(), key=lambda k:
     (all_models_by_tp_and_tn.get(k[0])[1][1] / (

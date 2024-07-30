@@ -96,23 +96,6 @@ function restoreOpacityForAlignments(svg, alignments) {
         svg.select('#gTree1').selectAll('#n' + align.e1.id).style('opacity', restoreOpacityVal);
         svg.select('#gTree2').selectAll('#n' + align.e2.id).style('opacity', restoreOpacityVal);
 
-        let leftAlignParen = align.e1 != null ? align.e1.parent : null;
-        // while (leftAlignParen != null) {
-        //
-        //     const curNode = svg.select('#gTree1').select('#n'+leftAlignParen.id)
-        //
-        //     curNode.style('opacity', restoreOpacityVal)
-        //     leftAlignParen = leftAlignParen.parent;
-        // }
-        //
-        // let rightAlignParen = align.e2 != null ? align.e2.parent : null;
-        //
-        // while(rightAlignParen != null) {
-        //     const curNode = svg.select('#gTree2').select('#n'+rightAlignParen.id)
-        //
-        //     curNode.style('opacity', restoreOpacityVal)
-        //     rightAlignParen = rightAlignParen.parent;
-        // }
     }
 }
 
@@ -148,12 +131,6 @@ function highlightNode(g, node, adaptation) {
         .style('opacity', 1)
         .select('text')
         .style('font-weight', adaptiveFontWeight);
-
-    //alignment .mapping .mapline
-    // g.select("#gMap").select('#a'+almt.id)
-    //     .style('opacity', 1)
-    //     // .classed('muted', false)
-    //     .raise();
 
 }
 

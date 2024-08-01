@@ -1,30 +1,25 @@
 class LinkIndentedList {
 
     constructor() {
-        this.margin = {top: 30, right: 20, bottom: 30, left: 20};
-        this.nodeHeight = 20,
-            this.nodeWidth = 200,
-            this.nodeIndent = 15,
-            this.nodeMarkSize = 4.5;
-        this.treeWidth = 300;
-
+        this.nodeHeight = 20;
+        this.nodeWidth = 200;
+        this.nodeIndent = 15;
+        this.nodeMarkSize = 4.5;
         this.hierarchies = [];
         this.triangle = this.trianglePoints(this.nodeMarkSize);
-        this.nodesByCoordinate = {};
         this.adaptations = new VisualizationAdaptations(this);
-        this.entities = []
-        this.mapLines = [];
         this.verticalLink = d => `M ${d.source.x},${d.source.y} V ${d.target.y}`;
     }
 
     createHierarchy(data) {
         console.log('creating hierarchy for node axis.');
+
         //Creates hierarchy from data
         const root = d3.hierarchy(data);
         const hierarchiesByIndex = {};
+
         //Sort nodes alphabetically
-        console.log('sort nodes in ascending order.');
-        root.sort((a, b) => d3.ascending(a.data.name, b.data.name));    
+        root.sort((a, b) => d3.ascending(a.data.name, b.data.name));
 
         //Sets the root position
         root.dx = 10;  //??: seems not necessary??
@@ -46,7 +41,6 @@ class LinkIndentedList {
      * @param {*} align left or right
      * @return {d3.tree object} d3.tree object
      */
-
     constructTree(root, align) {
         const _this = this;
         console.log(`Computes tree layout. tree(root='${root.data.name}' align='${align}')`);
@@ -61,7 +55,7 @@ class LinkIndentedList {
             d.x = d.depth * _this.nodeIndent * (alignRight ? -1 : 1); //gets indented
             d.y = ++index * _this.nodeHeight;                         //lists down
         });
-        // console.log(treeRoot);
+
         return treeRoot;
     }
 
@@ -85,14 +79,12 @@ class LinkIndentedList {
             }
             d.shown = true; //exclude self!
             console.log(`${d.data.name}'s descendants gets shown=false`);
-            // console.log(d._children);
         } else if (d.children) {     //if it's expanded branch node
             console.log(`branch node '${d.data.name}' expanded`);
             d.collapsed = false;
             d._children.forEach(d => d.descendants().forEach(dd => {
                 dd.shown = true;
             }));
-            // console.log(d._children);
         }
         if (d._children) { //only for branch nodes with children
             this.update(gTree, d, source, align); //update recursively
@@ -105,7 +97,6 @@ class LinkIndentedList {
      * @param {d3.hierarchy object} root d3.hierarchy root
      * @param {string} align left or right
      */
-
     treechart(root, align) {
         const _this = this;
         console.log(`treechart(root, align=${align})`);
@@ -115,10 +106,12 @@ class LinkIndentedList {
         const gTree = d3.create("svg:g")
             .classed('tree', true)
             .attr("transform", `translate(0,10)`); //??: why?
-        const gLink = gTree.append("g")
+
+        gTree.append("g")
             .classed('gLink', true)
             .attr('transform', `translate(0,${this.nodeHeight / 2.5})`);
-        const gNode = gTree.append("g")
+
+        gTree.append("g")
             .classed('gNode', true);
 
         //Sets initial state as tree collapsed to the top branches under root
@@ -135,7 +128,6 @@ class LinkIndentedList {
             }
         });
 
-
         //Initially updates the whole tree
         this.update(gTree, root, root, align);
 
@@ -146,28 +138,17 @@ class LinkIndentedList {
         const _this = this;
         const nodes = root.descendants().reverse();  //for the z-order
 
-
-        //Map Node x,y to their names
-        for (let node of nodes) {
-            const x = node.height;
-            const y = node.depth;
-            if (!this.nodesByCoordinate.hasOwnProperty(x))
-                this.nodesByCoordinate[x] = {};
-            this.nodesByCoordinate[x][y] = node;
-            //children nodes
-        }
         const links = _this.linksToLastChild(root);
         const alignRight = (align == "right") ? true : false;
+
         // Computes the new tree layout.
         _this.constructTree(root, align);
-
-        //TODO: auto resize the viewBox
-        let lowest = 400;
 
         const t = gTree.transition().duration(100);
 
         //Get link
         const gLink = gTree.selectAll("g.gLink")
+
         // Updates the nodes...
         const gNode = gTree.selectAll("g.gNode");
         const node = gNode.selectAll("g")
@@ -182,8 +163,10 @@ class LinkIndentedList {
             .classed('leaf', d => d._children ? false : true)
             .attr("transform", d => `translate(${source.x0},${source.y0})`)
             .attr("opacity", 0);
+
         nodeEnter
             .on("click", d => _this.expandAxisTick(gTree, root, d, align));
+
         // Appends nodemark, text, and select helper
         nodeEnter.append(d => {
             if (d._children) return d3.create("svg:polygon").attr('points', _this.triangle).node();  //branch nodemark
@@ -196,13 +179,14 @@ class LinkIndentedList {
             .attr("x", alignRight ? -8 : 8)
             .attr("text-anchor", alignRight ? "end" : "start")
             .text(d => d.data.name)
+
         nodeEnter.append("rect").classed('node-select-helper', true)
             .attr('fill', 'transparent')
             .attr('width', _this.nodeWidth)
             .attr('height', _this.nodeHeight)
             .attr('x', alignRight ? -_this.nodeWidth + 8 : -8)
             .attr('y', -_this.nodeHeight / 2);
-        // .lower();
+
 
         // Transition nodes to their new position.
         const nodeUpdate = node.merge(nodeEnter)
@@ -225,6 +209,7 @@ class LinkIndentedList {
         // Update the deapth guide lines…
         const link = gLink.selectAll("path")
             .data(links, d => d.target.id);
+
         // Enter any new links at the parent's previous position.
         const linkEnter = link.enter().append("path")
             .classed('nodelink', true)
@@ -232,9 +217,11 @@ class LinkIndentedList {
                 const o = {x: source.x0, y: source.y0};
                 return _this.verticalLink({source: o, target: o});
             });
+
         // Transition links to their new position.
         link.merge(linkEnter).transition(t)
             .attr("d", _this.verticalLink);
+
         // Transition exiting nodes to the parent's new position.
         link.exit().transition(t).remove()
             .attr("d", d => {
@@ -258,7 +245,7 @@ class LinkIndentedList {
 
     linksToLastChild(root) {
         const list = [];
-        for (var node of root.descendants()) {
+        for (const node of root.descendants()) {
             if (node.children) {    //branch node with children
                 list.push({source: node, target: getLastChild(node)});
             }
@@ -275,23 +262,6 @@ class LinkIndentedList {
         }
     }
 
-    boldFirstTwoLetter(textElem, str) {
-        const words = str.split(/([_]|[ ]|[\/])/)
-        const formattedWords = [];
-        for (let i = 0; i < words.length; ++i) {
-            const word = words[i];
-            let formattedWord = '';
-            //skip delimiters
-            if (i % 2 == 0 && word.length >= 2) {
-                textElem.append('tspan').style('bold').text(word.substring(0,2))
-                textElem.append(word.substring(2,word.length));
-                formattedWord = '<tspan>' + word.charAt(0) + word.charAt(1) + '</tspan>' + word.substring(2, word.length);
-            } else
-                formattedWord = word;
-            formattedWords.push(formattedWord)
-        }
-        return formattedWords.join('');
-    }
 
     /**
      * Calculates triangle points
@@ -302,9 +272,5 @@ class LinkIndentedList {
         return `-${s - 1},-${s} -${s - 1},${s} ${s - 1},0 -${s - 1},-${s}`;
     }
 
-    /**
-     * Blackbox: find a visually non-complex spot that is near the input and within reach of user's gaze.
-     */
-    findFreeSpace() {
-    }
+
 }

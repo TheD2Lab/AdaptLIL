@@ -8,11 +8,10 @@ See: [https://thed2lab.github.io/AdaptLIL/](https://thed2lab.github.io/AdaptLIL/
 # Requirements
 Eye Tracker w/ Gazepoint API implementation (or override the GazepointSocket with your own protocol)
 
-Java 11 or greater
-
-Python 3.9
+Java >= 11
+Python >=3.9 and <3.11
 - pip
-- Poetry
+- poetry
 
 CUDA 11+
 * Python server is setup with tensorflow and can use CUDA for GPU accelerated inference
@@ -175,25 +174,117 @@ you will need to update it.
  ### Backend
 1) Navigate to src/adaptations
 2) Create a subclass of Adaptation
-   4) What does this do?
-   5) 
-4) Establish JSON structure and elements to
+```
+class yourAdaptation extends Adaptation {
+   public yourAdaptation(boolean state, Map<String, String> styleConfig, double strength) {
+        super("yourAdaptation", state, styleConfig, strength);
+    }
+
+    @Override
+    public void applyStyleChange(double stepAmount) {
+        if (!this.hasFlipped())
+            this.setStrength(this.getStrength() + stepAmount);
+        else
+            this.setStrength(this.getStrength() - stepAmount);
+    }
+   
+   //NOTE: This is only used for the colorAdaptation (which was not present in the research study or is currently active)
+    public Map<String, String> getDefaultStyleConfig() {
+        Map<String, String> defaultStyleConfig = new HashMap<>();
+        defaultStyleConfig.put("CSS Attribute", "CSS Value");
+        return defaultStyleConfig;
+    }
+}
+   ```
+5) Navigate to src/adaptlil/mediator/AdaptationMediator and add your new adaptation to list of adaptations to select from
+```
+    public List<Adaptation> listOfAdaptations() {
+        ArrayList<Adaptation> adaptations = new ArrayList<>();
+        ...
+        adaptations.add(new yourAdaptation(true, null, defaultStrength));
+        ...
+        
+    }
+```
+
  ### Frontend
-1) Navigate to web/scripts/VisualizationAdapation.js
-2) Navigate to web/scripts/BaselineMap.js
-3) Navigate to web/scripts/script-alignment.js
+1) Navigate to web/scripts/VisualizationAdapation.js constructor
+   i) Add your new adaptation to the constructor
+```
+class VisualizationAdaptation {
+   constructor(...) {
+      this.{yourAdaptation} = new Adaptation('{yourAdaptation}', false, {}, 0.5);
+   }
+}
+   ```
+   ii) Add your new adaptation to VisualizationAdaptation.toggleAdaptation to properly toggle and reset flags
+      for the other adaptations
+```chatinput
+ toggleAdaptation(adaptationType, state, styleConfig, strength) {
+        const _this = this;
+        _this.deemphasisAdaptation.state = false;
+        _this.highlightAdaptation.state = false;
+        _this.colorSchemeAdaptation.state = false;
+         ...
+        elseif (adaptationType === '{yourAdaptation}') {
+            _this.{yourAdaptation}.state = state;
+            _this.{yourAdaptation}.styleConfig = styleConfig;
+            _this.{yourAdaptation}.strength = strength;
+        } 
+```
+### The next portion of this portion is dependent on using a link-indented list. To implement this design-flow into your visualization, loosely follow a structure of reseting the adaptation and applying your adaptation to the elements of your visualization.
+2) Navigate to web/scripts/script-alignment.js
+   i) Add a function to reset the visual state of the maplines (line connecting ontology classes) and the classes.
+   How you reset the elements depends on what CSS styling attributes you use. As an example, we will showcase the highlighting adaptation.
+```chatinput
+function unhighlightAllOntologyClasses(svg_canvas) {
+ 
+    svg_canvas.selectAll('.node>text').style('font-weight', 100)
+
+    svg_canvas.selectAll('text').style('font-weight', 100)
+}
+```
+ii) Add a function to apply your adaptation to the elements of your visualization. For the sake of example the code below only applies to the ontology classes
+```chatinput
+function highlightNode(svg_canvas, node, adaptation) {
+    let adaptive_font_weight = Math.ceil(900 * adaptation.strength);
+    if (adaptive_font_weight < 500)
+        adaptive_font_weight = 500;
+   
+   //Apply adaptive font-weight
+    svg_canvas.select('#n'+node.id)
+        .style('opacity', 1)
+        .select('text')
+        .style('font-weight', adaptive_font_weight);
+
+}
+```
+   iii) Add event listeners to interactively apply adaptations:
+```
+svg_canvas.selectAll('.node').on('mouseover', function(node) {
+     const tree = d3.select('#'+$(this).closest('.tree')[0].id);
+     highlightNode(tree, node, _this.linkIndentedList.adaptations.highlightAdaptation);
+}
+```
+
 # Replacing Rule-Based Selection Process
  ### Overview
+   
  ### Replacement Procedure
-
-
-# Using a Different Eye Tracker
-#### HOWTO
-
-# Adaptation Mediator, Controlling the flow and adjusting behavior
-
-# Python Server
-ACK, Load, Predict
+1) Navigate to src/adaptlil/mediator/AdaptationMediator
+2) Rewrite runRuleBasedAdaptationSelectionProcess() with your code and ensure:
+i) You have a finite-state automata to replace the selection process
+ii) AdaptationMediator.observedAdaptation represents the current Adaptation active on the frontend.
 
 # Limitations
 1. Access to eye tracking technology
+
+
+# Papers
+1) ISWC - Research Track
+Citation -
+2) Poster - Poster Track - High level view at a glance
+Citation -
+3) Thesis - proquest - In depth discussion of System design
+Citation -
+

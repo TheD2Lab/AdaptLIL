@@ -28,6 +28,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Main {
 
+
+    //TODO - Move env.yml to snake yaml, clean up Main flow.
+    //TODO replace killPID with kill Python Server
     public static final String url = "localhost";
     public static final int port = 8080;
 

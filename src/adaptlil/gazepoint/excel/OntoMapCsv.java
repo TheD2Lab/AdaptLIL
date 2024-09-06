@@ -1,5 +1,6 @@
 package adaptlil.gazepoint.excel;
 
+import adaptlil.Main;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import adaptlil.data_classes.*;
@@ -303,7 +304,7 @@ public class OntoMapCsv {
                 new File(pOutputDir.getAbsolutePath() + "/retrain").mkdirs();
                 new File(pOutputDir.getAbsolutePath() + "/test").mkdirs();
             }
-            GazeWindow participantWindow = new GazeWindow(windowSizeInMilliseconds);
+            GazeWindow participantWindow = new GazeWindow(windowSizeInMilliseconds, Main.EnvironmentConfig.EYETRACKER_REFRESH_RATE);
 
 
             File[] answersFiles = new File[]{ p.getAnatomyAnswersFile(), p.getConfAnswersFile() };

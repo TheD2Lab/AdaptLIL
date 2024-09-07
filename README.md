@@ -1,6 +1,7 @@
 
 # About
 This repository contains both the backend and frontend of an intelligent adaptive ontological visualization (AdaptLIL). Integrated with Gazepoint API, the visualization applies deep learning techniques to intelligently adapt a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve task success amon ontology mapping visualizations.
+[![AdaptLIL In-Lab User Study Preview](https://img.youtube.com/vi/eyCAkf5ldUg/0.jpg)](https://youtu.be/eyCAkf5ldUg)
 
 # Java Docs
 See: [https://thed2lab.github.io/AdaptLIL/](https://thed2lab.github.io/AdaptLIL/)
@@ -38,7 +39,7 @@ python -m pip install poetry
 python -m poetry install
 ```
 6. Launch and calibrate gazepoint (Skip if using pre-recorded gaze file
-7. Open the frontend visualization located in web/index.html
+7. Open the frontend visualization located in src/adapitlil/resources/visualization_web/index.html
 8. Continue to the link indented list (to be altered when study commences)
 9. At this point the websocket socket should now be connected
 
@@ -145,11 +146,11 @@ Since it is built on d3.js, elements are DOM. Therefore, to reflect adaptation u
  ###
 Add your model to python/deep_learning_models 
  
-Navigate to env.yml and change model_name to your model name.
+Navigate to env.yml and change **DEEP_LEARNING_MODEL_NAME** to your model name.
 
-Change EYETRACKER_REFRESH_RATE to the refresh rate you trained your model on
+Change **EYETRACKER_REFRESH_RATE** to the refresh rate you trained your model on
 
-Change the data shape in src/adaptlil/mediator/AdaptationMediator.java->formatGazeWindowsToModelInput
+Change the data shape in **src/adaptlil/mediator/AdaptationMediator.java->formatGazeWindowsToModelInput**
 to match the data shape of the input on your model. This shape is communicated to the python server so this is the only place
 you will need to update it.
 ```
@@ -196,7 +197,7 @@ class yourAdaptation extends Adaptation {
     }
 }
    ```
-5) Navigate to src/adaptlil/mediator/AdaptationMediator and add your new adaptation to list of adaptations to select from
+5) Navigate to **src/adaptlil/mediator/AdaptationMediator** and add your new adaptation to list of adaptations to select from
 ```
     public List<Adaptation> listOfAdaptations() {
         ArrayList<Adaptation> adaptations = new ArrayList<>();
@@ -208,7 +209,7 @@ class yourAdaptation extends Adaptation {
 ```
 
  ### Frontend
-1) Navigate to web/scripts/VisualizationAdapation.js constructor
+1) Navigate to **src/adaptlil/resources/visualization_web/scripts/VisualizationAdapation.js** constructor
    i) Add your new adaptation to the constructor
 ```
 class VisualizationAdaptation {
@@ -233,7 +234,8 @@ class VisualizationAdaptation {
         } 
 ```
 ### The next portion of this portion is dependent on using a link-indented list. To implement this design-flow into your visualization, loosely follow a structure of reseting the adaptation and applying your adaptation to the elements of your visualization.
-2) Navigate to web/scripts/script-alignment.js
+2) Navigate to **src/adaptlil/resources/visualization_web/scripts/script-alignment.js**
+
    i) Add a function to reset the visual state of the maplines (line connecting ontology classes) and the classes.
    How you reset the elements depends on what CSS styling attributes you use. As an example, we will showcase the highlighting adaptation.
 ```chatinput
@@ -271,7 +273,7 @@ svg_canvas.selectAll('.node').on('mouseover', function(node) {
  ### Overview
    
  ### Replacement Procedure
-1) Navigate to src/adaptlil/mediator/AdaptationMediator
+1) Navigate to **src/adaptlil/mediator/AdaptationMediator**
 2) Rewrite runRuleBasedAdaptationSelectionProcess() with your code and ensure:
 i) You have a finite-state automata to replace the selection process
 ii) AdaptationMediator.observedAdaptation represents the current Adaptation active on the frontend.
@@ -285,6 +287,7 @@ ii) AdaptationMediator.observedAdaptation represents the current Adaptation acti
 Citation -
 2) Poster - Poster Track - High level view at a glance
 Citation -
-3) Thesis - proquest - In depth discussion of System design
-Citation -
+3) [[Thesis]](https://www.proquest.com/docview/3083825008/AFF530ED644D4F83PQ/1?sourcetype=Dissertations%20&%20Theses) - In depth discussion of System design
+
+   Citation - Chow, N (2024). "Adaptive Ontology Mapping Visualizations: Curtailing Visualizations in Real Time Through Deep Learning and Eye Gaze" Thesis. California State University, Long Beach.
 

@@ -1,8 +1,12 @@
 
 # About
 This repository contains both the backend and frontend of an intelligent adaptive ontological visualization (AdaptLIL). Integrated with Gazepoint API, the visualization applies deep learning techniques to intelligently adapt a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve task success amon ontology mapping visualizations.
+
 [![AdaptLIL In-Lab User Study Preview](https://img.youtube.com/vi/eyCAkf5ldUg/0.jpg)](https://youtu.be/eyCAkf5ldUg)
 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=eyCAkf5ldUg
+" target="_blank"><img src="https://img.youtube.com/vi/eyCAkf5ldUg/0.jpg"
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
 # Java Docs
 See: [https://thed2lab.github.io/AdaptLIL/](https://thed2lab.github.io/AdaptLIL/)
 

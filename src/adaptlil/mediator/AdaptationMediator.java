@@ -10,7 +10,7 @@ import adaptlil.GazeWindow;
 import adaptlil.websocket.VisualizationWebsocket;
 import adaptlil.gazepoint.api.GazepointSocket;
 import adaptlil.gazepoint.api.recv.RecXml;
-import adaptlil.http.KerasServerCore;
+import adaptlil.http.PythonServerCore;
 import adaptlil.websocket.request.AdaptationInvokeRequestModelWs;
 
 import java.util.*;
@@ -25,7 +25,7 @@ import java.util.*;
 public class AdaptationMediator extends Mediator {
     private VisualizationWebsocket websocket;
     private GazepointSocket gazepointSocket;
-    private KerasServerCore kerasServerCore;
+    private PythonServerCore pythonServerCore;
     private GazeWindow gazeWindow;
     private boolean isRunning;
 
@@ -43,10 +43,10 @@ public class AdaptationMediator extends Mediator {
     private int curSequenceIndex = 0;
     private double defaultStrength = 0.50;
 
-    public AdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, KerasServerCore kerasServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
+    public AdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, PythonServerCore pythonServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
         this.websocket = websocket;
         this.gazepointSocket = gazepointSocket;
-        this.kerasServerCore = kerasServerCore;
+        this.pythonServerCore = pythonServerCore;
         this.gazeWindow = gazeWindow;
         this.isRunning = false;
         this.currentAdaptations = new HashMap<>();
@@ -153,7 +153,7 @@ public class AdaptationMediator extends Mediator {
      * @return
      */
     public int classifyTaskSuccess(INDArray input) {
-        Double probability = kerasServerCore.predict(input).getOutput().getDouble(0);
+        Double probability = pythonServerCore.predict(input).getOutput().getDouble(0);
         int classificationResult = probability >= 0.5 ? 1 : 0 ;
 
         Main.adaptationLogFile.logLine("Prediction," +probability + "," +classificationResult+","+ System.currentTimeMillis());
@@ -293,8 +293,8 @@ public class AdaptationMediator extends Mediator {
         return gazepointSocket;
     }
 
-    public KerasServerCore getClassifierModel() {
-        return kerasServerCore;
+    public PythonServerCore getClassifierModel() {
+        return pythonServerCore;
     }
 
     public GazeWindow getGazeWindow() {
@@ -309,8 +309,8 @@ public class AdaptationMediator extends Mediator {
         this.gazepointSocket = gazepointSocket;
     }
 
-    public void setClassifierModel(KerasServerCore kerasServerCore) {
-        this.kerasServerCore = kerasServerCore;
+    public void setClassifierModel(PythonServerCore pythonServerCore) {
+        this.pythonServerCore = pythonServerCore;
     }
 
     public void setGazeWindow(GazeWindow gazeWindow) {

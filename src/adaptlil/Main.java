@@ -16,7 +16,7 @@ import adaptlil.gazepoint.api.GazeApiCommands;
 import adaptlil.gazepoint.api.GazepointSimulationServer;
 import adaptlil.gazepoint.api.GazepointSocket;
 import adaptlil.gazepoint.api.set.SetEnableSendCommand;
-import adaptlil.http.KerasServerCore;
+import adaptlil.http.PythonServerCore;
 import adaptlil.mediator.AdaptationMediator;
 
 
@@ -30,11 +30,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Main {
 
-    //TODO replace killPID with kill Python Server
-    public static SimpleLogger adaptationLogFile;
-    public static SimpleLogger runTimeLogfile;
+    public static SimpleLogger adaptationLogFile; //Strictly for logging adaptations for post-anlaysis
+    public static SimpleLogger runTimeLogfile; // Used to log run time behavior, when things enter and exit
     public static boolean hasKerasServerAckd = false;
     public static EnvironmentConfig EnvironmentConfig;
+
     //Used to block main thread from making a keras server load_modal before receiving an ACK
     public static final ReentrantLock mainThreadLock = new ReentrantLock();
 
@@ -42,11 +42,6 @@ public class Main {
         preloadND4J();
         Main.initLoggers();
         Main.loadEnvConfig();
-
-        //TODO
-        //Replace with python kill command.
-        Thread printingHook = new Thread(() -> Main.ShutDownFunction());
-        Runtime.getRuntime().addShutdownHook(printingHook);
 
         adaptationLogFile.logLine("App Ran at," + adaptationLogFile.getDateTimeStamp() + "," + System.currentTimeMillis());
         runTimeLogfile.printAndLog("Beginning GP3 Real-Time Prototype Stream");
@@ -58,29 +53,14 @@ public class Main {
 
         try {
 
-            //Throw onto new thread
-            Runnable runnable = ()-> {
-                long pid = 0;
-                try {
-                    runTimeLogfile.printAndLog("starting keras server....");
-                    pid = startKerasServer();
-                    runTimeLogfile.printAndLog("pid: " + pid);
-                    Runtime.getRuntime().addShutdownHook(new KillPidThread(pid));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-            };
-            Thread cmdKerasThread = new Thread(runnable);
-            cmdKerasThread.start();
-
+            startPythonServer();
             //Block main thread acess until /init/kerasAckServer is called.
             synchronized (Main.mainThreadLock) {
                 while (!Main.hasKerasServerAckd) {
                     Main.mainThreadLock.wait();
                 }
                 runTimeLogfile.printAndLog("retained access");
-                execKerasServerAck();
+                ackJavaServerToPythonServerAndAddShutdownHook();
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -110,16 +90,43 @@ public class Main {
     }
     
 
-    public static void execKerasServerAck() {
+    private static void startPythonServer() {
+        //Throw onto new thread
+        Runnable runnable = ()-> {
+            try {
+                runTimeLogfile.printAndLog("starting keras server....");
+                //Start keras server from python script and wait for ACK from python that the server started.
+                runTimeLogfile.printAndLog("Starting python server..");
 
+                //Launch batch script to start Python server.
+                ProcessBuilder initPythonPBuilder = new ProcessBuilder( "scripts/start_flask.bat");
+
+                initPythonPBuilder.redirectErrorStream(true);
+
+                Process p = initPythonPBuilder.start();
+                Main.readProcessOutput(p);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        Thread cmdKerasThread = new Thread(runnable);
+        cmdKerasThread.start();
+
+    }
+
+    private static void ackJavaServerToPythonServerAndAddShutdownHook() {
         try {
 
             runTimeLogfile.printAndLog("Started python server.");
             runTimeLogfile.printAndLog("Loading Classification Model: " + EnvironmentConfig.DEEP_LEARNING_MODEL_NAME);
-            KerasServerCore kerasServerCore = new KerasServerCore(EnvironmentConfig.PYTHON_SERVER_URL, EnvironmentConfig.PYTHON_SERVER_PORT);
+            PythonServerCore pythonServerCore = new PythonServerCore(EnvironmentConfig.PYTHON_SERVER_URL, EnvironmentConfig.PYTHON_SERVER_PORT);
 
+            runTimeLogfile.printAndLog("Adding shutdown hook");
+            //Shutdown hook to close python server when java exits.
+            Runtime.getRuntime().addShutdownHook(new KillPythonServer(pythonServerCore));
+            runTimeLogfile.printAndLog("Shutdown hook added");
             //Make POST request to keras endpoint
-            kerasServerCore.loadKerasModel(EnvironmentConfig.DEEP_LEARNING_MODEL_NAME);
+            pythonServerCore.loadKerasModel(EnvironmentConfig.DEEP_LEARNING_MODEL_NAME);
 
             GazepointSocket gazepointSocket = initGazepointSocket(EnvironmentConfig.SIMULATE_GAZE_SERVER);
             VisualizationWebsocket visualizationWebsocket = initVisualizationWebsocket();
@@ -130,7 +137,7 @@ public class Main {
             GazeWindow gazeWindow = initGazeWindow(EnvironmentConfig.GAZE_WINDOW_SIZE_IN_MILLISECONDS);
             runTimeLogfile.printAndLog("Initialized gaze window");
             runTimeLogfile.printAndLog("Building AdaptationMediator");
-            AdaptationMediator adaptationMediator = initAdaptationMediator(visualizationWebsocket, gazepointSocket, kerasServerCore, gazeWindow);
+            AdaptationMediator adaptationMediator = initAdaptationMediator(visualizationWebsocket, gazepointSocket, pythonServerCore, gazeWindow);
             adaptationLogFile.logLine("Mediator started at: " + adaptationLogFile.getDateTimeStamp() + "," + System.currentTimeMillis());
 
             runTimeLogfile.printAndLog("Constructed AdaptationMediator");
@@ -169,29 +176,11 @@ public class Main {
     }
 
 
-    /**
-     * Starts the keras server via a batch script.
-     * @return
-     * @throws IOException
-     */
-    public static long startKerasServer() throws IOException {
-        //Start keras server from python script and wait for ACK from python that the server started.
-        runTimeLogfile.printAndLog("Starting python server..");
-
-        //Launch batch script to start Python server.
-        ProcessBuilder initPythonPBuilder = new ProcessBuilder( "scripts/start_flask.bat");
-
-        initPythonPBuilder.redirectErrorStream(true);
-
-        Process p = initPythonPBuilder.start();
-        Main.readProcessOutput(p);
-        return p.pid();
-    }
 
     /**
      * https://javaee.github.io/grizzly/websockets.html
      */
-    public static HttpServer initHttpServerAndWebSocketPort() {
+    public static void initHttpServerAndWebSocketPort() {
         runTimeLogfile.printAndLog("Starting grizzly HTTP server");
 
         URI uri = UriBuilder.fromUri("http://" + EnvironmentConfig.JAVA_URL).port(EnvironmentConfig.JAVA_PORT).build();
@@ -212,7 +201,6 @@ public class Main {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return server;
     }
 
     public static VisualizationWebsocket initVisualizationWebsocket() {
@@ -258,8 +246,8 @@ public class Main {
         return new GazeWindow(windowSizeInMilliseconds, Main.EnvironmentConfig.EYETRACKER_REFRESH_RATE);
     }
 
-    public static AdaptationMediator initAdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, KerasServerCore kerasServerCore, GazeWindow window) {
-        return new AdaptationMediator(websocket, gazepointSocket, kerasServerCore, window, EnvironmentConfig.GAZE_CHUNKS_FOR_TIME_SERIES_INPUT);
+    public static AdaptationMediator initAdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, PythonServerCore pythonServerCore, GazeWindow window) {
+        return new AdaptationMediator(websocket, gazepointSocket, pythonServerCore, window, EnvironmentConfig.GAZE_CHUNKS_FOR_TIME_SERIES_INPUT);
     }
 
     /**

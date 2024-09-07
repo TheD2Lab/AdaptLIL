@@ -75,8 +75,8 @@ def predict():
 @app.route("/close", methods=["POST"])
 def close():
     requestJson = request.get_json()
-    pid = 1010
-    if (requestJson['pid'] == pid):
+    sessionId = 918374 #Magic number's are lovely
+    if (requestJson['sessionId'] == sessionId):
         func = request.environ.get('werkzeug.server.shutdown')
         exit()
 

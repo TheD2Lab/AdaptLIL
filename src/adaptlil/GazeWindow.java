@@ -42,7 +42,7 @@ public class GazeWindow implements Component {
      *
      * @param windowSizeInMilliseconds
      */
-    public GazeWindow(float windowSizeInMilliseconds) {
+    public GazeWindow(float windowSizeInMilliseconds, int pollingRateInHz) {
 
         this.pollingRateInHz = 150; // default is 150hz
         this.setWindowSizeInMilliseconds(windowSizeInMilliseconds);

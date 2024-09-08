@@ -10,7 +10,7 @@ import adaptlil.GazeWindow;
 import adaptlil.websocket.VisualizationWebsocket;
 import adaptlil.gazepoint.api.GazepointSocket;
 import adaptlil.gazepoint.api.recv.RecXml;
-import adaptlil.http.KerasServerCore;
+import adaptlil.http.PythonServerCore;
 import adaptlil.websocket.request.AdaptationInvokeRequestModelWs;
 
 import java.util.*;
@@ -25,7 +25,7 @@ import java.util.*;
 public class AdaptationMediator extends Mediator {
     private VisualizationWebsocket websocket;
     private GazepointSocket gazepointSocket;
-    private KerasServerCore kerasServerCore;
+    private PythonServerCore pythonServerCore;
     private GazeWindow gazeWindow;
     private boolean isRunning;
 
@@ -43,10 +43,10 @@ public class AdaptationMediator extends Mediator {
     private int curSequenceIndex = 0;
     private double defaultStrength = 0.50;
 
-    public AdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, KerasServerCore kerasServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
+    public AdaptationMediator(VisualizationWebsocket websocket, GazepointSocket gazepointSocket, PythonServerCore pythonServerCore, GazeWindow gazeWindow, int numSequencesForClassification) {
         this.websocket = websocket;
         this.gazepointSocket = gazepointSocket;
-        this.kerasServerCore = kerasServerCore;
+        this.pythonServerCore = pythonServerCore;
         this.gazeWindow = gazeWindow;
         this.isRunning = false;
         this.currentAdaptations = new HashMap<>();
@@ -104,7 +104,7 @@ public class AdaptationMediator extends Mediator {
 
                     if (classificationIndex == classifications.length) {
                         Main.runTimeLogfile.printAndLog("# of classifications to begin intervention has occured : " + classificationIndex);
-                        this.countTaskSuccessPredictionsAndInvokeAdaptation(classifications);
+                        this.countTaskFailurePredictionsAndInvokeAdaptation(classifications);
                         classificationIndex = 0;
                     }
 
@@ -122,14 +122,14 @@ public class AdaptationMediator extends Mediator {
 
 
     /**
-     * Counts # task success predictions and runs through the rule-based adaptation selection
+     * Counts # task failure predictions and runs through the rule-based adaptation selection
      * @param classifications
      */
-    private void countTaskSuccessPredictionsAndInvokeAdaptation(int[] classifications) {
-        int numClassOne = this.countTaskSuccess(classifications);
-        Main.runTimeLogfile.printAndLog("# class of 1: " + numClassOne);
-        Main.adaptationLogFile.logLine("#Classifications," +numClassOne + "/5,"+ System.currentTimeMillis());
-        this.runRuleBasedAdaptationSelectionProcess((double) numClassOne / classifications.length);
+    private void countTaskFailurePredictionsAndInvokeAdaptation(int[] classifications) {
+        int numFailures = this.countTaskFailureClassifications(classifications);
+        Main.runTimeLogfile.printAndLog("# class of 1: " + numFailures);
+        Main.adaptationLogFile.logLine("#Classifications," + numFailures + "/5,"+ System.currentTimeMillis());
+        this.runRuleBasedAdaptationSelectionProcess(numFailures);
     }
 
 
@@ -138,12 +138,12 @@ public class AdaptationMediator extends Mediator {
      * @param classifications
      * @return
      */
-    private int countTaskSuccess(int[] classifications) {
-        int numClassOne = 0;
+    private int countTaskFailureClassifications(int[] classifications) {
+        int numFailures = 0;
         for (int classification : classifications)
-            if (classification == 1)
-                numClassOne++;
-        return numClassOne;
+            if (classification == 0)
+                numFailures++;
+        return numFailures;
     }
 
 
@@ -153,7 +153,7 @@ public class AdaptationMediator extends Mediator {
      * @return
      */
     public int classifyTaskSuccess(INDArray input) {
-        Double probability = kerasServerCore.predict(input).getOutput().getDouble(0);
+        Double probability = pythonServerCore.predict(input).getOutput().getDouble(0);
         int classificationResult = probability >= 0.5 ? 1 : 0 ;
 
         Main.adaptationLogFile.logLine("Prediction," +probability + "," +classificationResult+","+ System.currentTimeMillis());
@@ -201,6 +201,14 @@ public class AdaptationMediator extends Mediator {
         Main.runTimeLogfile.printAndLog("invoke new adaptation");
     }
 
+    public void adjustAdaptationStrengthAndInvoke() {
+        //TODO
+        //Needs to be touched up.
+        double stepAmount = 0.25;
+        if (this.observedAdaptation.getStrength() <= 0.0 || this.observedAdaptation.getStrength() >= 1.0)
+            this.observedAdaptation.flipDirection();
+        this.observedAdaptation.applyStyleChange(stepAmount);
+    }
     /**
      * Get a new adaptation type
      * @return
@@ -228,48 +236,40 @@ public class AdaptationMediator extends Mediator {
     /**
      * Rule-Based adaptation selection process that determines the appropriate action to take in terms of
      * invoking a new adaptation type, adjusting adaptation strength, or doing nothing.
-     * @param curRiskScore
+     * @param numFailurePredictions
      */
-    private void runRuleBasedAdaptationSelectionProcess(double curRiskScore) {
-        double stepAmount = 0.25;
+    private void runRuleBasedAdaptationSelectionProcess(int numFailurePredictions) {
+
+        if (numFailurePredictions == 5 || numFailurePredictions == 4) {
+            if (!this.adaptationExists() || this.gracePeriodExpired()) {
+                this.invokeNewAdaptationType();
+                Main.runTimeLogfile.printAndLog("Added new adaptation: " +this.observedAdaptation.getType()+" because score was {"+numFailurePredictions+"}");
+            } else {
+                this.adjustAdaptationStrengthAndInvoke();
+                Main.runTimeLogfile.printAndLog("Adjusted adaptation{"+this.observedAdaptation.getType()+"} strength to: " +this.observedAdaptation.getStrength() +" because adaptation because # failures == {" + numFailurePredictions + "} and grace period has not expired");
+
+            }
+        } else if (numFailurePredictions == 3 || numFailurePredictions == 2) {
+            if (this.adaptationExists()) {
+                this.invokeNewAdaptationType();
+                Main.runTimeLogfile.printAndLog("Added new adaptation: " +this.observedAdaptation.getType()+" because score was {"+numFailurePredictions+"}");
+            } else {
+                this.adjustAdaptationStrengthAndInvoke();
+                Main.runTimeLogfile.printAndLog("Added new adaptation: " +this.observedAdaptation.getType()+" because score was {"+numFailurePredictions+"}");
+            }
+        } else { //if numFailurePredictions == 1 || numFailurePredictions == 0
+            //Do nothing
+        }
+    }
+
+    private boolean adaptationExists() {
+        return !this.currentAdaptations.isEmpty();
+    }
+
+    private boolean gracePeriodExpired() {
         int numSequencesSinceNewAdaptation = this.curSequenceIndex - this.newAdaptationStartSequenceIndex;
         int gracePeriodByNumSequences = 5 * 24; //120 second grace period before invoking a new adaptation.
-        //Case 0
-        if (curRiskScore <= 0.0 && (this.currentAdaptations.isEmpty() || numSequencesSinceNewAdaptation > gracePeriodByNumSequences)) {
-            this.invokeNewAdaptationType();
-            Main.runTimeLogfile.printAndLog("Added new adaptation because score was zero: " + this.observedAdaptation.getType());
-        } else if (curRiskScore > 0.0){ //Has adaptovis.adaptations, review the currently observed one.
-            if (!this.currentAdaptations.isEmpty()) {  //Has an adaptation, we can review it and compare to the base line (presumed that it's always classifcations: [0_0,0_1,...,0_n]
-
-                //Case 1
-                if (curRiskScore < this.increaseStrengthThresh) { //Adaptation Risk increased.
-                    //Select new adaptation
-                    if (this.observedAdaptation.hasFlipped() && (this.observedAdaptation.getStrength() <= 0.0 || this.observedAdaptation.getStrength() >= 1.0)) { //Cannot increase/decrease strenth of adaptation, must select a new one (c2.a)
-                        this.observedAdaptation.flipDirection();
-                        this.observedAdaptation.setStrength(defaultStrength);
-                        this.invokeNewAdaptationType();
-                    }
-                    else if (!this.observedAdaptation.hasFlipped() && (this.observedAdaptation.getStrength() <= 0.0 || this.observedAdaptation.getStrength() >= 1.0)) //(c2.b)
-                    {
-                        this.observedAdaptation.flipDirection(); //Flip direction
-                        this.observedAdaptation.applyStyleChange(stepAmount);
-                        this.sendAdaptationToVisualization();
-                    }
-                    //or iterate over current adaptation
-                } else if (curRiskScore >= this.increaseStrengthThresh && curRiskScore <= this.remainThresh) { //Case 2
-
-                    //Check strength,
-                    //If we can increase strength, do so in same direction
-                    if (this.observedAdaptation.getStrength() > 0.0 && this.observedAdaptation.getStrength() <= 1.0) { //Not at max, increase adaptation strength (c2.a)
-                        this.observedAdaptation.applyStyleChange(stepAmount);
-                        this.sendAdaptationToVisualization();
-                    } else { //(c2.b)
-                        //Do nothing, reached max. Continue onwards.
-                    }
-
-                }
-            }
-        }
+        return numSequencesSinceNewAdaptation > gracePeriodByNumSequences;
     }
 
 
@@ -293,8 +293,8 @@ public class AdaptationMediator extends Mediator {
         return gazepointSocket;
     }
 
-    public KerasServerCore getClassifierModel() {
-        return kerasServerCore;
+    public PythonServerCore getClassifierModel() {
+        return pythonServerCore;
     }
 
     public GazeWindow getGazeWindow() {
@@ -309,8 +309,8 @@ public class AdaptationMediator extends Mediator {
         this.gazepointSocket = gazepointSocket;
     }
 
-    public void setClassifierModel(KerasServerCore kerasServerCore) {
-        this.kerasServerCore = kerasServerCore;
+    public void setClassifierModel(PythonServerCore pythonServerCore) {
+        this.pythonServerCore = pythonServerCore;
     }
 
     public void setGazeWindow(GazeWindow gazeWindow) {

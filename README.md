@@ -2,17 +2,21 @@
 # About
 This repository contains both the backend and frontend of an intelligent adaptive ontological visualization (AdaptLIL). Integrated with Gazepoint API, the visualization applies deep learning techniques to intelligently adapt a visualization to a user's gaze profile. The current adaptations are aimed to reduce clutter, improve readability, and improve task success amon ontology mapping visualizations.
 
+[![AdaptLIL In-Lab User Study Preview](https://img.youtube.com/vi/eyCAkf5ldUg/0.jpg)](https://youtu.be/eyCAkf5ldUg)
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=eyCAkf5ldUg
+" target="_blank"><img src="https://img.youtube.com/vi/eyCAkf5ldUg/0.jpg"
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
 # Java Docs
 See: [https://thed2lab.github.io/AdaptLIL/](https://thed2lab.github.io/AdaptLIL/)
 
 # Requirements
 Eye Tracker w/ Gazepoint API implementation (or override the GazepointSocket with your own protocol)
 
-Java 11 or greater
-
-Python 3.9
+Java >= 11
+Python >=3.9 and <3.11
 - pip
-- Poetry
+- poetry
 
 CUDA 11+
 * Python server is setup with tensorflow and can use CUDA for GPU accelerated inference
@@ -39,7 +43,7 @@ python -m pip install poetry
 python -m poetry install
 ```
 6. Launch and calibrate gazepoint (Skip if using pre-recorded gaze file
-7. Open the frontend visualization located in web/index.html
+7. Open the frontend visualization located in src/adapitlil/resources/visualization_web/index.html
 8. Continue to the link indented list (to be altered when study commences)
 9. At this point the websocket socket should now be connected
 
@@ -146,11 +150,11 @@ Since it is built on d3.js, elements are DOM. Therefore, to reflect adaptation u
  ###
 Add your model to python/deep_learning_models 
  
-Navigate to env.yml and change model_name to your model name.
+Navigate to env.yml and change **DEEP_LEARNING_MODEL_NAME** to your model name.
 
-Change EYETRACKER_REFRESH_RATE to the refresh rate you trained your model on
+Change **EYETRACKER_REFRESH_RATE** to the refresh rate you trained your model on
 
-Change the data shape in src/adaptlil/mediator/AdaptationMediator.java->formatGazeWindowsToModelInput
+Change the data shape in **src/adaptlil/mediator/AdaptationMediator.java->formatGazeWindowsToModelInput**
 to match the data shape of the input on your model. This shape is communicated to the python server so this is the only place
 you will need to update it.
 ```
@@ -175,25 +179,119 @@ you will need to update it.
  ### Backend
 1) Navigate to src/adaptations
 2) Create a subclass of Adaptation
-   4) What does this do?
-   5) 
-4) Establish JSON structure and elements to
+```
+class yourAdaptation extends Adaptation {
+   public yourAdaptation(boolean state, Map<String, String> styleConfig, double strength) {
+        super("yourAdaptation", state, styleConfig, strength);
+    }
+
+    @Override
+    public void applyStyleChange(double stepAmount) {
+        if (!this.hasFlipped())
+            this.setStrength(this.getStrength() + stepAmount);
+        else
+            this.setStrength(this.getStrength() - stepAmount);
+    }
+   
+   //NOTE: This is only used for the colorAdaptation (which was not present in the research study or is currently active)
+    public Map<String, String> getDefaultStyleConfig() {
+        Map<String, String> defaultStyleConfig = new HashMap<>();
+        defaultStyleConfig.put("CSS Attribute", "CSS Value");
+        return defaultStyleConfig;
+    }
+}
+   ```
+5) Navigate to **src/adaptlil/mediator/AdaptationMediator** and add your new adaptation to list of adaptations to select from
+```
+    public List<Adaptation> listOfAdaptations() {
+        ArrayList<Adaptation> adaptations = new ArrayList<>();
+        ...
+        adaptations.add(new yourAdaptation(true, null, defaultStrength));
+        ...
+        
+    }
+```
+
  ### Frontend
-1) Navigate to web/scripts/VisualizationAdapation.js
-2) Navigate to web/scripts/BaselineMap.js
-3) Navigate to web/scripts/script-alignment.js
+1) Navigate to **src/adaptlil/resources/visualization_web/scripts/VisualizationAdapation.js** constructor
+   i) Add your new adaptation to the constructor
+```
+class VisualizationAdaptation {
+   constructor(...) {
+      this.{yourAdaptation} = new Adaptation('{yourAdaptation}', false, {}, 0.5);
+   }
+}
+   ```
+   ii) Add your new adaptation to VisualizationAdaptation.toggleAdaptation to properly toggle and reset flags
+      for the other adaptations
+```chatinput
+ toggleAdaptation(adaptationType, state, styleConfig, strength) {
+        const _this = this;
+        _this.deemphasisAdaptation.state = false;
+        _this.highlightAdaptation.state = false;
+        _this.colorSchemeAdaptation.state = false;
+         ...
+        elseif (adaptationType === '{yourAdaptation}') {
+            _this.{yourAdaptation}.state = state;
+            _this.{yourAdaptation}.styleConfig = styleConfig;
+            _this.{yourAdaptation}.strength = strength;
+        } 
+```
+### The next portion of this portion is dependent on using a link-indented list. To implement this design-flow into your visualization, loosely follow a structure of reseting the adaptation and applying your adaptation to the elements of your visualization.
+2) Navigate to **src/adaptlil/resources/visualization_web/scripts/script-alignment.js**
+
+   i) Add a function to reset the visual state of the maplines (line connecting ontology classes) and the classes.
+   How you reset the elements depends on what CSS styling attributes you use. As an example, we will showcase the highlighting adaptation.
+```chatinput
+function unhighlightAllOntologyClasses(svg_canvas) {
+ 
+    svg_canvas.selectAll('.node>text').style('font-weight', 100)
+
+    svg_canvas.selectAll('text').style('font-weight', 100)
+}
+```
+ii) Add a function to apply your adaptation to the elements of your visualization. For the sake of example the code below only applies to the ontology classes
+```chatinput
+function highlightNode(svg_canvas, node, adaptation) {
+    let adaptive_font_weight = Math.ceil(900 * adaptation.strength);
+    if (adaptive_font_weight < 500)
+        adaptive_font_weight = 500;
+   
+   //Apply adaptive font-weight
+    svg_canvas.select('#n'+node.id)
+        .style('opacity', 1)
+        .select('text')
+        .style('font-weight', adaptive_font_weight);
+
+}
+```
+   iii) Add event listeners to interactively apply adaptations:
+```
+svg_canvas.selectAll('.node').on('mouseover', function(node) {
+     const tree = d3.select('#'+$(this).closest('.tree')[0].id);
+     highlightNode(tree, node, _this.linkIndentedList.adaptations.highlightAdaptation);
+}
+```
+
 # Replacing Rule-Based Selection Process
  ### Overview
+   
  ### Replacement Procedure
-
-
-# Using a Different Eye Tracker
-#### HOWTO
-
-# Adaptation Mediator, Controlling the flow and adjusting behavior
-
-# Python Server
-ACK, Load, Predict
+1) Navigate to **src/adaptlil/mediator/AdaptationMediator**
+2) Rewrite runRuleBasedAdaptationSelectionProcess() with your code and ensure:
+i) You have a finite-state automata to replace the selection process
+ii) AdaptationMediator.observedAdaptation represents the current Adaptation active on the frontend.
 
 # Limitations
 1. Access to eye tracking technology
+
+
+# Papers
+1) ISWC - Research Track
+Citation -
+2) Poster - Poster Track - High level view at a glance
+Citation -
+3) [[Thesis]](https://www.proquest.com/docview/3083825008/AFF530ED644D4F83PQ/1?sourcetype=Dissertations%20&%20Theses) - In depth discussion of System design
+
+   Citation - Chow, N (2024). "Adaptive Ontology Mapping Visualizations: Curtailing Visualizations in Real Time Through Deep Learning and Eye Gaze" Thesis. California State University, Long Beach.
+

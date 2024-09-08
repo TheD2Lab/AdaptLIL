@@ -13,7 +13,7 @@ class VisualizationAdaptations {
     }
 
     /**
-     * Sets flags for adaptations. Will likely need to be expanded to allow for more customization as needed.
+     * Sets flags for adaptation and resets the default states for strength and styleconfigs. Will likely need to be expanded to allow for more customization as needed.
      * @param adaptationType
      * @param state
      * @param styleConfig
@@ -46,8 +46,6 @@ class VisualizationAdaptations {
              */
             _this.colorSchemeAdaptation.styleConfig = styleConfig;
             _this.baselineMap.refreshMapLineColors();
-        } else if (adaptationType === 'annotations') { //https://d3-annotation.susielu.com/
-            _this.annotationAdaptation.state = state;
         }
     }
 

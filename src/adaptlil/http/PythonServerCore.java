@@ -1,5 +1,8 @@
 package adaptlil.http;
 
+import adaptlil.http.request.RequestClosePythonServer;
+import adaptlil.http.request.RequestModelHttp;
+import adaptlil.http.response.ResponseModelHttp;
 import org.glassfish.grizzly.http.HttpBrokenContentException;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import adaptlil.http.request.RequestLoadModel;
@@ -13,7 +16,7 @@ import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class KerasServerCore {
+public class PythonServerCore {
 
     private final String loadModelEndpoint = "loadModel";
     private final String predictEndpoint = "predict";
@@ -22,7 +25,7 @@ public class KerasServerCore {
     private String modelName; //TODO Env var load
     private String baseUri;
 
-    public KerasServerCore(String pythonServerURL, Integer pythonServerPort) {
+    public PythonServerCore(String pythonServerURL, Integer pythonServerPort) {
         this.pythonServerURL = pythonServerURL;
         this.pythonServerPort = pythonServerPort;
         this.baseUri = UriBuilder.fromUri("http://" +pythonServerURL + ":" + pythonServerPort).toString();
@@ -62,5 +65,20 @@ public class KerasServerCore {
         }
     }
 
+    /**
+     * Makes request to close the python server.
+     * @return
+     */
+    public ResponseModelHttp closeServer() {
+        URI uri = URI.create(baseUri + "/close");
+        RequestClosePythonServer requestClosePythonServer = new RequestClosePythonServer(918374); //Magic numbers are lovely.
+        Response response = HttpRequestCore.POST(uri.toString(), Entity.entity(requestClosePythonServer, MediaType.APPLICATION_JSON_TYPE));
+        if (response.getStatus() == 200) {
+            return response.readEntity(ResponsePrediction.class);
+        } else {
+            System.err.println("Error closing server on uri " + uri);
+            return null;
+        }
+    }
 
 }

@@ -69,7 +69,7 @@ public class Main {
 
     private static void loadEnvConfig() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        Main.EnvironmentConfig = objectMapper.readValue(new File("src/main/resources/customer.yaml"), EnvironmentConfig.class);
+        Main.EnvironmentConfig = objectMapper.readValue(new File("src/adaptlil/resources/env.yaml"), EnvironmentConfig.class);
     }
 
     /**

@@ -288,9 +288,9 @@ ii) AdaptationMediator.observedAdaptation represents the current Adaptation acti
 
 # Papers
 1) ISWC - Research Track
-Citation -
+Citation - Bo Fu, Nicholas Chow, AdaptLIL: A Real-Time Adaptive Linked Indented List Visualization for Ontology Mapping, In: Proceedings of the 23rd International Semantic Web Conference (ISWC 2024)
 2) Poster - Poster Track - High level view at a glance
-Citation -
+Citation - Nicholas Chow, Bo Fu, AdaptLIL: A Gaze-Adaptive Visualization for Ontology Mapping, IEEE VIS 2024
 3) [[Thesis]](https://www.proquest.com/docview/3083825008/AFF530ED644D4F83PQ/1?sourcetype=Dissertations%20&%20Theses) - In depth discussion of System design
 
    Citation - Chow, N (2024). "Adaptive Ontology Mapping Visualizations: Curtailing Visualizations in Real Time Through Deep Learning and Eye Gaze" Thesis. California State University, Long Beach.
